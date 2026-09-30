@@ -6,13 +6,12 @@
   * dense 连续特征：直接进模型数值部分。
   * sparse 类目特征：进 embedding（DeepFM 的 FM/DNN 需要）。
 - 所有特征由"原始特征"构造，**不包含**生成器里的隐式交叉乘积项——交叉须由模型自行学习。
-
-注意：`price_norm / miles_*_norm` 等是"归一化原始特征"，不是交叉项。
+- 归一化使用**全量表的统计量（max）**，保证训练与推理口径一致。
 """
 import numpy as np
 import pandas as pd
 
-from src.config import FEATURE_VERSION, CATEGORIES, PROC_DIR
+from src.config import FEATURE_VERSION, CATEGORIES
 
 # 连续特征（进入 DNN / FM 一阶）
 DENSE_COLS = [
@@ -25,11 +24,25 @@ DENSE_COLS = [
 SPARSE_COLS = ["category_idx", "time_slot", "hour_slot"]
 
 
-def _normalize_col(s: pd.Series, cap: float = 3.0) -> np.ndarray:
-    mx = s.max()
-    if mx == 0 or pd.isna(mx):
+def norm_stats(users: pd.DataFrame, items: pd.DataFrame) -> dict:
+    """归一化用的全量统计量（max）。"""
+    return {
+        "cash_price": float(items["cash_price"].max()),
+        "miles_balance": float(users["miles_balance"].max()),
+        "miles_required": float(items["miles_required"].max()),
+    }
+
+
+def _norm(s: pd.Series, mx: float, cap: float = 3.0) -> np.ndarray:
+    if mx is None or pd.isna(mx) or mx == 0:
         return np.zeros(len(s), dtype=np.float32)
     return np.clip(s.to_numpy() / mx, 0.0, cap).astype(np.float32)
+
+
+def _norm_scalar(x: float, mx: float, cap: float = 3.0) -> float:
+    if mx is None or pd.isna(mx) or mx == 0:
+        return 0.0
+    return float(np.clip(x / mx, 0.0, cap))
 
 
 def build_training_matrix(logs: pd.DataFrame, users: pd.DataFrame,
@@ -41,26 +54,25 @@ def build_training_matrix(logs: pd.DataFrame, users: pd.DataFrame,
     if sample is not None and sample < len(logs):
         logs = logs.sample(n=sample, random_state=42)
 
+    stats = norm_stats(users, items)
     u = users.set_index("user_id")
     it = items.set_index("item_id")
-
     user_sub = u.loc[logs["user_id"]].reset_index(drop=True)
     item_sub = it.loc[logs["item_id"]].reset_index(drop=True)
 
     dense = {}
-    for i, c in enumerate(CATEGORIES):
+    for c in CATEGORIES:
         dense[f"aff_{c}"] = user_sub[f"aff_{c}"].to_numpy(dtype=np.float32)
     dense["quality"] = item_sub["quality"].to_numpy(dtype=np.float32)
-    dense["price_norm"] = _normalize_col(item_sub["cash_price"])
+    dense["price_norm"] = _norm(item_sub["cash_price"], stats["cash_price"])
     dense["price_sensitivity"] = user_sub["price_sensitivity"].to_numpy(dtype=np.float32)
     dense["is_business"] = user_sub["is_business"].to_numpy(dtype=np.float32)
-    dense["miles_balance_norm"] = _normalize_col(user_sub["miles_balance"])
-    dense["miles_required_norm"] = _normalize_col(item_sub["miles_required"])
+    dense["miles_balance_norm"] = _norm(user_sub["miles_balance"], stats["miles_balance"])
+    dense["miles_required_norm"] = _norm(item_sub["miles_required"], stats["miles_required"])
     dense["is_miles_ticket"] = item_sub["is_miles_ticket"].to_numpy(dtype=np.float32)
     dense["is_weekend"] = logs["is_weekend"].to_numpy(dtype=np.float32)
 
     dense_arr = np.stack([dense[c] for c in DENSE_COLS], axis=1).astype(np.float32)
-
     sparse_arr = np.stack([
         item_sub["category_idx"].to_numpy(),
         item_sub["time_slot"].to_numpy(),
@@ -70,6 +82,40 @@ def build_training_matrix(logs: pd.DataFrame, users: pd.DataFrame,
     y_click = logs["clicked"].to_numpy(dtype=np.int64)
     y_conv = logs["converted"].to_numpy(dtype=np.int64)
     return dense_arr, sparse_arr, y_click, y_conv
+
+
+def build_candidate_features(user_id: int, item_ids, users: pd.DataFrame,
+                             items: pd.DataFrame, hour_slot: int = 0,
+                             is_weekend: int = 0):
+    """为单个用户 × 候选物品构建推理特征（与训练矩阵同构、同一归一化口径）。"""
+    stats = norm_stats(users, items)
+    u = users.set_index("user_id").loc[user_id]
+    it = items.set_index("item_id").loc[item_ids]
+    if isinstance(it, pd.Series):  # 单个物品
+        it = it.to_frame().T
+    it = it.reset_index(drop=True)
+    K = len(it)
+
+    dense = {}
+    for c in CATEGORIES:
+        dense[f"aff_{c}"] = np.full(K, float(u[f"aff_{c}"]), dtype=np.float32)
+    dense["quality"] = it["quality"].to_numpy(dtype=np.float32)
+    dense["price_norm"] = _norm(it["cash_price"], stats["cash_price"])
+    dense["price_sensitivity"] = np.full(K, float(u["price_sensitivity"]), dtype=np.float32)
+    dense["is_business"] = np.full(K, float(u["is_business"]), dtype=np.float32)
+    dense["miles_balance_norm"] = np.full(
+        K, _norm_scalar(float(u["miles_balance"]), stats["miles_balance"]), dtype=np.float32)
+    dense["miles_required_norm"] = _norm(it["miles_required"], stats["miles_required"])
+    dense["is_miles_ticket"] = it["is_miles_ticket"].to_numpy(dtype=np.float32)
+    dense["is_weekend"] = np.full(K, float(is_weekend), dtype=np.float32)
+
+    dense_arr = np.stack([dense[c] for c in DENSE_COLS], axis=1).astype(np.float32)
+    sparse_arr = np.stack([
+        it["category_idx"].to_numpy(),
+        it["time_slot"].to_numpy(),
+        np.full(K, int(hour_slot), dtype=np.int64),
+    ], axis=1).astype(np.int64)
+    return dense_arr, sparse_arr
 
 
 def feature_dim() -> tuple[int, int, list[int]]:
@@ -86,3 +132,5 @@ if __name__ == "__main__":
     print(f"feature_version={FEATURE_VERSION}")
     print(f"dense={dense.shape} sparse={sparse.shape} "
           f"click_rate={yc.mean():.4f} conv_rate(click)={yv[yc==1].mean():.4f}")
+    c_dense, c_sparse = build_candidate_features(0, [0, 1, 2], users, items)
+    print(f"candidate dense={c_dense.shape} sparse={c_sparse.shape}")
