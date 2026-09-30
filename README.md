@@ -21,10 +21,13 @@
 
 - [x] 多场景推荐：航线 / 酒店 / 商城 / 营销 / 直播 五大类目混排
 - [x] 热门兜底召回 + 物品协同过滤（ItemCF）召回基线
+- [x] Two-Tower 向量召回（PyTorch 双塔 + 负采样）
+- [x] 规则召回：里程兑换 / 里程票零库存 / 常驻地热门航线 / 多段行程优先返程
+- [x] 四路召回融合（位置分加权 + 降级兜底）
 - [x] 轻量特征库：集中产出召回 / 排序 / 冷启动共用特征（dense + sparse）
-- [ ] CTR 动态排序：归一化 → CTR 加权 → 分层排序 → 同品类打散 → 分页去重（W2–W3）
-- [ ] DeepFM 排序模型（PyTorch）+ Two-Tower 向量召回 + 规则召回（W2–W3）
-- [ ] 降级兜底：CTR 服务超时 → 近 7 天平均 CTR 兜底（W2）
+- [ ] CTR 动态排序：归一化 → CTR 加权 → 分层排序 → 同品类打散 → 分页去重（W3）
+- [ ] DeepFM 排序模型（PyTorch）（W3）
+- [ ] 降级兜底：CTR 服务超时 → 近 7 天平均 CTR 兜底（W3）
 - [ ] 服务化 API（FastAPI）与可解释面板（W4）
 - [ ] 模拟 A/B 报告（W4）
 - [ ] 架构图 / 复现文档 / demo 视频（W5–W6）
@@ -37,7 +40,7 @@ Web/Dashboard ──HTTP/JSON──▶ Serving(FastAPI)
             ┌───────────────────┼───────────────────┐
             ▼                   ▼                   ▼
         Recall 召回          Rank 排序            Degrade 降级
-        (热门+协同)        (CTR 模型)          (7日均值兜底)
+        (热门/协同/双塔/规则)  (CTR 模型)          (7日均值兜底)
             └───────────────────┼───────────────────┘
                                 ▼
                Data: 合成出行交互生成器(可复现)
@@ -47,7 +50,7 @@ Web/Dashboard ──HTTP/JSON──▶ Serving(FastAPI)
 
 ```bash
 pip install -r requirements.txt
-python -m src.pipeline_demo        # 生成数据 + 训练召回基线 + 样例推荐
+python -m src.pipeline_demo        # 生成数据 + 四路召回 + 融合 + 样例推荐
 python -m pytest tests/ -q         # 冒烟测试
 ```
 
@@ -62,11 +65,11 @@ python -m pytest tests/ -q         # 冒烟测试
 
 因已知潜在真实 CTR，离线评估（AUC、线上增益）具备可比性。生成产物为 CSV，位于 `data/processed/`（已 gitignore，用脚本重生）。
 
-## 方法（规划）
+## 方法
 
-1. **召回**：热门兜底 + ItemCF，产出候选集（后续接入 Two-Tower 向量召回与规则召回）。
-2. **排序（W2–W3）**：复刻工业 5 步流程——分数归一化 → CTR 加权 → 分层排序 → 同品类打散 → 分页去重；CTR 模型升级为 DeepFM（PyTorch）。
-3. **降级（W2）**：CTR 服务超时 → 降级为近 7 天平均 CTR 兜底，保证核心链路不挂。
+1. **召回（已完成）**：热门兜底 + ItemCF + Two-Tower 向量召回 + 出行规则召回，四路融合产出候选集。
+2. **排序（W3）**：复刻工业 5 步流程——分数归一化 → CTR 加权 → 分层排序 → 同品类打散 → 分页去重；CTR 模型升级为 DeepFM（PyTorch）。
+3. **降级（W3）**：CTR 服务超时 → 降级为近 7 天平均 CTR 兜底，保证核心链路不挂。
 
 ## 目录结构
 
@@ -76,25 +79,29 @@ src/
   data/synthetic_generator.py   合成数据生成器
   feature/store.py             轻量特征库
   recall/baselines.py          热门 + ItemCF 召回
-  rank/                        (W2) CTR 排序
+  recall/two_tower.py         Two-Tower 向量召回
+  recall/rule.py              出行规则召回（里程 / 多段行程）
+  recall/fusion.py            多路召回融合
+  rank/                        (W3) CTR 排序
   serve/                       (W4) FastAPI + 面板
   eval/                        (W4) 离线评估 + A/B
-tests/test_data.py         数据层 + 特征库冒烟测试
+tests/test_data.py         数据 / 特征 / 召回 冒烟测试
 ```
 
 ## 诚实边界
 
 - 数据为本项目**合成**（受控实验），仅用于演示工程链路；不涉任何真实业务数据，也不与任何真实企业系统关联。
 - 数据生成公式中注入了隐式非线性交叉项，用于让深度模型可学；模型只能拿到原始特征，交叉需自行学习——此设计明确标注为受控实验设置。
-- CTR 模型使用标准模型（scikit-learn / PyTorch 实现的 DeepFM、Two-Tower 等均为已有方法的实现），本项目**不提出新算法**。
+- CTR / 召回模型使用标准模型（scikit-learn / PyTorch 实现的 Two-Tower、DeepFM 等均为已有方法的实现），本项目**不提出新算法**。
 - 实习经历仅作为项目动机来源（业务规则与流程启发），实习中未涉及深度排序模型的训练。
 
 ## 待办（Roadmap）
 
-- [ ] W2：Two-Tower 召回 + 规则召回 + 召回融合 + 降级策略
-- [ ] W3：DeepFM 排序 + 5 步混排流程 + 离线评估（AUC / Recall@k）
+- [x] W2：Two-Tower 召回 + 规则召回 + 召回融合
+- [ ] W3：DeepFM 排序 + 5 步混排流程 + 降级策略 + 离线评估（AUC / Recall@k）
 - [ ] W4：FastAPI 服务化 + 可解释面板 + 模拟 A/B 报告
-- [ ] W5–W6：README 完善（架构图/复现/量化结果/demo 视频）+ 在线 Demo（GitHub Pages + Streamlit Cloud）
+- [ ] W5–W6：README 完善（架构图 / 复现 / 量化结果 / demo 视频）+ 在线 Demo（GitHub Pages + Streamlit Cloud）
 
 ---
+
 *注：本文档随开发推进更新，勾选项为已完成模块。*

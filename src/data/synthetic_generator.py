@@ -85,7 +85,7 @@ def generate_users(rng, n_users=N_USERS) -> pd.DataFrame:
     for i, c in enumerate(CATEGORIES):
         df[f"aff_{c}"] = aff[:, i]
 
-    df["miles_balance"] = np.round(np.exp(rng.normal(8.0, 1.0, size=n_users)), 0)
+    df["miles_balance"] = np.round(np.exp(rng.normal(10.0, 1.0, size=n_users)), 0)
     df["miles_balance"] = np.where(rng.random(n_users) < 0.05, 0.0, df["miles_balance"])
     df["home_idx"] = rng.integers(0, len(CITIES), size=n_users)
     df["price_sensitivity"] = rng.normal(0.0, 1.0, size=n_users)
