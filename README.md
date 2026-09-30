@@ -32,20 +32,27 @@
 - [x] 服务化 API（FastAPI：推荐 / 排序流程 / A/B）
 - [x] 可解释面板（Streamlit：推荐演示 / 排序流程 / A/B 报告）
 - [x] 模拟 A/B 报告（多目标 CTR+CVR，点击率 / 转化率双提升）
-- [ ] 架构图 / 复现文档 / demo 视频（W5–W6）
+- [x] 架构图（Mermaid + 展示页 SVG）
+- [ ] demo 视频（录制脚本已备，`docs/demo-script.md`）
 
 ## 系统架构
 
-```
-Web/Dashboard ──HTTP/JSON──▶ Serving(FastAPI)
-                                │
-            ┌───────────────────┼───────────────────┐
-            ▼                   ▼                   ▼
-        Recall 召回          Rank 排序            Degrade 降级
-        (热门/协同/双塔/规则)  (CTR 模型)          (7日均值兜底)
-            └───────────────────┼───────────────────┘
-                                ▼
-               Data: 合成出行交互生成器(可复现)
+```mermaid
+flowchart TB
+    GEN["合成数据生成器<br/>10万用户 × 10万物品 × 500万曝光<br/>（含隐式非线性交叉）"]
+
+    REC["召回层：热门 · ItemCF · Two-Tower · 规则"]
+    FUS["四路召回融合"]
+    RANK["排序层：DeepFM(CTR) + LR(CVR) 多目标打分"]
+    MIX["5步混排：归一化→加权→分层→打散→去重"]
+    DEG["降级兜底：异常→历史平均CTR"]
+    SVC["服务层：FastAPI / Streamlit 面板"]
+    OUT["Top-K 推荐（可解释）"]
+
+    GEN --> REC --> FUS --> RANK --> MIX --> OUT
+    DEG -.->|服务异常| RANK
+    SVC -->|请求| REC
+    MIX -->|响应| SVC
 ```
 
 ## 快速开始
@@ -116,6 +123,8 @@ src/
   serve/engine.py            推荐引擎（召回 + 多目标排序 + 混排）
   serve/app.py               FastAPI 服务
   app.py                     Streamlit 交互 Demo（根目录）
+docs/index.html             GitHub Pages 展示页
+docs/demo-script.md          demo 录制脚本
 tests/test_data.py         数据 / 特征 / 召回 冒烟测试
 tests/test_rank.py         排序层 / 混排 / 降级 冒烟测试
 tests/test_ab.py           模拟 A/B 冒烟测试
@@ -133,7 +142,8 @@ tests/test_ab.py           模拟 A/B 冒烟测试
 - [x] W2：Two-Tower 召回 + 规则召回 + 召回融合
 - [x] W3：DeepFM 排序 + 5 步混排流程 + 降级策略 + 离线评估（AUC / 真实 CTR）
 - [x] W4：FastAPI 服务化 + 可解释面板（Streamlit）+ 模拟 A/B 报告
-- [ ] W5–W6：README 完善（架构图 / 复现 / 量化结果 / demo 视频）+ 在线 Demo（GitHub Pages + Streamlit Cloud 部署）
+- [x] W5：架构图 + GitHub Pages 展示页 + demo 录制脚本
+- [ ] W6：demo 视频录制 + Streamlit Cloud / GitHub Pages 在线部署
 
 ---
 
