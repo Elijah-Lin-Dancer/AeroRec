@@ -25,9 +25,10 @@
 - [x] 规则召回：里程兑换 / 里程票零库存 / 常驻地热门航线 / 多段行程优先返程
 - [x] 四路召回融合（位置分加权 + 降级兜底）
 - [x] 轻量特征库：集中产出召回 / 排序 / 冷启动共用特征（dense + sparse）
-- [ ] CTR 动态排序：归一化 → CTR 加权 → 分层排序 → 同品类打散 → 分页去重（W3）
-- [ ] DeepFM 排序模型（PyTorch）（W3）
-- [ ] 降级兜底：CTR 服务超时 → 近 7 天平均 CTR 兜底（W3）
+- [x] CTR 动态排序：归一化 → CTR 加权 → 分层排序 → 同品类打散 → 分页去重
+- [x] DeepFM 排序模型（PyTorch，FM + DNN）
+- [x] 降级兜底：CTR 服务超时 → 历史平均 CTR 兜底
+- [x] 离线评估：LR vs DeepFM 的 AUC 对比 + 推荐列表真实 CTR 对比
 - [ ] 服务化 API（FastAPI）与可解释面板（W4）
 - [ ] 模拟 A/B 报告（W4）
 - [ ] 架构图 / 复现文档 / demo 视频（W5–W6）
@@ -50,7 +51,8 @@ Web/Dashboard ──HTTP/JSON──▶ Serving(FastAPI)
 
 ```bash
 pip install -r requirements.txt
-python -m src.pipeline_demo        # 生成数据 + 四路召回 + 融合 + 样例推荐
+python -m src.pipeline_demo        # 数据 + 四路召回 + 融合 + 样例推荐
+python -m src.eval.evaluate        # LR vs DeepFM AUC + 排序层真实 CTR 对比
 python -m pytest tests/ -q         # 冒烟测试
 ```
 
@@ -68,8 +70,18 @@ python -m pytest tests/ -q         # 冒烟测试
 ## 方法
 
 1. **召回（已完成）**：热门兜底 + ItemCF + Two-Tower 向量召回 + 出行规则召回，四路融合产出候选集。
-2. **排序（W3）**：复刻工业 5 步流程——分数归一化 → CTR 加权 → 分层排序 → 同品类打散 → 分页去重；CTR 模型升级为 DeepFM（PyTorch）。
-3. **降级（W3）**：CTR 服务超时 → 降级为近 7 天平均 CTR 兜底，保证核心链路不挂。
+2. **排序（已完成）**：复刻工业 5 步流程——分数归一化 → CTR 加权 → 分层排序 → 同品类打散 → 分页去重；CTR 模型为 DeepFM（PyTorch）。
+3. **降级（已完成）**：CTR 服务超时 → 降级为历史平均 CTR 兜底，保证核心链路不挂。
+
+## 离线评估结果（受控合成实验）
+
+| 指标 | 基线 | DeepFM / 排序层 | 提升 |
+|---|---|---|---|
+| CTR 模型 AUC（测试集 6 万） | Logistic Regression 0.742 | **DeepFM 0.798** | +5.6pp |
+| 推荐列表真实 CTR（Top10 均值） | 热门 0.205 / 随机 0.155 | **DeepFM+混排 0.583** | 相对热门 **+184%** |
+
+> 合成数据含隐式非线性交叉（价格敏感×低价、商务×早班机、里程契合），DeepFM 的 FM/DNN 结构
+> 能自动学到这些交叉，故 AUC 与真实 CTR 均显著优于线性基线——此为受控实验结论，非真实线上指标。
 
 ## 目录结构
 
@@ -82,10 +94,15 @@ src/
   recall/two_tower.py         Two-Tower 向量召回
   recall/rule.py              出行规则召回（里程 / 多段行程）
   recall/fusion.py            多路召回融合
-  rank/                        (W3) CTR 排序
+  rank/deepfm.py              DeepFM 排序模型
+  rank/trainer.py             CTR 训练器
+  rank/mixer.py               5 步混排
+  rank/degrade.py             降级兜底
+  eval/metrics.py             离线指标
+  eval/evaluate.py            LR vs DeepFM AUC + 真实 CTR 对比
   serve/                       (W4) FastAPI + 面板
-  eval/                        (W4) 离线评估 + A/B
 tests/test_data.py         数据 / 特征 / 召回 冒烟测试
+tests/test_rank.py         排序层 / 混排 / 降级 冒烟测试
 ```
 
 ## 诚实边界
@@ -98,7 +115,7 @@ tests/test_data.py         数据 / 特征 / 召回 冒烟测试
 ## 待办（Roadmap）
 
 - [x] W2：Two-Tower 召回 + 规则召回 + 召回融合
-- [ ] W3：DeepFM 排序 + 5 步混排流程 + 降级策略 + 离线评估（AUC / Recall@k）
+- [x] W3：DeepFM 排序 + 5 步混排流程 + 降级策略 + 离线评估（AUC / 真实 CTR）
 - [ ] W4：FastAPI 服务化 + 可解释面板 + 模拟 A/B 报告
 - [ ] W5–W6：README 完善（架构图 / 复现 / 量化结果 / demo 视频）+ 在线 Demo（GitHub Pages + Streamlit Cloud）
 

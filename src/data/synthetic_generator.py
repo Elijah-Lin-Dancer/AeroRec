@@ -24,6 +24,9 @@ from src.config import (
     ITEMS_PATH, USERS_PATH, TRIPS_PATH, LOGS_PATH, PROC_DIR,
 )
 
+# 固定类目偏置：生成日志与离线评估共用，保证 true_ctr 口径一致
+_CAT_BIAS = np.random.default_rng(SEED).normal(0.0, CAT_BIAS_STD, size=len(CATEGORIES))
+
 
 def _sigmoid(x):
     return 1.0 / (1.0 + np.exp(-x))
@@ -154,7 +157,7 @@ def generate_logs(rng, users, items, impressions_per_user=IMPRESSIONS_PER_USER):
                              np.clip((miles_bal - miles_req) / np.maximum(miles_req, 1),
                                      -1.0, 1.0), 0.0)
 
-    cat_bias = rng.normal(0.0, CAT_BIAS_STD, size=len(CATEGORIES))
+    cat_bias = _CAT_BIAS
     aff_cat = aff[np.arange(n), cat]
 
     logit = (CTR_BASE
@@ -186,6 +189,46 @@ def generate_logs(rng, users, items, impressions_per_user=IMPRESSIONS_PER_USER):
         "converted": converted,
     })
     return logs
+
+
+def compute_true_ctr(users, items, user_ids, item_ids):
+    """对任意 (用户, 物品) 对计算潜在真实 CTR（与生成日志同一公式、同一 cat_bias）。
+
+    供离线评估使用：可用它度量"推荐列表的真实点击概率"，从而对比不同排序策略的效果。
+    user_ids / item_ids 为等长数组，元素即 user_id / item_id（等于行索引）。
+    """
+    user_ids = np.asarray(user_ids)
+    item_ids = np.asarray(item_ids)
+    u = users.iloc[user_ids].reset_index(drop=True)
+    it = items.iloc[item_ids].reset_index(drop=True)
+
+    aff = u[[f"aff_{c}" for c in CATEGORIES]].to_numpy()
+    cat = it["category_idx"].to_numpy()
+    quality = it["quality"].to_numpy()
+    cash_price = it["cash_price"].to_numpy()
+    is_miles = it["is_miles_ticket"].to_numpy()
+    miles_req = it["miles_required"].to_numpy()
+    miles_bal = u["miles_balance"].to_numpy()
+    price_sens = u["price_sensitivity"].to_numpy()
+    is_biz = u["is_business"].to_numpy()
+    time_slot = it["time_slot"].to_numpy()
+
+    price_max = items["cash_price"].max()
+    if price_max is None or price_max <= 0:
+        price_max = 1.0
+    price_norm = cash_price / price_max
+    is_early = (time_slot == 0).astype(float)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        miles_fit = np.where(is_miles == 1,
+                             np.clip((miles_bal - miles_req) / np.maximum(miles_req, 1),
+                                     -1.0, 1.0), 0.0)
+
+    aff_cat = aff[np.arange(len(user_ids)), cat]
+    logit = (CTR_BASE + aff_cat + QUALITY_W * quality + _CAT_BIAS[cat]
+             + GAMMA_PRICE * (price_sens * (1.0 - price_norm))
+             + GAMMA_BIZ_MORNING * (is_biz * is_early)
+             + GAMMA_MILES * miles_fit)
+    return _sigmoid(logit)
 
 
 def build_dataset(force=False):
