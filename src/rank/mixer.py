@@ -28,6 +28,10 @@ class Mixer:
 
     def mix(self, item_ids, base_scores, ctr_scores, categories) -> list:
         """返回重排后的 item_id 列表（已加权、打散、去重、截断）。"""
+        return self.mix_trace(item_ids, base_scores, ctr_scores, categories)["final_ids"]
+
+    def mix_trace(self, item_ids, base_scores, ctr_scores, categories) -> dict:
+        """返回重排结果 + 各步骤中间状态（供可视化 / 可解释面板）。"""
         item_ids = list(item_ids)
         categories = list(categories)
 
@@ -52,7 +56,15 @@ class Mixer:
                 result.append(iid)
             if len(result) >= self.top_k:
                 break
-        return result
+
+        return {
+            "base_norm": np.round(base_norm, 4).tolist(),
+            "ctr_norm": np.round(ctr_norm, 4).tolist(),
+            "combined": np.round(combined, 4).tolist(),
+            "sorted_ids": [iid for iid, _, _ in records],
+            "scattered_ids": ordered,
+            "final_ids": result,
+        }
 
     def _scatter(self, records) -> list:
         """贪心打散：连续同类目不超过 max_same_category，超出的延后到队尾。"""

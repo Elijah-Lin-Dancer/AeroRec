@@ -44,8 +44,9 @@ GAMMA_MILES = 0.5          # g3
 CAT_BIAS_STD = 0.3
 
 # ---- CVR 生成（点击后转化）----
-# cvr = sigmoid( beta0 + beta1*miles_fit + beta2*(1-price_norm) + noise )
+# cvr = sigmoid( beta0 + beta_q*quality + beta1*miles_fit + beta2*(1-price_norm) + noise )
 BETA0 = -2.5               # 压低基准转化率到 ~10%
+BETA_QUALITY = 0.4         # 高质量物品转化率也更高（与 CTR 的 quality 项对齐）
 BETA_MILES = 0.5
 BETA_PRICE = 0.6
 CVR_NOISE_STD = 0.3

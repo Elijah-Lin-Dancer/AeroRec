@@ -20,7 +20,7 @@ from src.config import (
     SEED, N_USERS, N_ITEMS, ITEMS_PER_CAT, IMPRESSIONS_PER_USER,
     MAX_TRIPS_PER_USER, CATEGORIES, CITIES, TIME_SLOTS, HOUR_SLOTS,
     CTR_BASE, QUALITY_W, GAMMA_PRICE, GAMMA_BIZ_MORNING, GAMMA_MILES, CAT_BIAS_STD,
-    BETA0, BETA_MILES, BETA_PRICE, CVR_NOISE_STD,
+    BETA0, BETA_QUALITY, BETA_MILES, BETA_PRICE, CVR_NOISE_STD,
     ITEMS_PATH, USERS_PATH, TRIPS_PATH, LOGS_PATH, PROC_DIR,
 )
 
@@ -171,7 +171,8 @@ def generate_logs(rng, users, items, impressions_per_user=IMPRESSIONS_PER_USER):
     clicked = (rng.random(n) < true_ctr).astype(int)
 
     # 转化：仅点击后可转化
-    cvr_logit = (BETA0 + BETA_MILES * miles_fit
+    cvr_logit = (BETA0 + BETA_QUALITY * quality
+                 + BETA_MILES * miles_fit
                  + BETA_PRICE * (1.0 - price_norm)
                  + rng.normal(0.0, CVR_NOISE_STD, size=n))
     cvr = _sigmoid(cvr_logit)
@@ -191,12 +192,8 @@ def generate_logs(rng, users, items, impressions_per_user=IMPRESSIONS_PER_USER):
     return logs
 
 
-def compute_true_ctr(users, items, user_ids, item_ids):
-    """对任意 (用户, 物品) 对计算潜在真实 CTR（与生成日志同一公式、同一 cat_bias）。
-
-    供离线评估使用：可用它度量"推荐列表的真实点击概率"，从而对比不同排序策略的效果。
-    user_ids / item_ids 为等长数组，元素即 user_id / item_id（等于行索引）。
-    """
+def _pair_features(users, items, user_ids, item_ids):
+    """提取 (用户, 物品) 对的原始/派生特征，供 true_ctr / true_cvr 共用。"""
     user_ids = np.asarray(user_ids)
     item_ids = np.asarray(item_ids)
     u = users.iloc[user_ids].reset_index(drop=True)
@@ -222,12 +219,31 @@ def compute_true_ctr(users, items, user_ids, item_ids):
         miles_fit = np.where(is_miles == 1,
                              np.clip((miles_bal - miles_req) / np.maximum(miles_req, 1),
                                      -1.0, 1.0), 0.0)
-
     aff_cat = aff[np.arange(len(user_ids)), cat]
+    return aff_cat, quality, cat, price_sens, price_norm, is_biz, is_early, miles_fit
+
+
+def compute_true_ctr(users, items, user_ids, item_ids):
+    """对任意 (用户, 物品) 对计算潜在真实 CTR（与生成日志同一公式、同一 cat_bias）。
+
+    供离线评估使用：可用它度量"推荐列表的真实点击概率"，从而对比不同排序策略的效果。
+    user_ids / item_ids 为等长数组，元素即 user_id / item_id（等于行索引）。
+    """
+    aff_cat, quality, cat, price_sens, price_norm, is_biz, is_early, miles_fit = \
+        _pair_features(users, items, user_ids, item_ids)
     logit = (CTR_BASE + aff_cat + QUALITY_W * quality + _CAT_BIAS[cat]
              + GAMMA_PRICE * (price_sens * (1.0 - price_norm))
              + GAMMA_BIZ_MORNING * (is_biz * is_early)
              + GAMMA_MILES * miles_fit)
+    return _sigmoid(logit)
+
+
+def compute_true_cvr(users, items, user_ids, item_ids):
+    """对任意 (用户, 物品) 对计算潜在真实 CVR（点击后转化率，去掉噪声的期望值）。"""
+    _, quality, _, _, price_norm, _, _, miles_fit = \
+        _pair_features(users, items, user_ids, item_ids)
+    logit = (BETA0 + BETA_QUALITY * quality + BETA_MILES * miles_fit
+             + BETA_PRICE * (1.0 - price_norm))
     return _sigmoid(logit)
 
 
