@@ -29,8 +29,9 @@
 - [x] DeepFM 排序模型（PyTorch，FM + DNN）
 - [x] 降级兜底：CTR 服务超时 → 历史平均 CTR 兜底
 - [x] 离线评估：LR vs DeepFM 的 AUC 对比 + 推荐列表真实 CTR 对比
-- [ ] 服务化 API（FastAPI）与可解释面板（W4）
-- [ ] 模拟 A/B 报告（W4）
+- [x] 服务化 API（FastAPI：推荐 / 排序流程 / A/B）
+- [x] 可解释面板（Streamlit：推荐演示 / 排序流程 / A/B 报告）
+- [x] 模拟 A/B 报告（多目标 CTR+CVR，点击率 / 转化率双提升）
 - [ ] 架构图 / 复现文档 / demo 视频（W5–W6）
 
 ## 系统架构
@@ -53,6 +54,8 @@ Web/Dashboard ──HTTP/JSON──▶ Serving(FastAPI)
 pip install -r requirements.txt
 python -m src.pipeline_demo        # 数据 + 四路召回 + 融合 + 样例推荐
 python -m src.eval.evaluate        # LR vs DeepFM AUC + 排序层真实 CTR 对比
+streamlit run app.py               # 交互式 Demo（推荐 / 排序流程 / A/B 报告）
+uvicorn src.serve.app:app --port 8000  # FastAPI 服务（推荐 / 排序流程 / A/B）
 python -m pytest tests/ -q         # 冒烟测试
 ```
 
@@ -75,13 +78,22 @@ python -m pytest tests/ -q         # 冒烟测试
 
 ## 离线评估结果（受控合成实验）
 
-| 指标 | 基线 | DeepFM / 排序层 | 提升 |
-|---|---|---|---|
-| CTR 模型 AUC（测试集 6 万） | Logistic Regression 0.742 | **DeepFM 0.798** | +5.6pp |
-| 推荐列表真实 CTR（Top10 均值） | 热门 0.205 / 随机 0.155 | **DeepFM+混排 0.583** | 相对热门 **+184%** |
+**CTR 模型 AUC**（测试集 6 万样本）：
 
-> 合成数据含隐式非线性交叉（价格敏感×低价、商务×早班机、里程契合），DeepFM 的 FM/DNN 结构
-> 能自动学到这些交叉，故 AUC 与真实 CTR 均显著优于线性基线——此为受控实验结论，非真实线上指标。
+| 模型 | AUC |
+|---|---|
+| Logistic Regression | 0.742 |
+| **DeepFM** | **0.798**（+5.6pp） |
+
+**模拟在线 A/B**（对照=历史点击率热门，实验=DeepFM+多目标混排，1000 用户）：
+
+| 指标 | 对照组 | 实验组 | 提升 |
+|---|---|---|---|
+| 点击率 CTR | 0.519 | **0.618** | **+18.9%**（p<0.001） |
+| 转化率（转化/曝光） | 0.191 | **0.227** | **+18.8%**（p<0.001） |
+
+> 合成数据含隐式非线性交叉（价格敏感×低价、商务×早班机、里程契合），DeepFM 的 FM/DNN
+> 能自动学出这些交叉；A/B 为**离线模拟**（用潜在真实 CTR/CVR 模拟用户反馈），非真实线上指标。
 
 ## 目录结构
 
@@ -100,9 +112,13 @@ src/
   rank/degrade.py             降级兜底
   eval/metrics.py             离线指标
   eval/evaluate.py            LR vs DeepFM AUC + 真实 CTR 对比
-  serve/                       (W4) FastAPI + 面板
+  eval/ab.py                 模拟 A/B（CTR/CVR 提升 + 显著性）
+  serve/engine.py            推荐引擎（召回 + 多目标排序 + 混排）
+  serve/app.py               FastAPI 服务
+  app.py                     Streamlit 交互 Demo（根目录）
 tests/test_data.py         数据 / 特征 / 召回 冒烟测试
 tests/test_rank.py         排序层 / 混排 / 降级 冒烟测试
+tests/test_ab.py           模拟 A/B 冒烟测试
 ```
 
 ## 诚实边界
@@ -116,8 +132,8 @@ tests/test_rank.py         排序层 / 混排 / 降级 冒烟测试
 
 - [x] W2：Two-Tower 召回 + 规则召回 + 召回融合
 - [x] W3：DeepFM 排序 + 5 步混排流程 + 降级策略 + 离线评估（AUC / 真实 CTR）
-- [ ] W4：FastAPI 服务化 + 可解释面板 + 模拟 A/B 报告
-- [ ] W5–W6：README 完善（架构图 / 复现 / 量化结果 / demo 视频）+ 在线 Demo（GitHub Pages + Streamlit Cloud）
+- [x] W4：FastAPI 服务化 + 可解释面板（Streamlit）+ 模拟 A/B 报告
+- [ ] W5–W6：README 完善（架构图 / 复现 / 量化结果 / demo 视频）+ 在线 Demo（GitHub Pages + Streamlit Cloud 部署）
 
 ---
 
