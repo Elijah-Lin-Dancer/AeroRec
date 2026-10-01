@@ -1,0 +1,7 @@
+# AeroRec Space 运行依赖（轻量档 Demo）
+# 说明：Hugging Face Spaces 的 Streamlit SDK 只负责启动 `streamlit run app.py`，
+#       不需要 fastapi / uvicorn（那是仓库里 `src/serve/app.py` REST 服务用的）。
+numpy>=1.24
+scikit-learn>=1.3
+torch>=2.0
+streamlit>=1.30
