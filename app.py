@@ -9,8 +9,14 @@
   full         ：10 万用户 × 10 万物品 × 500 万曝光，需较大内存与较长加载时间，
                   用于本地完整复现。
 
-在线实例默认 lite，并在页面上**明确标注规模与 A/B 口径差异**，
-避免读者把 Demo 的交互数值误当成论文级结论。
+评估口径（重要）
+----------------
+本 Demo 有两个评估页面，口径可信度不同：
+
+  ① 「真实 CTR 对比」—— 直接用已知的潜在真实 CTR 计算各方法 Top-K 的平均点击率，
+     并给出逐用户候选池 Oracle 上界。**不受平滑偏差影响，结论可引用。**
+  ② 「模拟 A/B」    —— 接近工业 A/B 的形式（曝光/点击/显著性检验），
+     但对照的热门基线按「平滑历史 CTR」排序，存在稀疏性偏差，**增益被高估，仅供参考**。
 """
 import os
 
@@ -34,17 +40,17 @@ def get_engine():
 engine, mode = get_engine()
 
 st.title("AeroRec · 出行智能推荐中台")
-st.caption("召回 → DeepFM CTR 排序 → 5 步混排 → 降级兜底 → 模拟 A/B（合成数据演示）")
+st.caption("召回 → DeepFM CTR 排序 → 5 步混排 → 降级兜底 → 真实 CTR 评估（合成数据演示）")
 
 if mode == "lite":
     st.warning(
         "**本实例为轻量档**：2 万用户 × 2 万物品 × 100 万曝光（完整档为 10 万 × 10 万 × 500 万），"
-        "仅用于交互体验。因数据更稀疏，**此处 A/B 数值不可引用**；"
-        "量化结论请以完整档离线复现为准（见 GitHub 仓库 README 与展示页）。",
+        "仅用于交互体验。因数据更稀疏，**本页数值不可作为论文级结论**；"
+        "可引用结论请以完整档离线复现为准（见 GitHub 仓库 README 与展示页）。",
         icon="⚠️",
     )
 
-page = st.sidebar.radio("导航", ["推荐演示", "排序流程", "A/B 报告"])
+page = st.sidebar.radio("导航", ["推荐演示", "排序流程", "真实 CTR 对比", "模拟 A/B"])
 st.sidebar.caption(f"当前模式：**{mode}**")
 n_users_max = 19_999 if mode == "lite" else 99_999
 
@@ -74,7 +80,11 @@ elif page == "排序流程":
     user_id = st.number_input("用户 ID", 0, n_users_max, 0, 1)
     if st.button("展示流程", type="primary"):
         tr = engine.explain_steps(int(user_id), show=15)
-        st.subheader("① 归一化 ② 多目标加权（0.4×基础分 + 0.6×(0.7×CTR + 0.3×CVR)）")
+        st.subheader("① 归一化 ② 多目标加权（w_base·基础分 + w_ctr·(0.7×CTR + 0.3×CVR)，默认 w_base=0）")
+        st.caption(
+            "默认 `w_base=0`：候选池已由热门+规则召回构成，热度信息已体现在候选集里，"
+            "混排阶段不再二次注入热门偏差（见 `src/rank/mixer.py` 实测说明）。"
+        )
         st.dataframe(pd.DataFrame({
             "物品": tr["names"],
             "类目": tr["categories"],
@@ -87,15 +97,68 @@ elif page == "排序流程":
         st.write("  →  ".join(tr["names"][:15]))
 
 # --------------------------------------------------------------------------
-elif page == "A/B 报告":
+elif page == "真实 CTR 对比":
+    st.header("真实 CTR 口径对比（可引用）")
+    st.caption(
+        "直接用已知的潜在真实 CTR，计算每个方法 Top-K 列表的平均点击率。"
+        "不依赖任何「平滑历史 CTR」估计，因此**不受稀疏性偏差影响**。"
+        "Oracle 上界 = 逐用户候选池（热门∪规则∪随机）内按真实 CTR 取 Top-K。"
+    )
+    n_eval = st.slider("样本用户数", 20, 200, 100, 20)
+    top_k_eval = st.slider("Top K", 5, 20, 10, 1, key="ctr_topk")
+    if st.button("运行真实 CTR 对比", type="primary"):
+        with st.spinner("评估中 ..."):
+            r = engine.benchmark_rankers(n_users=n_eval, top_k=top_k_eval)
+        pm = r["per_method"]
+        base = r["base_method"]
+
+        rows = []
+        for name in ["随机", base, "DeepFM+混排", "Oracle"]:
+            if name not in pm:
+                continue
+            d = pm[name]
+            rows.append({
+                "方法": name,
+                "平均真实CTR": round(d["true_ctr"], 4),
+                f"相对{base}": ("—" if name == base
+                              else f"{d['rel_to_base']:+.1%}"),
+                "占 Oracle 上界": f"{d['pct_of_oracle']:.1%}",
+            })
+        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+
+        c1, c2, c3 = st.columns(3)
+        dfm = pm.get("DeepFM+混排", {})
+        c1.metric("DeepFM 相对热门", f"{dfm.get('rel_to_base', 0):+.1%}")
+        c2.metric("DeepFM 占上界", f"{dfm.get('pct_of_oracle', 0):.1%}")
+        c3.metric("Oracle 上界真实CTR", f"{pm.get('Oracle', {}).get('true_ctr', 0):.4f}")
+
+        chart = pd.DataFrame({
+            "方法": [n for n in ["随机", base, "DeepFM+混排", "Oracle"] if n in pm],
+            "真实CTR": [pm[n]["true_ctr"] for n in ["随机", base, "DeepFM+混排", "Oracle"]
+                       if n in pm],
+        }).set_index("方法")
+        st.bar_chart(chart)
+
+        st.info(
+            f"**这是本 Demo 中最可信的一组数字。** 样本 {r['n_users']} 用户、Top-{r['top_k']}；"
+            f"DeepFM+混排 相对 {base} 基线提升 **{dfm.get('rel_to_base', 0):+.1%}**，"
+            f"达到理论上界的 **{dfm.get('pct_of_oracle', 0):.1%}**。"
+        )
+
+# --------------------------------------------------------------------------
+elif page == "模拟 A/B":
     st.header("模拟 A/B 报告")
     st.caption("对照组 = 热门排序；实验组 = DeepFM+混排。各自独立曝光并观测点击/转化（离线模拟）")
+    st.warning(
+        "**本页口径受限，数值仅供参考。** 对照的热门基线按「历史日志平滑 CTR」排序，"
+        "而日志为随机曝光——曝光少的物品偶然被点击就会推高平滑 CTR，形成稀疏性偏差，"
+        "使实验组增益被**高估**。请以「真实 CTR 对比」页的结论为准。",
+        icon="⚠️",
+    )
     if mode == "lite":
         st.error(
-            "**轻量档的 A/B 数值不可引用。** 热门基线用「历史日志平滑 CTR」排序，"
-            "而日志为随机曝光——曝光次数少的物品偶然被点击就会推高平滑 CTR，"
-            "形成稀疏性偏差（完整档实测该偏差约 +0.37）。轻量档物品更少、更稀疏，"
-            "该偏差被放大，甚至出现负提升。请以完整档离线复现结论为准。",
+            "**轻量档的 A/B 数值尤其不可引用。** 轻量档物品更少、更稀疏，"
+            "该偏差被进一步放大，甚至可能出现负提升。",
             icon="🚫",
         )
     n_users = st.slider("模拟用户数", 200, 2000, 800, 100)
@@ -126,8 +189,10 @@ elif page == "A/B 报告":
                 "**位置偏差 / 数据稀疏偏差**问题。\n\n"
                 "**完整档实测**：热门榜 top200 的平滑 CTR = 0.6231，而其真实 CTR 仅 0.2528，"
                 "偏差 **+0.37**；平滑榜 top10 与真实 CTR top10 仅 **2/10** 重合。\n\n"
-                "**这意味着**：用「热门基线」作为对照，会**高估**推荐系统的相对收益。"
-                "严谨的做法是同时报告一条**上界基线**（按真实 CTR 排序的 Oracle），"
-                "给出「本方法逼近上界多少」的信息。本项目正在补齐这一项。\n\n"
-                "**结论**：请勿引用轻量档或未加偏差说明的 A/B 数值。"
+                "**这意味着**：用「热门基线」作为对照，会**高估**推荐系统的相对收益。\n\n"
+                "**已采取的修正**：本项目新增「**真实 CTR 对比**」页面，"
+                "直接用已知的潜在真实 CTR 计算各方法 Top-K 的平均点击率，"
+                "并给出逐用户候选池的 **Oracle 上界**（池 = 热门 ∪ 规则 ∪ 随机，"
+                "保证严格 ≥ 所有方法）。该口径不依赖任何平滑估计，**结论可引用**。\n\n"
+                "**结论**：本页数字请勿引用；请以「真实 CTR 对比」页为准。"
             )
