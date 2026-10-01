@@ -48,7 +48,8 @@ class RecommendationEngine:
         self.cvr_model = LogisticRegression(max_iter=1000).fit(
             np.hstack([d2, self.cvr_enc.fit_transform(s2)]), yconv)
 
-        self.mixer = Mixer(w_base=0.4, w_ctr=0.6, max_same_category=2, top_k=top_k)
+        # w_base=0.0：候选池已含热度信息，混排阶段不再二次注入热门偏差（见 mixer 文档）
+        self.mixer = Mixer(w_base=0.0, w_ctr=1.0, max_same_category=2, top_k=top_k)
         self.deg = DegradeRanker(self.dfm.predict_ctr, compute_recent_ctr(self.logs))
 
         self.pop_map = self.items.set_index("item_id")["popularity"].to_dict()
