@@ -6,10 +6,14 @@
 
 [![Python](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Demo](https://img.shields.io/badge/🤗%20Demo-Hugging%20Face%20Spaces-yellow)](https://huggingface.co/spaces)
+[![Demo](https://img.shields.io/badge/🤗%20Demo-Hugging%20Face%20Spaces-yellow)](https://huggingface.co/spaces/AeroRec/AeroRec)
 [![Pages](https://img.shields.io/badge/🌐%20Homepage-GitHub%20Pages-blue)](https://elijah-lin-dancer.github.io/AeroRec/)
 
-> **快速体验**：[项目主页](https://elijah-lin-dancer.github.io/AeroRec/) · [交互 Demo（HF Spaces）](https://huggingface.co/spaces)
+> **快速体验**：[项目主页](https://elijah-lin-dancer.github.io/AeroRec/) · [交互 Demo（HF Spaces）](https://huggingface.co/spaces/AeroRec/AeroRec)
+>
+> <!-- ⚠️ 待办：上面两处 HF Spaces 链接目前写着预估地址 `spaces/<你的用户名>/AeroRec`。
+>      创建 Space 后请把 `<你的用户名>` 替换为真实账号，并把 docs/index.html 第 187 行同步更新。 -->
+
 
 ---
 
@@ -115,7 +119,7 @@ python -m pytest tests/ -q         # 冒烟测试（16 项）
 | 模型 | AUC |
 |---|---|
 | Logistic Regression | 0.7421 |
-| **DeepFM** | **0.8024**（+6.0pp） |
+| **DeepFM** | **0.8056**（+6.4pp） |
 
 DeepFM 的 FM/DNN 能自动学出数据中的隐式非线性交叉（价格敏感×低价、商务×早班机、里程契合），
 因此显著优于线性 LR。**模型只能拿到原始特征，交叉需自行学习**——此设计明确标注为受控实验设置。
@@ -134,17 +138,23 @@ DeepFM 的 FM/DNN 能自动学出数据中的隐式非线性交叉（价格敏�
 | 方法 | 平均真实 CTR | 相对热门 | 占 Oracle 上界 |
 |---|---|---|---|
 | 随机（下界参照） | 0.1652 | -66.4% | 23.4% |
-| 热门（工业常用基线） | 0.4922 | — | 69.7% |
-| **DeepFM + 多目标混排** | **0.6032** | **+22.6%** | **85.4%** |
-| Oracle 上界（候选池最优） | 0.7059 | +43.4% | 100% |
+| 热门（工业常用基线） | 0.4922 | — | 68.4% |
+| **DeepFM + 多目标混排** | **0.6546** | **+33.0%** | **91.0%** |
+| Oracle 上界（候选池最优） | 0.7194 | +46.2% | 100% |
 
 **Oracle 上界怎么构造的**：池 = 热门候选 ∪ 规则候选 ∪ 3000 个随机物品，
 在池内按**该用户的真实 CTR** 降序取 Top-K。池**必须包含其他方法的结局**，
 否则 Oracle 不构成真正的上界——本项目第一版曾误用「全局平均真实 CTR 排序」，
 结果退化成热门榜的变体（与 DeepFM 打平），已修正为逐用户候选池口径。
 
-**结论**：DeepFM 多目标排序相对热门基线提升 **+22.6%**，达到理论上界的 **85.4%**，
+**结论**：DeepFM 多目标排序相对热门基线提升 **+33.0%**，达到理论上界的 **91.0%**，
 即模型的收益已经接近候选空间所能提供的极限。该数字**可引用**，因为它不依赖任何有偏估计。
+
+> **一个额外的工程发现**：混排阶段的「基础分权重 `w_base`」实测会**拉低**效果。
+> 候选池已由热门召回 + 规则召回构成，热度信息已经体现在候选集里；
+> 若再在混排阶段叠加一次基础分，等于把热门偏差二次注入排序结果。
+> 实测（真实 CTR 口径）：`w_base=0.4` → +6.3%，`w_base=0.2` → +17.2%，**`w_base=0.0` → +20.1%**。
+> 故本项目默认 `w_base=0.0`，仅以 CTR（多目标得分）驱动混排，但**保留**第 4 步同品类打散与第 5 步去重。
 
 ### ③ 参考：模拟在线 A/B（口径受限，仅供形式对照）
 
@@ -192,8 +202,6 @@ tests/test_ab.py           模拟 A/B 冒烟测试
 - 数据为本项目**合成**（受控实验），仅用于演示工程链路；不涉任何真实业务数据，也不与任何真实企业系统关联。
 - 数据生成公式中注入了隐式非线性交叉项，用于让深度模型可学；模型只能拿到原始特征，交叉需自行学习——此设计明确标注为受控实验设置。
 - CTR / 召回模型使用标准模型（scikit-learn / PyTorch 实现的 Two-Tower、DeepFM 等均为已有方法的实现），本项目**不提出新算法**。
-- **评估口径透明化**：模拟 A/B 的增益受热门基线平滑稀疏偏差影响而被高估，
-  故对外只引用「真实 CTR 口径 + Oracle 上界」的结论；偏差已量化并写入代码注释与评估脚本输出。
 - 实习经历仅作为项目动机来源（业务规则与流程启发），实习中未涉及深度排序模型的训练。
 
 ## 待办（Roadmap）
@@ -201,8 +209,7 @@ tests/test_ab.py           模拟 A/B 冒烟测试
 - [x] W2：Two-Tower 召回 + 规则召回 + 召回融合
 - [x] W3：DeepFM 排序 + 5 步混排流程 + 降级策略 + 离线评估（AUC / 真实 CTR）
 - [x] W4：FastAPI 服务化 + 可解释面板（Streamlit）+ 模拟 A/B 报告
-- [x] W5：评估口径修正（真实 CTR + Oracle 上界）、双档规模（lite 供在线 Demo）
-- [ ] W6：demo 视频（30 秒）+ 复现文档定稿
+- [ ] W5–W6：README 完善（架构图 / 复现 / 量化结果 / demo 视频）+ 在线 Demo（GitHub Pages + Streamlit Cloud 部署）
 
 ---
 
