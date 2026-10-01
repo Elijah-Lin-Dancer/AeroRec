@@ -46,7 +46,7 @@
   <header>
     <span class="badge">本科 AI 出国申请作品 · 工程型 · 交叉学科（AI + 出行/交通）</span>
     <h1>AeroRec · 出行智能推荐中台</h1>
-    <p class="subtitle">开源、可复现的出行场景智能推荐系统 —— 召回 → DeepFM 排序 → 5 步混排 → 降级 → 模拟 A/B</p>
+    <p class="subtitle">开源、可复现的出行场景智能推荐系统 —— 召回 → DeepFM 排序 → 5 步混排 → 降级 → 真实 CTR 评估</p>
   </header>
 
   <section>
@@ -62,40 +62,49 @@
           </marker>
         </defs>
 
+        <!-- 数据层 -->
         <rect x="150" y="16" width="460" height="64" rx="10" fill="#eef4ff" stroke="#2563eb"/>
         <text x="380" y="42" text-anchor="middle" font-size="16" font-weight="700" fill="#1d4ed8">数据层</text>
         <text x="380" y="64" text-anchor="middle" font-size="12" fill="#475569">合成数据生成器 · 10万用户×10万物品×500万曝光（含隐式交叉）</text>
 
+        <!-- 召回层 -->
         <rect x="150" y="132" width="460" height="64" rx="10" fill="#fff7ed" stroke="#ea580c"/>
         <text x="380" y="158" text-anchor="middle" font-size="16" font-weight="700" fill="#c2410c">召回层</text>
         <text x="380" y="180" text-anchor="middle" font-size="12" fill="#475569">热门 · ItemCF · Two-Tower · 规则 → 四路融合</text>
 
+        <!-- 排序层 -->
         <rect x="150" y="248" width="460" height="64" rx="10" fill="#fef2f2" stroke="#dc2626"/>
         <text x="380" y="274" text-anchor="middle" font-size="16" font-weight="700" fill="#b91c1c">排序层</text>
         <text x="380" y="296" text-anchor="middle" font-size="12" fill="#475569">DeepFM(CTR) + LR(CVR) 多目标打分</text>
 
+        <!-- 降级 -->
         <rect x="640" y="248" width="100" height="64" rx="10" fill="#fffbeb" stroke="#f59e0b" stroke-dasharray="5 3"/>
         <text x="690" y="274" text-anchor="middle" font-size="13" font-weight="700" fill="#b45309">降级兜底</text>
         <text x="690" y="294" text-anchor="middle" font-size="11" fill="#78716c">异常→历史CTR</text>
 
+        <!-- 混排层 -->
         <rect x="150" y="364" width="460" height="64" rx="10" fill="#f0fdf4" stroke="#16a34a"/>
         <text x="380" y="390" text-anchor="middle" font-size="16" font-weight="700" fill="#15803d">混排层</text>
         <text x="380" y="412" text-anchor="middle" font-size="12" fill="#475569">5 步：归一化 → 加权 → 分层 → 同品类打散 → 去重</text>
 
+        <!-- 服务层 -->
         <rect x="150" y="480" width="460" height="64" rx="10" fill="#faf5ff" stroke="#9333ea"/>
         <text x="380" y="506" text-anchor="middle" font-size="16" font-weight="700" fill="#7e22ce">服务层</text>
         <text x="380" y="528" text-anchor="middle" font-size="12" fill="#475569">FastAPI / Streamlit 可解释面板</text>
 
+        <!-- 输出 -->
         <rect x="150" y="596" width="460" height="64" rx="10" fill="#eef4ff" stroke="#2563eb"/>
         <text x="380" y="622" text-anchor="middle" font-size="16" font-weight="700" fill="#1d4ed8">输出</text>
         <text x="380" y="644" text-anchor="middle" font-size="12" fill="#475569">Top-K 推荐（可解释：为什么推这个）</text>
 
+        <!-- 主链路箭头 -->
         <line x1="380" y1="80" x2="380" y2="128" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
         <line x1="380" y1="196" x2="380" y2="244" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
         <line x1="380" y1="312" x2="380" y2="360" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
         <line x1="380" y1="428" x2="380" y2="476" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
         <line x1="380" y1="544" x2="380" y2="592" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrow)"/>
 
+        <!-- 降级虚线箭头 -->
         <line x1="640" y1="280" x2="614" y2="280" stroke="#f59e0b" stroke-width="2" stroke-dasharray="5 3" marker-end="url(#dash)"/>
       </svg>
     </div>
@@ -115,19 +124,41 @@
 
   <section>
     <h2>量化结果（受控合成实验）</h2>
-    <h3>CTR 模型 AUC（测试集 6 万样本）</h3>
+    <h3>① CTR 模型 AUC（测试集 6 万样本）</h3>
     <table>
       <tr><th>模型</th><th>AUC</th></tr>
-      <tr><td>Logistic Regression</td><td>0.742</td></tr>
-      <tr><td><b>DeepFM</b></td><td class="up">0.798（+5.6pp）</td></tr>
+      <tr><td>Logistic Regression</td><td>0.7421</td></tr>
+      <tr><td><b>DeepFM</b></td><td class="up">0.8024（+6.0pp）</td></tr>
     </table>
-    <h3>模拟在线 A/B（对照=历史点击率热门，实验=DeepFM+多目标混排，1000 用户）</h3>
+
+    <h3>② 可引用结论：真实 CTR 口径 + Oracle 上界</h3>
     <table>
-      <tr><th>指标</th><th>对照组</th><th>实验组</th><th>提升</th></tr>
+      <tr><th>方法</th><th>平均真实 CTR</th><th>相对热门</th><th>占 Oracle 上界</th></tr>
+      <tr><td>随机（下界参照）</td><td>0.1652</td><td>−66.4%</td><td>23.4%</td></tr>
+      <tr><td>热门（工业常用基线）</td><td>0.4922</td><td>—</td><td>69.7%</td></tr>
+      <tr><td><b>DeepFM + 多目标混排</b></td><td><b>0.6032</b></td><td class="up"><b>+22.6%</b></td><td class="up"><b>85.4%</b></td></tr>
+      <tr><td>Oracle 上界（候选池最优）</td><td>0.7059</td><td>+43.4%</td><td>100%</td></tr>
+    </table>
+    <p style="font-size:13.5px;color:#5f6672;margin-top:10px">
+      Oracle 池 = 热门候选 ∪ 规则候选 ∪ 3000 个随机物品，在池内按<b>该用户的真实 CTR</b> 降序取 Top-K。
+      池必须包含其他方法的结局，否则不构成真正的上界。
+    </p>
+
+    <h3>③ 参考：模拟在线 A/B（口径受限，仅供形式对照）</h3>
+    <table>
+      <tr><th>指标</th><th>对照组（热门）</th><th>实验组（DeepFM+混排）</th><th>提升</th></tr>
       <tr><td>点击率 CTR</td><td>0.519</td><td><b>0.618</b></td><td class="up">+18.9%（p&lt;0.001）</td></tr>
       <tr><td>转化率（转化/曝光）</td><td>0.191</td><td><b>0.227</b></td><td class="up">+18.8%（p&lt;0.001）</td></tr>
     </table>
-    <div class="note">数据为<b>合成</b>（受控实验），A/B 为<b>离线模拟</b>；DeepFM / Two-Tower 等均为已有方法的标准实现，本项目不提出新算法、不使用真实业务数据。</div>
+    <div class="note">
+      <b>评估口径透明化</b>：热门基线按「贝叶斯平滑 CTR（α=5）」排序，而日志是<b>随机曝光</b>生成的，
+      低曝光物品偶被点击就会推高平滑 CTR。完整档实测热门榜 top200 <b>平滑 CTR 0.6231</b> vs
+      <b>真实 CTR 0.2528</b>（偏差 +0.37），平滑榜 top10 与真实 top10 仅重合 2/10。
+      这会使模拟 A/B 中的热门基线被削弱、实验组增益被高估，故<b>结论请以 ② 的真实 CTR 口径为准</b>。
+    </div>
+    <div class="note" style="background:#eef4ff;border-left-color:#2563eb">
+      数据为<b>合成</b>（受控实验）；DeepFM / Two-Tower 等均为已有方法的标准实现，本项目不提出新算法、不使用真实业务数据。
+    </div>
   </section>
 
   <section>
@@ -147,12 +178,14 @@
     <h2>快速开始</h2>
     <pre>pip install -r requirements.txt
 python -m src.pipeline_demo      # 数据 + 四路召回 + 融合
-python -m src.eval.evaluate      # LR vs DeepFM AUC + 真实 CTR
-streamlit run app.py             # 交互式 Demo（推荐 / 排序流程 / A/B）</pre>
+python -m src.eval.evaluate      # LR vs DeepFM AUC + 真实 CTR + Oracle 上界
+streamlit run app.py             # 交互式 Demo（默认 lite 档，2GB 内存可跑）
+python -m pytest tests/ -q       # 冒烟测试（16 项）</pre>
   </section>
 
   <div class="cta">
-    <a class="btn" href="https://github.com/Elijah-Lin-Dancer/AeroRec" target="_blank">查看源码仓库 →</a>
+    <a class="btn" href="https://huggingface.co/spaces" target="_blank">在线交互 Demo →</a>
+    <a class="btn" style="background:#1a1d23;margin-left:10px" href="https://github.com/Elijah-Lin-Dancer/AeroRec" target="_blank">源码仓库 →</a>
   </div>
 
   <footer>AeroRec · 出行智能推荐中台 · 合成数据、可复现、诚实标注边界</footer>
