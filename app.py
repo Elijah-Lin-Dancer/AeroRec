@@ -2,12 +2,34 @@
 
 运行：streamlit run app.py
 
-两种模式（通过环境变量 AEROREC_MODE 切换）
+三种模式（通过环境变量 AEROREC_MODE 切换）
 ------------------------------------------
-  lite  （默认）：2 万用户 × 2 万物品 × 100 万曝光，峰值约 900MB，
-                  适配 2GB 内存的在线实例（如 Hugging Face Spaces）。
+  micro（默认）：1 万用户 × 1 万物品 × 50 万曝光，纯 numpy 推理、**不加载 torch**，
+                  实测峰值内存约 130MB，适配 1GB 内存的免费在线实例
+                  （Streamlit Community Cloud）。模型权重离线预训练后加载，
+                  故启动仅需约 1 秒。
+  lite         ：2 万用户 × 2 万物品 × 100 万曝光，内存约 930MB（在线训练），
+                  适配 2GB 内存的实例。
   full         ：10 万用户 × 10 万物品 × 500 万曝光，需较大内存与较长加载时间，
                   用于本地完整复现。
+
+为什么默认是 micro（工程取舍，值得说明）
+------------------------------------------
+在线免费托管的**内存上限**是硬约束，而实测框架的固有导入开销为：
+
+    裸 Python 9MB → +numpy 25MB → +sklearn 176MB → +torch 643MB → +streamlit 676MB
+
+torch 一项就固定花掉 643MB，**与数据规模无关**：把数据从 100 万曝光压到
+50 万曝光，峰值内存只从 847MB 降到 840MB。瓶颈是框架运行时，不是数据。
+
+因此本项目把训练与推理**解耦**：离线（本机）用 torch 训练 DeepFM / LR，
+把权重导出为 numpy（`python -m src.build_online_artifacts micro`），
+在线侧只加载权重、用纯 numpy 复现前向计算。
+
+    解耦前：峰值 840MB、启动 90s，紧贴 1GB 上限
+    解耦后：峰值 130MB、启动 ~1s，留出 8 倍余量
+
+数学等价性已在构建期逐样本校验（PyTorch vs numpy 最大偏差 1.19e-07）。
 
 评估口径（重要）
 ----------------
@@ -17,24 +39,30 @@
      并给出逐用户候选池 Oracle 上界。**不受平滑偏差影响，结论可引用。**
   ② 「模拟 A/B」    —— 接近工业 A/B 的形式（曝光/点击/显著性检验），
      但对照的热门基线按「平滑历史 CTR」排序，存在稀疏性偏差，**增益被高估，仅供参考**。
+
+注：以上两个页面的**可引用数值以完整档（full，10万×10万×500万）离线复现为准**；
+在线任何档位（micro/lite）的数值仅用于交互演示。
 """
 import os
 
 import pandas as pd
 import streamlit as st
 
-MODE = os.environ.get("AEROREC_MODE", "lite").lower()
+MODE = os.environ.get("AEROREC_MODE", "micro").lower()
 
 st.set_page_config(page_title="AeroRec 出行推荐中台", layout="wide")
 
 
-@st.cache_resource(show_spinner="首次加载需生成数据并训练模型（约 10 秒）...")
+@st.cache_resource(show_spinner="首次加载需生成数据并加载模型（约数秒）...")
 def get_engine():
     if MODE == "full":
         from src.serve.engine import RecommendationEngine
         return RecommendationEngine(), "full"
-    from src.serve.engine_lite import LiteRecommendationEngine
-    return LiteRecommendationEngine(), "lite"
+    if MODE == "lite":
+        from src.serve.engine_lite import LiteRecommendationEngine
+        return LiteRecommendationEngine(), "lite"
+    from src.serve.engine_micro import MicroRecommendationEngine
+    return MicroRecommendationEngine(), "micro"
 
 
 engine, mode = get_engine()
@@ -42,17 +70,29 @@ engine, mode = get_engine()
 st.title("AeroRec · 出行智能推荐中台")
 st.caption("召回 → DeepFM CTR 排序 → 5 步混排 → 降级兜底 → 真实 CTR 评估（合成数据演示）")
 
-if mode == "lite":
+_SCALE_INFO = {
+    "micro": ("极轻档", "1 万用户 × 1 万物品 × 50 万曝光", "约 130MB", "1GB 内存的免费实例"),
+    "lite":  ("轻量档", "2 万用户 × 2 万物品 × 100 万曝光", "约 930MB", "2GB 内存的实例"),
+}
+
+if mode in _SCALE_INFO:
+    _name, _scale, _mem, _tier = _SCALE_INFO[mode]
     st.warning(
-        "**本实例为轻量档**：2 万用户 × 2 万物品 × 100 万曝光（完整档为 10 万 × 10 万 × 500 万），"
-        "仅用于交互体验。因数据更稀疏，**本页数值不可作为论文级结论**；"
+        f"**本实例为{_name}**：{_scale}（完整档为 10 万 × 10 万 × 500 万），"
+        f"实测峰值内存 {_mem}，适配{_tier}，仅用于**交互体验**。"
+        "因数据规模远小于完整档，**本页数值不可作为论文级结论**；"
         "可引用结论请以完整档离线复现为准（见 GitHub 仓库 README 与展示页）。",
         icon="⚠️",
+    )
+    st.caption(
+        "ℹ️ 本实例的模型为**离线预训练 + numpy 推理**：训练阶段在本机完成，"
+        "权重导出为 numpy 数组后加载，在线侧不依赖 torch/sklearn —— "
+        "这是在「免费实例内存受限」条件下的工程取舍，详见仓库 `src/build_online_artifacts.py`。"
     )
 
 page = st.sidebar.radio("导航", ["推荐演示", "排序流程", "真实 CTR 对比", "模拟 A/B"])
 st.sidebar.caption(f"当前模式：**{mode}**")
-n_users_max = 19_999 if mode == "lite" else 99_999
+n_users_max = {"micro": 9_999, "lite": 19_999}.get(mode, 99_999)
 
 # --------------------------------------------------------------------------
 if page == "推荐演示":
