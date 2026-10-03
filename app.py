@@ -45,8 +45,13 @@ torch 一项就固定花掉 643MB，**与数据规模无关**：把数据从 100
 """
 import os
 
-import pandas as pd
 import streamlit as st
+
+# ⚠️ 这里**刻意不在模块顶层 `import pandas`**：
+# 在线 micro 档走纯 numpy 路径，pandas 的固有导入开销约 150MB，
+# 而免费实例内存上限仅 1GB（详见本文件顶部「工程取舍」说明）。
+# `st.dataframe` / `st.bar_chart` 均可直接吃 dict 与 list[dict]，无需 pandas。
+# 仅当需要 pandas 专有能力时，才在函数内部惰性导入。
 
 MODE = os.environ.get("AEROREC_MODE", "micro").lower()
 
@@ -106,7 +111,7 @@ if page == "推荐演示":
             st.warning("该用户无推荐结果")
         else:
             st.subheader(f"用户 {user_id} 的 Top{top_k} 推荐")
-            st.dataframe(pd.DataFrame(items), use_container_width=True)
+            st.dataframe(items, use_container_width=True)
             for it in items:
                 st.markdown(
                     f"**#{it['rank']}  {it['name']}** · {it['category']} · "
@@ -125,14 +130,14 @@ elif page == "排序流程":
             "默认 `w_base=0`：候选池已由热门+规则召回构成，热度信息已体现在候选集里，"
             "混排阶段不再二次注入热门偏差（见 `src/rank/mixer.py` 实测说明）。"
         )
-        st.dataframe(pd.DataFrame({
+        st.dataframe({
             "物品": tr["names"],
             "类目": tr["categories"],
             "基础分": tr["base"],
             "预估CTR": tr["ctr"],
             "预估CVR": tr["cvr"],
             "加权分": tr["combined"],
-        }), use_container_width=True)
+        }, use_container_width=True)
         st.subheader("③ 分层排序 → ④ 同品类打散 → ⑤ 去重截断")
         st.write("  →  ".join(tr["names"][:15]))
 
@@ -164,7 +169,7 @@ elif page == "真实 CTR 对比":
                               else f"{d['rel_to_base']:+.1%}"),
                 "占 Oracle 上界": f"{d['pct_of_oracle']:.1%}",
             })
-        st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
+        st.dataframe(rows, use_container_width=True, hide_index=True)
 
         c1, c2, c3 = st.columns(3)
         dfm = pm.get("DeepFM+混排", {})
@@ -172,12 +177,12 @@ elif page == "真实 CTR 对比":
         c2.metric("DeepFM 占上界", f"{dfm.get('pct_of_oracle', 0):.1%}")
         c3.metric("Oracle 上界真实CTR", f"{pm.get('Oracle', {}).get('true_ctr', 0):.4f}")
 
-        chart = pd.DataFrame({
+        chart = {
             "方法": [n for n in ["随机", base, "DeepFM+混排", "Oracle"] if n in pm],
             "真实CTR": [pm[n]["true_ctr"] for n in ["随机", base, "DeepFM+混排", "Oracle"]
                        if n in pm],
-        }).set_index("方法")
-        st.bar_chart(chart)
+        }
+        st.bar_chart(chart, x="方法", y="真实CTR")
 
         st.info(
             f"**这是本 Demo 中最可信的一组数字。** 样本 {r['n_users']} 用户、Top-{r['top_k']}；"
@@ -210,12 +215,12 @@ elif page == "模拟 A/B":
                   delta=f"{r['ctr_lift'] * 100:+.1f}% vs 对照")
         c2.metric("转化率（转化/曝光）", f"{r['trt_cvr'] * 100:.2f}%",
                   delta=f"{r['cvr_lift'] * 100:+.1f}% vs 对照")
-        chart = pd.DataFrame({
+        chart = {
             "指标": ["点击率 CTR", "转化率 CVR"],
             "对照组(热门)": [round(r["ctrl_ctr"], 4), round(r["ctrl_cvr"], 4)],
             "实验组(DeepFM+混排)": [round(r["trt_ctr"], 4), round(r["trt_cvr"], 4)],
-        }).set_index("指标")
-        st.bar_chart(chart)
+        }
+        st.bar_chart(chart, x="指标")
         st.caption(f"CTR 显著性 p={r['ctr_p']:.4f}，CVR 显著性 p={r['cvr_p']:.4f}"
                    f"；点击后转化率 对照 {r['ctrl_pcvr']:.2%} / 实验 {r['trt_pcvr']:.2%}"
                    "（合成数据，非真实线上指标）")

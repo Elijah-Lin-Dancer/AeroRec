@@ -298,19 +298,21 @@ class MicroRecommendationEngine:
     # ---------- 评估（复用完整档口径） ----------
 
     def run_ab(self, n_users: int = 1000, top_k=None) -> dict:
-        """模拟 A/B（⚠️ 口径受限：对照基线含平滑稀疏偏差，数字仅供参考）。"""
-        top_k = top_k or self.top_k
+        """模拟 A/B（对照 = 热门，实验 = DeepFM+混排）。
 
-        def ctrl(uid, k):
-            return [self.name_map[i] for i in self.pop.recall(k)], \
-                   [self.cat_map[i] for i in self.pop.recall(k)]
+        ⚠️ 口径受限：热门基线含「平滑 CTR 稀疏性偏差」，会**高估**实验组增益；
+        可引用结论请用 `benchmark_rankers`。
 
-        def expr(uid, k):
-            recs = self.recommend(uid, k)
-            return [r["name"] for r in recs], [r["category"] for r in recs]
-
-        return simulate_ab(self._ab_users, self._ab_items, self.logs,
-                           ctrl, expr, n_users=n_users, top_k=top_k)
+        注意：`simulate_ab` 的签名是
+            simulate_ab(users, items, control_ranker, treatment_ranker, n_users, top_k, seed)
+        `control_ranker` / `treatment_ranker` 必须是 `callable(uid, k) -> item_id 列表`。
+        为与完整档口径一致，这里直接复用 `popular_rank` / `recommend_items`（均返回 item_id 列表），
+        而不是包一层返回 name 的闭包——那会让 `compute_true_ctr` 拿到非法的 item_id。
+        """
+        return simulate_ab(self._ab_users, self._ab_items,
+                           control_ranker=self.popular_rank,
+                           treatment_ranker=self.recommend_items,
+                           n_users=int(n_users), top_k=top_k or self.top_k)
 
     def benchmark_rankers(self, n_users: int = 60, top_k=None, seed: int = 42) -> dict:
         """真实 CTR 口径对比 + 逐用户候选池 Oracle 上界（**可引用口径**）。"""
