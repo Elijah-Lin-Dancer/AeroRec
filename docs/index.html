@@ -179,12 +179,15 @@
     <pre>pip install -r requirements.txt
 python -m src.pipeline_demo      # 数据 + 四路召回 + 融合
 python -m src.eval.evaluate      # LR vs DeepFM AUC + 真实 CTR + Oracle 上界
-streamlit run app.py             # 交互式 Demo（默认 lite 档，2GB 内存可跑）
+python -m src.build_online_artifacts micro   # 离线导出 numpy 权重（约 2 分钟）
+streamlit run app.py             # 交互式 Demo（默认 micro 档，约 130MB 内存）
+AEROREC_MODE=lite streamlit run app.py       # 切到 lite 档（约 930MB）
 python -m pytest tests/ -q       # 冒烟测试（16 项）</pre>
   </section>
 
   <div class="cta">
-    <a class="btn" href="https://huggingface.co/spaces/AeroRec/AeroRec" target="_blank">在线交互 Demo →</a><!-- ⚠️ 创建 Space 后替换 <你的用户名> -->
+    <!-- ⚠️ 部署到 Streamlit Community Cloud 后，把下面的 href 换成真实 App URL -->
+    <a class="btn" href="https://aerorec.streamlit.app" target="_blank" title="占位链接：部署完成后会替换为真实地址">在线交互 Demo →</a>
     <a class="btn" style="background:#1a1d23;margin-left:10px" href="https://github.com/Elijah-Lin-Dancer/AeroRec" target="_blank">源码仓库 →</a>
   </div>
 
