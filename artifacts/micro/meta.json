@@ -1,0 +1,15 @@
+{
+  "mode": "micro",
+  "n_users": 10000,
+  "n_items": 10000,
+  "n_impressions": 500000,
+  "train_sample": 40000,
+  "seed": 42,
+  "n_dense": 9,
+  "sparse_card": [5, 5, 5, 24],
+  "embed_dim": 16,
+  "dnn_hidden": [64, 32],
+  "deepfm_epochs": 3,
+  "built_at": "2025-10-03 23:11:00",
+  "note": "由 src/build_online_artifacts.py 离线生成；在线侧以纯 numpy 加载，不依赖 torch/sklearn。"
+}

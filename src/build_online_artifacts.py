@@ -22,13 +22,13 @@ torch 一项就吃掉 643MB，与数据规模无关。因此在线侧**不能 im
 
 产物
 ----
-    artifacts/micro/deepfm_ctr.npz   DeepFM 权重（numpy，约 28KB）
-    artifacts/micro/cvr_lr.npz       LR(CVR) 系数 + OneHot 类别（约 1KB）
+    artifacts/micro/deepfm_ctr.npz   DeepFM 权重（numpy）
+    artifacts/micro/cvr_lr.npz       LR(CVR) 系数 + OneHot 类别
     artifacts/micro/meta.json        数据规模、种子、特征维度等元信息
 
 运行
 ----
-    python -m src.build_online_artifacts micro
+    python -m src.build_online_artifacts
 """
 from __future__ import annotations
 
@@ -45,6 +45,7 @@ def main(mode: str = "micro") -> None:
 
     t0 = time.time()
     import numpy.random as npr
+
     import importlib
 
     # 必须在设置 AEROREC_MODE 之后再导入配置解析器
@@ -70,7 +71,7 @@ def main(mode: str = "micro") -> None:
     print(f"[build] 数据生成完毕 {time.time() - t0:.1f}s")
 
     n = len(logs["clicked"])
-    # 训练样本量：取曝光量的 8%，上下界 40k / 200k
+    # 训练样本量：与在线侧保持同一规则（曝光量的 8%，上下界 40k/200k）
     train_sample = int(min(200_000, max(40_000, n * 0.08)))
     train_sample = min(train_sample, n)
     print(f"[build] train_sample={train_sample}（占全量 {train_sample / n:.1%}）")
@@ -109,6 +110,7 @@ def main(mode: str = "micro") -> None:
         out_dir / "cvr_lr.npz",
         coef=lr.coef_.astype(np.float32),
         intercept=lr.intercept_.astype(np.float32),
+        # OneHot 类别边界（长度 = len(SPARSE_CARD)+1，供 numpy 侧切分用）
         ohe_offsets=np.cumsum([0] + [len(range(c)) for c in SPARSE_CARD]).astype(np.int64),
         ohe_n_features=np.array([int(ohe.shape[1])]),
     )

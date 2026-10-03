@@ -1,0 +1,17 @@
+# AeroRec 在线 Demo 运行依赖（micro 档，Streamlit Community Cloud）
+#
+# 关键：本应用**不需要 torch / scikit-learn / pandas**。
+#
+# 原因：在线免费实例内存上限 1GB，而这些库的固有导入开销极大
+#   （torch 643MB、sklearn 176MB、pandas 约 150MB，均与数据规模无关）。
+# 本应用采用「离线预训练 + numpy 推理」：
+#   模型权重已由 `python -m src.build_online_artifacts micro` 预先导出到
+#   artifacts/micro/*.npz，在线侧只用 numpy 复现前向计算。
+#   实测峰值内存约 130MB（解耦前为 840MB）。
+#
+# 因此这里只保留真正需要的依赖，既省内存也大幅加快构建。
+numpy>=1.24
+streamlit>=1.30
+
+# 说明：如需切到 lite 档（在线训练，约 930MB），请改用仓库根目录的
+# requirements.txt（含 scikit-learn 与 torch）。
