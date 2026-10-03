@@ -74,7 +74,6 @@ def main():
     print("\n[eval] 真实 CTR 口径对比（含上界 Oracle）...")
     pop = PopularRecall(top_k=200).fit(logs)
     rule = RuleRecall().fit(logs=logs, items=items, users=users, trips=trips)
-    # w_base=0.0：候选池已含热度信息，混排阶段不再二次注入热门偏差（见 mixer 文档）
     mixer = Mixer(w_base=0.0, w_ctr=1.0, max_same_category=2, top_k=TOP_K)
     deg = DegradeRanker(dfm.predict_ctr, compute_recent_ctr(logs))
 

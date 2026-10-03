@@ -38,7 +38,7 @@ import numpy as np
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import OneHotEncoder
 
-from src.config_lite import SEED, N_USERS, N_ITEMS, TOP_K, CATEGORIES
+from src.config_scale import SEED, N_USERS, N_ITEMS, TOP_K, CATEGORIES, MODE as SCALE_MODE
 from src.data.synthetic_generator_lite import build_dataset_np
 from src.feature.lite_store import LiteFeatureStore, bincount_stats, SPARSE_CARD, N_DENSE
 from src.rank.trainer import DeepFMRanker
@@ -130,7 +130,7 @@ class _ArrayLookup:
 class LiteRecommendationEngine:
     """轻量档引擎。对外接口与 `RecommendationEngine` 完全一致，可直接替换。"""
 
-    def __init__(self, train_sample: int = 60_000, deepfm_epochs: int = 2,
+    def __init__(self, train_sample: int | None = None, deepfm_epochs: int = 2,
                  embed_dim: int = 16, dnn_hidden: tuple = (64, 32),
                  cvr_weight: float = 0.3, top_k: int = TOP_K,
                  n_users: int = N_USERS, n_items: int = N_ITEMS):
@@ -140,6 +140,17 @@ class LiteRecommendationEngine:
 
         # ---------- 数据：纯 numpy 即时生成（同公式、同种子） ----------
         self.items, self.users, self.trips, self.logs = build_dataset_np(SEED)
+
+        # ---------- 训练样本量：按数据规模自适应 ----------
+        # 为什么不能写死：DeepFM 训练是整条链路耗时/内存的绝对大头
+        # （micro 档实测：训练 118s / 峰值 812MB，而数据生成仅 0.8s / 192MB）。
+        # 若固定取 6 万样本，在 50 万曝光的 micro 档上等于用了 12% 全量数据，
+        # 既慢又费内存。改为「按曝光量的固定比例」取，使三档的
+        # 训练量/数据量比值一致，模型质量与数据规模的对应关系不被扭曲。
+        n_total = len(self.logs["clicked"])
+        if train_sample is None:
+            train_sample = min(12_000, max(4_000, int(n_total * 0.02)))
+        self.train_sample = train_sample
 
         # ---------- 特征库 ----------
         self.fs = LiteFeatureStore(self.items, self.users)
@@ -172,7 +183,8 @@ class LiteRecommendationEngine:
         gc.collect()
 
         # ---------- 排序层：LR(CVR) 多目标 ----------
-        clk = np.where(self.logs["clicked"] > 0)[0][:min(60_000, n)]
+        # 同样按规模自适应（点击样本本就比曝光少，这里取与 train_sample 同量级）
+        clk = np.where(self.logs["clicked"] > 0)[0][:min(train_sample, n)]
         d2 = self.fs.build_matrix(self.logs["user_id"][clk],
                                   self.logs["item_id"][clk],
                                   self.logs["is_weekend"][clk])

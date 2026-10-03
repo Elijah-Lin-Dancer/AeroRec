@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from src.config_lite import CATEGORIES, TIME_SLOTS, HOUR_SLOTS
+from src.config_scale import CATEGORIES, TIME_SLOTS, HOUR_SLOTS
 
 _CAT = list(CATEGORIES)
 
