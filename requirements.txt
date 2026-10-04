@@ -1,9 +1,25 @@
 # AeroRec — 推荐中台依赖
-numpy>=1.24
-pandas>=2.0
-scikit-learn>=1.3
-torch>=2.0
-fastapi>=0.100
-uvicorn>=0.23
-streamlit>=1.30
+#
+# 为什么这里写成「下限 + 主版本上限」而不是全锁定（==）？
+#   1. 这份仓库要同时跑在三种环境：本地开发、Streamlit Cloud、离线构建机。
+#      全锁 == 会让 Cloud 的镜像构建在某次依赖下线后直接失败。
+#   2. 但完全不设上限同样有代价：实测 numpy / scikit-learn 的**大版本跃迁**
+#      会改变浮点归约顺序，让 DeepFM 的 AUC 在第 4 位小数上漂移。
+#   因此采用「主版本上限」策略：允许补丁与小版本更新，挡住破坏性跃迁。
+#
+# 关于可复现性：
+#   指标的完全可复现**不依赖**于锁定依赖版本，而依赖于训练代码显式播种。
+#   见 src/rank/trainer.py —— 权重初始化被安排在种子设定之后。
+#   验证方式：在 numpy 2.3.5 / torch 2.10 与 numpy 2.4.6 / torch 2.14
+#   两套环境下执行 `python -m src.eval.evaluate`，输出逐字节一致。
+numpy>=1.24,<3
+pandas>=2.0,<4
+scikit-learn>=1.3,<2
+torch>=2.0,<3
+fastapi>=0.100,<1
+uvicorn>=0.23,<1
+streamlit>=1.30,<2
+
+# 测试依赖（README「快速开始」第 4 步用到；此前漏列，导致 pytest 报 ModuleNotFoundError）
+pytest>=7.0,<9
 # 后续可选: plotly, matplotlib, shap

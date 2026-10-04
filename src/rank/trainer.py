@@ -15,6 +15,12 @@ class DeepFMRanker:
                  device: str = "cpu"):
         self.dense_dim = dense_dim
         self.sparse_cards = sparse_cards
+        # 权重初始化必须发生在全局随机种子被设定之后。
+        # DeepFM.__init__ 内部会做 xavier_uniform_ / normal_(std=0.01)，
+        # 若此处不先播种，网络初值将取决于进程此前消耗掉的 RNG 状态，
+        # 导致同一份代码在不同依赖版本/不同调用顺序下产出不同的指标。
+        torch.manual_seed(SEED)
+        np.random.seed(SEED)
         self.model = DeepFM(dense_dim, sparse_cards, embed_dim, dnn_hidden).to(device)
         self.lr = lr
         self.epochs = epochs
@@ -22,6 +28,7 @@ class DeepFMRanker:
         self.device = device
 
     def fit(self, dense, sparse, y, val_dense=None, val_sparse=None, val_y=None):
+        # 训练阶段的随机性是显式的：打乱顺序（randperm）与 Dropout 掩码都依赖全局 RNG。
         torch.manual_seed(SEED)
         np.random.seed(SEED)
         dense_t = torch.tensor(dense)

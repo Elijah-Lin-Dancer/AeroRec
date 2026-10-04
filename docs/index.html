@@ -128,16 +128,16 @@
     <table>
       <tr><th>模型</th><th>AUC</th></tr>
       <tr><td>Logistic Regression</td><td>0.7421</td></tr>
-      <tr><td><b>DeepFM</b></td><td class="up">0.8056（+6.4pp）</td></tr>
+      <tr><td><b>DeepFM</b></td><td class="up">0.8019（+6.0pp）</td></tr>
     </table>
 
     <h3>② 可引用结论：真实 CTR 口径 + Oracle 上界</h3>
     <table>
       <tr><th>方法</th><th>平均真实 CTR</th><th>相对热门</th><th>占 Oracle 上界</th></tr>
-      <tr><td>随机（下界参照）</td><td>0.1652</td><td>−66.4%</td><td>23.4%</td></tr>
-      <tr><td>热门（工业常用基线）</td><td>0.4922</td><td>—</td><td>68.4%</td></tr>
-      <tr><td><b>DeepFM + 多目标混排</b></td><td><b>0.6546</b></td><td class="up"><b>+33.0%</b></td><td class="up"><b>91.0%</b></td></tr>
-      <tr><td>Oracle 上界（候选池最优）</td><td>0.7194</td><td>+46.2%</td><td>100%</td></tr>
+      <tr><td>随机（下界参照）</td><td>0.1652</td><td>−66.4%</td><td>23.1%</td></tr>
+      <tr><td>热门（工业常用基线）</td><td>0.4922</td><td>—</td><td>68.8%</td></tr>
+      <tr><td><b>DeepFM + 多目标混排</b></td><td><b>0.6323</b></td><td class="up"><b>+28.5%</b></td><td class="up"><b>88.4%</b></td></tr>
+      <tr><td>Oracle 上界（候选池最优）</td><td>0.7153</td><td>+45.3%</td><td>100%</td></tr>
     </table>
     <p style="font-size:13.5px;color:#5f6672;margin-top:10px">
       Oracle 池 = 热门候选 ∪ 规则候选 ∪ 3000 个随机物品，在池内按<b>该用户的真实 CTR</b> 降序取 Top-K。

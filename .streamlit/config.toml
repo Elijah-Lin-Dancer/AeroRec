@@ -1,0 +1,13 @@
+# Streamlit Cloud 运行时配置
+# 关键点：社区版 Cloud 的反向代理场景下，若不显式放开 CORS / XSRF，
+# 内嵌 iframe 或跨域访问会出现 WebSocket 握手被拒（页面一直 "Connecting..."）。
+[server]
+enableCORS = true
+enableXsrfProtection = true
+headless = true
+
+[browser]
+gatherUsageStats = false
+
+[theme]
+base = "light"
