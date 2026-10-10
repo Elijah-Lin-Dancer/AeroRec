@@ -41,7 +41,7 @@ from sklearn.preprocessing import OneHotEncoder
 from src.config_scale import SEED, N_USERS, N_ITEMS, TOP_K, CATEGORIES, MODE as SCALE_MODE
 from src.data.synthetic_generator_lite import build_dataset_np
 from src.feature.lite_store import LiteFeatureStore, bincount_stats, SPARSE_CARD, N_DENSE
-from src.rank.trainer import DeepFMRanker
+from src.rank.trainer import DeepFMRanker, plan_epochs, DEEFM_BATCH_SIZE
 from src.rank.mixer import Mixer
 from src.rank.degrade import DegradeRanker
 from src.eval.ab import simulate_ab
@@ -130,7 +130,8 @@ class _ArrayLookup:
 class LiteRecommendationEngine:
     """轻量档引擎。对外接口与 `RecommendationEngine` 完全一致，可直接替换。"""
 
-    def __init__(self, train_sample: int | None = None, deepfm_epochs: int = 2,
+    def __init__(self, train_sample: int | None = None, deepfm_epochs: int | None = None,
+                 deepfm_batch_size: int = DEEFM_BATCH_SIZE,
                  embed_dim: int = 16, dnn_hidden: tuple = (64, 32),
                  cvr_weight: float = 0.3, top_k: int = TOP_K,
                  n_users: int = N_USERS, n_items: int = N_ITEMS):
@@ -142,15 +143,25 @@ class LiteRecommendationEngine:
         self.items, self.users, self.trips, self.logs = build_dataset_np(SEED)
 
         # ---------- 训练样本量：按数据规模自适应 ----------
-        # 为什么不能写死：DeepFM 训练是整条链路耗时/内存的绝对大头
-        # （micro 档实测：训练 118s / 峰值 812MB，而数据生成仅 0.8s / 192MB）。
+        # 为什么不能写死：DeepFM 训练是整条链路耗时/内存的绝对大头。
         # 若固定取 6 万样本，在 50 万曝光的 micro 档上等于用了 12% 全量数据，
         # 既慢又费内存。改为「按曝光量的固定比例」取，使三档的
         # 训练量/数据量比值一致，模型质量与数据规模的对应关系不被扭曲。
+        #
+        # 注意：**样本量自适应 ≠ 训练量自适应**。样本量随规模缩小是对的，
+        # 但此前 epoch 写死为 2，导致轻量档只有 12 次梯度更新（AUC 0.51）。
+        # 现在 epoch 由目标更新次数反推（见下方），两者共同决定训练预算。
         n_total = len(self.logs["clicked"])
         if train_sample is None:
             train_sample = min(12_000, max(4_000, int(n_total * 0.02)))
         self.train_sample = train_sample
+
+        # 由目标更新次数反推 epoch（见 src/rank/trainer.py:plan_epochs 的实测依据）。
+        # 调用方显式传入 deepfm_epochs 时以调用方为准。
+        if deepfm_epochs is None:
+            deepfm_epochs = plan_epochs(train_sample, deepfm_batch_size)
+        self.deepfm_epochs = int(deepfm_epochs)
+        self.deepfm_batch_size = int(deepfm_batch_size)
 
         # ---------- 特征库 ----------
         self.fs = LiteFeatureStore(self.items, self.users)
@@ -177,8 +188,8 @@ class LiteRecommendationEngine:
                                       self.logs["hour_slot"][idx])
         y = self.logs["clicked"][idx].astype(np.int64)
         self.dfm = DeepFMRanker(N_DENSE, SPARSE_CARD, embed_dim=embed_dim,
-                                dnn_hidden=dnn_hidden, epochs=deepfm_epochs,
-                                batch_size=2048).fit(dense, sparse, y)
+                                dnn_hidden=dnn_hidden, epochs=self.deepfm_epochs,
+                                batch_size=self.deepfm_batch_size).fit(dense, sparse, y)
         del dense, sparse, y, idx
         gc.collect()
 

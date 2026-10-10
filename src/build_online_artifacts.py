@@ -54,7 +54,7 @@ def main(mode: str = "micro") -> None:
 
     from src.data.synthetic_generator_lite import build_dataset_np
     from src.feature.lite_store import LiteFeatureStore, SPARSE_CARD, N_DENSE
-    from src.rank.trainer import DeepFMRanker
+    from src.rank.trainer import DeepFMRanker, plan_epochs, DEEFM_BATCH_SIZE
     from src.rank.numpy_deepfm import export_from_ranker, save_npz
     from sklearn.linear_model import LogisticRegression
     from sklearn.preprocessing import OneHotEncoder
@@ -83,9 +83,15 @@ def main(mode: str = "micro") -> None:
     y = logs["clicked"][idx].astype(np.int64)
 
     # ---------- 2. 训练 DeepFM(CTR) ----------
+    # epoch 由目标更新次数反推，而非写死（见 src/rank/trainer.py:plan_epochs）。
+    # 写死 epoch 会让离线档欠训：原先 epochs=3 / batch=2048 仅 60 次梯度更新。
+    dfm_epochs = plan_epochs(len(y), DEEFM_BATCH_SIZE)
+    n_updates = ((len(y) + DEEFM_BATCH_SIZE - 1) // DEEFM_BATCH_SIZE) * dfm_epochs
+    print(f"[build] DeepFM 训练：{len(y)} 样本 × {dfm_epochs} epoch / batch "
+          f"{DEEFM_BATCH_SIZE} → {n_updates} 次梯度更新")
     t1 = time.time()
     dfm = DeepFMRanker(N_DENSE, SPARSE_CARD, embed_dim=16, dnn_hidden=(64, 32),
-                       epochs=3, batch_size=2048).fit(dense, sparse, y)
+                       epochs=dfm_epochs, batch_size=DEEFM_BATCH_SIZE).fit(dense, sparse, y)
     print(f"[build] DeepFM 训练完毕 {time.time() - t1:.1f}s")
 
     # ---------- 3. 导出 DeepFM -> numpy ----------
@@ -128,7 +134,9 @@ def main(mode: str = "micro") -> None:
         "sparse_card": [int(c) for c in SPARSE_CARD],
         "embed_dim": 16,
         "dnn_hidden": [64, 32],
-        "deepfm_epochs": 3,
+        "deepfm_epochs": int(dfm_epochs),
+        "deepfm_batch_size": int(DEEFM_BATCH_SIZE),
+        "deepfm_updates": int(n_updates),
         "built_at": time.strftime("%Y-%m-%d %H:%M:%S"),
         "note": "由 src/build_online_artifacts.py 离线生成；在线侧以纯 numpy 加载，不依赖 torch/sklearn。",
     }

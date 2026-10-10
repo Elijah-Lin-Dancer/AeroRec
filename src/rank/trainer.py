@@ -7,6 +7,37 @@ from sklearn.metrics import roc_auc_score
 from src.config import SEED
 from src.rank.deepfm import DeepFM
 
+# ---------------------------------------------------------------------------
+# DeepFM 训练预算：锚定「梯度更新次数」，而不是固定 epoch 数。
+#
+# 背景（实测教训）：模型能否收敛取决于**优化器步数**，而这个量级与数据规模无关。
+# 若只按 epoch 计数，数据量小的档位会被严重欠训 —— 轻量档曾用
+# train_sample=12,000 / epochs=2 / batch=2048，仅 12 次梯度更新，
+# 实测 test AUC = 0.5109（≈随机），推荐效果反而**劣于热门基线**。
+# 同一份数据的对照实验：
+#     12 次 → AUC 0.5109      60 次 → 0.6991
+#    120 次 → AUC 0.7422     480 次 → 0.8008（与完整档 0.8019 同级）
+#
+# 因此各档位统一「锚定目标更新次数 → 反推 epoch」；batch 取 512：
+# 同样样本量下更新次数是 2048 的 4 倍，且 batch 更小、峰值内存更低。
+# ---------------------------------------------------------------------------
+TARGET_UPDATES = 400
+DEEFM_BATCH_SIZE = 512
+
+
+def ceil_div(a: int, b: int) -> int:
+    return -(-int(a) // int(b))
+
+
+def plan_epochs(train_sample: int, batch_size: int = DEEFM_BATCH_SIZE,
+                target_updates: int = TARGET_UPDATES, min_epochs: int = 2) -> int:
+    """由目标梯度更新次数反推 epoch 数。
+
+    用法：`epochs = plan_epochs(len(y))`，保证训练量不随数据规模缩小而坍塌。
+    """
+    batches = max(1, ceil_div(train_sample, batch_size))
+    return max(int(min_epochs), ceil_div(target_updates, batches))
+
 
 class DeepFMRanker:
     def __init__(self, dense_dim: int, sparse_cards: list[int],

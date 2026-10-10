@@ -122,7 +122,7 @@
 ```bash
 pip install -r requirements.txt
 streamlit run app.py                     # 默认 micro 档（1万×1万×50万，约 130MB）
-AEROREC_MODE=lite  streamlit run app.py  # 轻量档（2万×2万×100万，约 930MB）
+AEROREC_MODE=lite  streamlit run app.py  # 轻量档（2万×2万×100万，约 960MB）
 AEROREC_MODE=full  streamlit run app.py  # 完整档（10万×10万×500万，需大内存）
 ```
 
