@@ -16,7 +16,9 @@
     64,
     32
   ],
-  "deepfm_epochs": 3,
-  "built_at": "2026-10-10 18:12:08",
+  "deepfm_epochs": 6,
+  "deepfm_batch_size": 512,
+  "deepfm_updates": 474,
+  "built_at": "2026-10-10 18:29:32",
   "note": "由 src/build_online_artifacts.py 离线生成；在线侧以纯 numpy 加载，不依赖 torch/sklearn。"
 }
