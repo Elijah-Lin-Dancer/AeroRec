@@ -1,21 +1,27 @@
-"""路径 B 验证脚本：用真实公开数据集验证同一个 DeepFM 能学到真实信号。
+"""真实数据验证脚本：用真实公开数据集验证同一个 DeepFM 能学到真实信号。
 
-支持两种真实基准（与 DeepFM 完全同构，模型零改动）：
-  - adult  （默认）UCI Adult / Census Income，已在本沙箱跑通（验证 AUC 0.9183）
-  - criteo Criteo Display Advertising Challenge，CTR 标准基准；需本机提供 train.txt
-    （本沙箱网络不可达，详见 README「路径 B / Criteo 接入」）
+为什么保留这个脚本
+------------------
+本项目的合成指标（AUC、真实 CTR 提升）都是在**自己的合成分布**上算的，
+一个合理的追问是「换个分布还成立吗」。这里用一份**真实、公开、可引用**的数据集
+（UCI Adult / Census Income）替换特征库，**模型与训练代码零改动**，
+检验同一份 DeepFM 实现能否在真实数据上学到信号。
+
+> 说明：这不是「在出行真实流量上验证过」。本脚本的定位是
+> **排除「模型实现本身有问题」这一可能**，而非证明合成指标可外推。
+> 见 README「已知局限」。
+
+UCI Adult 与 CTR 任务同构：
+  - 6 连续（dense）+ 8 类别（sparse）特征；
+  - 正类率约 24%，与 CTR 的类别不均衡量级接近；
+  - 任务 p(income>50K) 与 p(click) 完全同构。
 
 运行：
-    python scripts/validate_real_data_deepfm.py                      # 默认 adult
-    python scripts/validate_real_data_deepfm.py --dataset criteo \\
-        --criteo-path data/criteo/train.txt --criteo-rows 1000000
+    python scripts/validate_real_data.py
 
 产出：
     data/real_validation/result.json   实验元信息 + 指标（AUC / 基线对照 / 环境）
     stdout                             人类可读摘要
-
-注意：本脚本不改动任何合成链路代码；它只复用 src.rank.trainer.DeepFMRanker，
-传入真实 (dense, sparse, sparse_cards) 四元组。
 """
 from __future__ import annotations
 
@@ -28,7 +34,6 @@ import time
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import numpy as np  # noqa: E402
-import scipy.sparse as sp  # noqa: E402
 import torch  # noqa: E402
 import sklearn  # noqa: E402
 
@@ -46,34 +51,23 @@ from src.rank.trainer import (DEEFM_BATCH_SIZE, DeepFMRanker,  # noqa: E402
 
 
 def lr_baseline(dtr, str_, ytr, dva, sva, yva):
-    """线性对照基线：dense + 稀疏 one-hot 的 LogisticRegression（全程稀疏，避免稠密爆内存）。
-
-    Criteo 有 26 个稀疏字段、词表可达百万级，若用 toarray() 变稠密会直接 OOM；
-    这里保持 scipy 稀疏，LR 直接吃稀疏输入。
-    """
+    """线性对照基线：dense + 稀疏 one-hot 的 LogisticRegression。"""
     enc = OneHotEncoder(handle_unknown="ignore")
     ohe_tr = enc.fit_transform(str_)
     ohe_va = enc.transform(sva)
-    Xtr = sp.hstack([sp.csr_matrix(dtr), ohe_tr]).tocsr()
-    Xva = sp.hstack([sp.csr_matrix(dva), ohe_va]).tocsr()
-    clf = LogisticRegression(max_iter=150, solver="lbfgs").fit(Xtr, ytr)
+    Xtr = np.hstack([dtr, ohe_tr.toarray()])
+    Xva = np.hstack([dva, ohe_va.toarray()])
+    clf = LogisticRegression(max_iter=200, solver="lbfgs").fit(Xtr, ytr)
     return float(roc_auc_score(yva, clf.predict_proba(Xva)[:, 1]))
 
 
 def main():
-    ap = argparse.ArgumentParser(description="路径 B：真实数据验证 DeepFM 迁移性")
-    ap.add_argument("--dataset", choices=["adult", "criteo"], default="adult")
-    ap.add_argument("--criteo-path", default="data/criteo/train.txt")
-    ap.add_argument("--criteo-rows", type=int, default=1_000_000)
+    ap = argparse.ArgumentParser(description="真实数据验证 DeepFM 迁移性")
     args = ap.parse_args()
 
     t0 = time.time()
-    if args.dataset == "criteo":
-        from src.data.criteo import load_criteo  # noqa: E402
-        data = load_criteo(args.criteo_path, n_rows=args.criteo_rows)
-    else:
-        from src.data.adult import load_adult  # noqa: E402
-        data = load_adult()
+    from src.data.adult import load_adult  # noqa: E402
+    data = load_adult()
     meta = data["meta"]
     print(f"[validate] 数据集={meta['dataset']}  训练={meta['n_train']}  验证={meta['n_val']}  "
           f"正类率(val)={meta['positive_rate_val']}")
@@ -94,7 +88,7 @@ def main():
 
     auc_deepfm = float(roc_auc_score(data["y_val"], ranker.predict_ctr(data["dense_val"], data["sparse_val"])))
     auc_lr = lr_baseline(data["dense_train"], data["sparse_train"], data["y_train"],
-                        data["dense_val"], data["sparse_val"], data["y_val"])
+                         data["dense_val"], data["sparse_val"], data["y_val"])
     auc_naive = 0.5  # 常数预测
 
     result = {
@@ -116,10 +110,11 @@ def main():
         "elapsed_sec": round(time.time() - t0, 1),
     }
     out_path = os.path.join("data", "real_validation", "result.json")
+    os.makedirs(os.path.dirname(out_path), exist_ok=True)
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=2)
 
-    print("\n==================== 路径 B 验证结果 ====================")
+    print("\n==================== 真实数据验证结果 ====================")
     print(f"  数据集             : {result['dataset']}")
     print(f"  训练 / 验证样本     : {result['n_train']} / {result['n_val']}")
     print(f"  验证集正类率        : {result['positive_rate_val']}")

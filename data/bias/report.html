@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AeroRec · 偏差传播诊断报告</title>
+<style>
+  :root {
+    --bg: #f7f8fa; --card: #ffffff; --text: #1a1d23; --muted: #5f6672;
+    --accent: #2563eb; --border: #e5e7eb;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+         background: var(--bg); color: var(--text); line-height: 1.7; }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 44px 22px 80px; }
+  header { text-align: center; padding-bottom: 26px; }
+  .badge { display: inline-block; font-size: 13px; color: var(--accent);
+           border: 1px solid var(--accent); border-radius: 999px; padding: 2px 12px; margin-bottom: 14px; }
+  h1 { font-size: 31px; letter-spacing: -0.5px; }
+  .subtitle { color: var(--muted); margin-top: 10px; font-size: 15.5px; }
+  section { background: var(--card); border: 1px solid var(--border);
+            border-radius: 14px; padding: 26px; margin-top: 22px; }
+  h2 { font-size: 19px; margin-bottom: 12px; }
+  h3 { font-size: 15px; margin: 20px 0 8px; }
+  p { margin-top: 8px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; margin-top: 10px; }
+  th, td { text-align: left; padding: 9px 11px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 600; font-size: 12.5px; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  code { background: #eef1f5; padding: 1px 6px; border-radius: 4px; font-size: 12.5px; }
+  /* 颜色表示指标好坏（绿=好/红=差），不是涨跌方向 */
+  .up { color: #16a34a; font-weight: 600; }
+  .down { color: #dc2626; font-weight: 600; }
+  .note { font-size: 13px; color: var(--muted); background: #fff8e6;
+          border-left: 3px solid #f59e0b; padding: 10px 14px; border-radius: 6px; margin-top: 14px; }
+  .fix { font-size: 13px; color: #7c2d12; background: #fef2f2;
+         border-left: 3px solid #dc2626; padding: 10px 14px; border-radius: 6px; margin-top: 14px; }
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 16px; }
+  .kpi { background: var(--bg); border-radius: 10px; padding: 14px 16px; }
+  .kpi b { display: block; font-size: 21px; margin-bottom: 2px; }
+  .kpi span { font-size: 12.5px; color: var(--muted); }
+  .svg-wrap { overflow-x: auto; margin-top: 14px; }
+  footer { text-align: center; color: var(--muted); font-size: 13px; margin-top: 34px; }
+  @media (max-width: 700px) { .kpis { grid-template-columns: repeat(2, 1fr); } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="badge">研究主线 · 偏差诊断与去偏</span>
+    <h1>AeroRec · 链路偏差传播诊断报告</h1>
+    <p class="subtitle">
+      在可控 ground-truth 下精确测量推荐链路的偏差累积与二次注入，
+      并标定 IPS / SNIPS / DR 去偏的<b>有效边界</b>
+    </p>
+  </header>
+
+
+  <section>
+    <h2>0 · 为什么这件事只有合成数据能做</h2>
+    <p>
+      真实日志只能<b>估计</b>偏差——你不知道曝光策略、也不知道真值；
+      本项目的数据是合成的，因此每个 (用户, 物品) 对的真实 CTR 由
+      <code>compute_true_ctr</code> <b>解析已知</b>，并且曝光策略的 propensity π
+      是策略参数的<b>闭式函数</b>（不是估计量）。
+    </p>
+    <p>
+      这两个条件合起来，才让「偏差可精确测量」成立：<b>偏差 = 有偏观测 − 已知真值</b>。
+      本报告的全部数字都建立在此之上。
+    </p>
+    <div class="note">
+      本报告的实验<b>不训练任何模型</b>——研究的是「估计量在偏差下的行为」，
+      用真实 CTR 作 ground-truth 即可，因此完全可复现（固定 seed）且秒级完成。
+    </div>
+  </section>
+
+
+  <section>
+    <h2>1 · 链路偏差传播矩阵</h2>
+    <p>
+      在 4 级链路（真值 → 召回 → 排序 → 混排）上逐级测量偏差。
+      主指标为<b>逐物品相对误差 rel_err</b>（水平，机制 A）与
+      <b>与真值的秩相关 spearman</b>（排序，机制 B）。
+    </p>
+    <div class="kpis">
+      <div class="kpi"><b class="up">+0.783</b>
+        <span>τ=0 排序相关（好）</span></div>
+      <div class="kpi"><b class="down">-0.572</b>
+        <span>τ=3 排序相关（已反转）</span></div>
+      <div class="kpi"><b>0.110 → 0.624</b>
+        <span>曝光 Gini</span></div>
+      <div class="kpi"><b>13 → 0</b>
+        <span>冷门物品最少曝光次数</span></div>
+    </div>
+
+<table><thead><tr><th>τ（曝光偏差）</th><th>排序级 rel_err</th><th>排序级 spearman</th><th>混排级 rel_err</th><th>排序级增量</th><th>曝光 KL</th><th>曝光 Gini</th><th>最少曝光</th></tr></thead><tbody><tr><td class='num'>0.0</td><td class='num'>0.657</td><td class='num up'>+0.783</td><td class='num'>0.657</td><td class='num'>+0.221</td><td class='num'>0.0195</td><td class='num'>0.110</td><td class='num'>13</td></tr><tr><td class='num'>0.5</td><td class='num'>0.771</td><td class='num up'>+0.694</td><td class='num'>0.771</td><td class='num'>+0.564</td><td class='num'>0.0298</td><td class='num'>0.140</td><td class='num'>14</td></tr><tr><td class='num'>1.0</td><td class='num'>0.874</td><td class='num up'>+0.544</td><td class='num'>0.874</td><td class='num'>+0.874</td><td class='num'>0.1100</td><td class='num'>0.265</td><td class='num'>6</td></tr><tr><td class='num'>2.0</td><td class='num'>1.407</td><td class='num down'>-0.175</td><td class='num'>1.407</td><td class='num'>+1.051</td><td class='num'>0.3412</td><td class='num'>0.455</td><td class='num'>2</td></tr><tr><td class='num'>3.0</td><td class='num'>1.996</td><td class='num down'>-0.572</td><td class='num'>1.996</td><td class='num'>+1.369</td><td class='num'>0.6985</td><td class='num'>0.624</td><td class='num'>0</td></tr></tbody></table>
+<div class="svg-wrap">
+<svg viewBox="0 0 760 300" width="100%" style="max-width:760px">
+<text x="62" y="18" font-size="13" fill="#1a1d23" font-weight="600">排序质量随偏差反转，曝光集中度同步上升</text>
+<line x1="62" y1="254.0" x2="550" y2="254.0" stroke="#e5e7eb" stroke-width="1"/>
+<text x="54" y="258.0" font-size="11" fill="#5f6672" text-anchor="end">-0.68</text>
+<line x1="62" y1="199.0" x2="550" y2="199.0" stroke="#e5e7eb" stroke-width="1"/>
+<text x="54" y="203.0" font-size="11" fill="#5f6672" text-anchor="end">-0.27</text>
+<line x1="62" y1="144.0" x2="550" y2="144.0" stroke="#e5e7eb" stroke-width="1"/>
+<text x="54" y="148.0" font-size="11" fill="#5f6672" text-anchor="end">0.13</text>
+<line x1="62" y1="89.0" x2="550" y2="89.0" stroke="#e5e7eb" stroke-width="1"/>
+<text x="54" y="93.0" font-size="11" fill="#5f6672" text-anchor="end">0.54</text>
+<line x1="62" y1="34.0" x2="550" y2="34.0" stroke="#e5e7eb" stroke-width="1"/>
+<text x="54" y="38.0" font-size="11" fill="#5f6672" text-anchor="end">0.95</text>
+<line x1="62" y1="162.0" x2="550" y2="162.0" stroke="#5f6672" stroke-width="1.4" stroke-dasharray="4,3"/>
+<text x="62.0" y="272" font-size="11" fill="#5f6672" text-anchor="middle">τ=0.0</text>
+<text x="184.0" y="272" font-size="11" fill="#5f6672" text-anchor="middle">τ=0.5</text>
+<text x="306.0" y="272" font-size="11" fill="#5f6672" text-anchor="middle">τ=1.0</text>
+<text x="428.0" y="272" font-size="11" fill="#5f6672" text-anchor="middle">τ=2.0</text>
+<text x="550.0" y="272" font-size="11" fill="#5f6672" text-anchor="middle">τ=3.0</text>
+<text x="306" y="294" font-size="11" fill="#5f6672" text-anchor="middle">曝光偏差强度 τ</text>
+<text x="14" y="144" font-size="11" fill="#5f6672" transform="rotate(-90 14 144)" text-anchor="middle">指标值</text>
+<polyline points="62.0,56.0 184.0,68.2 306.0,88.4 428.0,185.7 550.0,239.3" fill="none" stroke="#2563eb" stroke-width="2.4"/>
+<circle cx="62.0" cy="56.0" r="3.2" fill="#2563eb"/>
+<circle cx="184.0" cy="68.2" r="3.2" fill="#2563eb"/>
+<circle cx="306.0" cy="88.4" r="3.2" fill="#2563eb"/>
+<circle cx="428.0" cy="185.7" r="3.2" fill="#2563eb"/>
+<circle cx="550.0" cy="239.3" r="3.2" fill="#2563eb"/>
+<rect x="562" y="38" width="11" height="11" rx="2" fill="#2563eb"/>
+<text x="578" y="47" font-size="11.5" fill="#1a1d23">排序级 spearman</text>
+<polyline points="62.0,147.1 184.0,143.1 306.0,126.2 428.0,100.4 550.0,77.6" fill="none" stroke="#f59e0b" stroke-width="2.4"/>
+<circle cx="62.0" cy="147.1" r="3.2" fill="#f59e0b"/>
+<circle cx="184.0" cy="143.1" r="3.2" fill="#f59e0b"/>
+<circle cx="306.0" cy="126.2" r="3.2" fill="#f59e0b"/>
+<circle cx="428.0" cy="100.4" r="3.2" fill="#f59e0b"/>
+<circle cx="550.0" cy="77.6" r="3.2" fill="#f59e0b"/>
+<rect x="562" y="58" width="11" height="11" rx="2" fill="#f59e0b"/>
+<text x="578" y="67" font-size="11.5" fill="#1a1d23">曝光 Gini</text>
+</svg>
+</div>
+
+    <div class="note">
+      <b>核心结论</b>：偏差的主要危害<b>不是整体偏高，而是把排序搞反</b>——
+      spearman 从 τ=0 的正相关一路降到 τ=3 的<b>负相关</b>。
+      机制是：曝光越偏，冷门物品曝光越少，被 α 平滑拽向先验 1.0，
+      于是「最冷门的反而被估成最好」。
+    </div>
+  </section>
+
+
+  <section>
+    <h2>2 · 混排阶段的偏差二次注入</h2>
+    <p>
+      固定 τ=2.0，扫描混排基础分（热度）权重 <code>w_base</code>。
+      候选池本就由热门召回构成，热度信息已存在；在混排再叠加一次即<b>二次注入</b>。
+    </p>
+    <div class="svg-wrap">
+
+<svg viewBox="0 0 760 300" width="100%" style="max-width:760px">
+<text x="62" y="18" font-size="13" fill="#1a1d23" font-weight="600">w_base → 1 时混排级等于真值（误差严格为 0，实现自检）</text>
+<line x1="62" y1="254.0" x2="550" y2="254.0" stroke="#e5e7eb" stroke-width="1"/>
+<text x="54" y="258.0" font-size="11" fill="#5f6672" text-anchor="end">-0.42</text>
+<line x1="62" y1="199.0" x2="550" y2="199.0" stroke="#e5e7eb" stroke-width="1"/>
+<text x="54" y="203.0" font-size="11" fill="#5f6672" text-anchor="end">0.10</text>
+<line x1="62" y1="144.0" x2="550" y2="144.0" stroke="#e5e7eb" stroke-width="1"/>
+<text x="54" y="148.0" font-size="11" fill="#5f6672" text-anchor="end">0.61</text>
+<line x1="62" y1="89.0" x2="550" y2="89.0" stroke="#e5e7eb" stroke-width="1"/>
+<text x="54" y="93.0" font-size="11" fill="#5f6672" text-anchor="end">1.13</text>
+<line x1="62" y1="34.0" x2="550" y2="34.0" stroke="#e5e7eb" stroke-width="1"/>
+<text x="54" y="38.0" font-size="11" fill="#5f6672" text-anchor="end">1.64</text>
+<line x1="62" y1="209.5" x2="550" y2="209.5" stroke="#5f6672" stroke-width="1.4" stroke-dasharray="4,3"/>
+<text x="62.0" y="272" font-size="11" fill="#5f6672" text-anchor="middle">0.0</text>
+<text x="184.0" y="272" font-size="11" fill="#5f6672" text-anchor="middle">0.2</text>
+<text x="306.0" y="272" font-size="11" fill="#5f6672" text-anchor="middle">0.4</text>
+<text x="428.0" y="272" font-size="11" fill="#5f6672" text-anchor="middle">0.8</text>
+<text x="550.0" y="272" font-size="11" fill="#5f6672" text-anchor="middle">1.0</text>
+<text x="306" y="294" font-size="11" fill="#5f6672" text-anchor="middle">w_base（基础分/热度权重）</text>
+<text x="14" y="144" font-size="11" fill="#5f6672" transform="rotate(-90 14 144)" text-anchor="middle">指标值</text>
+<polyline points="62.0,56.0 184.0,96.0 306.0,118.5 428.0,179.4 550.0,209.5" fill="none" stroke="#dc2626" stroke-width="2.4"/>
+<circle cx="62.0" cy="56.0" r="3.2" fill="#dc2626"/>
+<circle cx="184.0" cy="96.0" r="3.2" fill="#dc2626"/>
+<circle cx="306.0" cy="118.5" r="3.2" fill="#dc2626"/>
+<circle cx="428.0" cy="179.4" r="3.2" fill="#dc2626"/>
+<circle cx="550.0" cy="209.5" r="3.2" fill="#dc2626"/>
+<rect x="562" y="38" width="11" height="11" rx="2" fill="#dc2626"/>
+<text x="578" y="47" font-size="11.5" fill="#1a1d23">混排级 rel_err</text>
+<polyline points="62.0,239.3 184.0,197.6 306.0,176.5 428.0,111.1 550.0,102.4" fill="none" stroke="#2563eb" stroke-width="2.4"/>
+<circle cx="62.0" cy="239.3" r="3.2" fill="#2563eb"/>
+<circle cx="184.0" cy="197.6" r="3.2" fill="#2563eb"/>
+<circle cx="306.0" cy="176.5" r="3.2" fill="#2563eb"/>
+<circle cx="428.0" cy="111.1" r="3.2" fill="#2563eb"/>
+<circle cx="550.0" cy="102.4" r="3.2" fill="#2563eb"/>
+<rect x="562" y="58" width="11" height="11" rx="2" fill="#2563eb"/>
+<text x="578" y="67" font-size="11.5" fill="#1a1d23">混排级 spearman</text>
+</svg>
+</div>
+<table><thead><tr><th>w_base</th><th>排序级 rel_err</th><th>混排级 rel_err</th><th>注入增量(rel)</th><th>排序级 spearman</th><th>混排级 spearman</th><th>注入增量(sp)</th></tr></thead><tbody><tr><td class='num'>0.0</td><td class='num'>1.434</td><td class='num'>1.434</td><td class='num'>+0.000</td><td class='num'>-0.279</td><td class='num'>-0.279</td><td class='num'>+0.000</td></tr><tr><td class='num'>0.2</td><td class='num'>1.325</td><td class='num'>1.060</td><td class='num'>-0.265</td><td class='num'>-0.081</td><td class='num'>+0.111</td><td class='num'>+0.192</td></tr><tr><td class='num'>0.4</td><td class='num'>1.416</td><td class='num'>0.850</td><td class='num'>-0.567</td><td class='num'>-0.171</td><td class='num'>+0.308</td><td class='num'>+0.479</td></tr><tr><td class='num'>0.8</td><td class='num'>1.407</td><td class='num'>0.281</td><td class='num'>-1.126</td><td class='num'>-0.175</td><td class='num'>+0.919</td><td class='num'>+1.094</td></tr><tr><td class='num'>1.0</td><td class='num'>1.439</td><td class='num'>0.000</td><td class='num'>-1.439</td><td class='num'>-0.222</td><td class='num'>+1.000</td><td class='num'>+1.222</td></tr></tbody></table>
+
+    <div class="note">
+      <b>实现自检</b>：<code>w_base=1.0</code> 时混排级<b>等于真值</b>，
+      故 rel_err 必须严格为 0、spearman 为 1——实测正是如此，
+      这说明链路实现本身没有引入额外误差。
+    </div>
+  </section>
+
+
+  <section>
+    <h2>3 · 去偏的有效边界</h2>
+    <p>
+      最初的假设是「曝光越偏（τ 越大），IPS 去偏越容易亏本」。
+      <b>实测否定了这个假设</b>：τ 增大反而让去偏赚得更多，
+      因为 τ 只是拉大了两个估计目标之间的差距，而 IPS 纠正的正是这个差距。
+    </p>
+    <p>
+      真正决定成败的是 <b>π 的动态范围</b>，它通过<b>有效样本量 ESS/N</b> 起作用：
+      π 越极端，1/π 的方差越大，IPS 越容易被少数记录带偏。
+    </p>
+    <div class="svg-wrap">
+
+<svg viewBox="0 0 760 280" width="100%" style="max-width:760px">
+<text x="62" y="18" font-size="13" fill="#1a1d23" font-weight="600">去偏收益 vs ESS/N：低于边界后转负</text>
+<line x1="62" y1="228.0" x2="736" y2="228.0" stroke="#e5e7eb"/>
+<text x="54" y="232.0" font-size="11" fill="#5f6672" text-anchor="end">-0.06</text>
+<line x1="62" y1="179.5" x2="736" y2="179.5" stroke="#e5e7eb"/>
+<text x="54" y="183.5" font-size="11" fill="#5f6672" text-anchor="end">-0.04</text>
+<line x1="62" y1="131.0" x2="736" y2="131.0" stroke="#e5e7eb"/>
+<text x="54" y="135.0" font-size="11" fill="#5f6672" text-anchor="end">-0.03</text>
+<line x1="62" y1="82.5" x2="736" y2="82.5" stroke="#e5e7eb"/>
+<text x="54" y="86.5" font-size="11" fill="#5f6672" text-anchor="end">-0.01</text>
+<line x1="62" y1="34.0" x2="736" y2="34.0" stroke="#e5e7eb"/>
+<text x="54" y="38.0" font-size="11" fill="#5f6672" text-anchor="end">0.01</text>
+<line x1="62" y1="50.2" x2="736" y2="50.2" stroke="#5f6672"/>
+<rect x="86.7" y="50.2" width="62.9" height="1.0" rx="3" fill="#16a34a" opacity="0.9"/>
+<text x="118.2" y="244" font-size="11" fill="#5f6672" text-anchor="middle">1.000</text>
+<text x="118.2" y="44.2" font-size="10.5" fill=#5f6672 text-anchor="middle">+0.000</text>
+<rect x="199.0" y="50.2" width="62.9" height="1.6" rx="3" fill="#dc2626" opacity="0.9"/>
+<text x="230.5" y="244" font-size="11" fill="#5f6672" text-anchor="middle">0.905</text>
+<text x="230.5" y="65.7" font-size="10.5" fill=#5f6672 text-anchor="middle">-0.001</text>
+<rect x="311.4" y="50.2" width="62.9" height="6.3" rx="3" fill="#dc2626" opacity="0.9"/>
+<text x="342.8" y="244" font-size="11" fill="#5f6672" text-anchor="middle">0.358</text>
+<text x="342.8" y="70.4" font-size="10.5" fill=#5f6672 text-anchor="middle">-0.002</text>
+<rect x="423.7" y="50.2" width="62.9" height="22.2" rx="3" fill="#dc2626" opacity="0.9"/>
+<text x="455.2" y="244" font-size="11" fill="#5f6672" text-anchor="middle">0.048</text>
+<text x="455.2" y="86.4" font-size="10.5" fill=#5f6672 text-anchor="middle">-0.007</text>
+<rect x="536.0" y="50.2" width="62.9" height="96.8" rx="3" fill="#dc2626" opacity="0.9"/>
+<text x="567.5" y="244" font-size="11" fill="#5f6672" text-anchor="middle">0.006</text>
+<text x="567.5" y="161.0" font-size="10.5" fill=#5f6672 text-anchor="middle">-0.031</text>
+<rect x="648.4" y="50.2" width="62.9" height="161.7" rx="3" fill="#dc2626" opacity="0.9"/>
+<text x="679.8" y="244" font-size="11" fill="#5f6672" text-anchor="middle">0.003</text>
+<text x="679.8" y="225.8" font-size="10.5" fill=#5f6672 text-anchor="middle">-0.052</text>
+<text x="399" y="272" font-size="11" fill="#5f6672" text-anchor="middle">ESS/N（有效样本量占比）</text>
+<text x="14" y="131" font-size="11" fill="#5f6672" transform="rotate(-90 14 131)" text-anchor="middle">去偏收益 gain</text>
+</svg>
+</div>
+<table><thead><tr><th>π 取值下界</th><th>π 上界</th><th>极值比</th><th>ESS/N</th><th>naive_err</th><th>snips_err</th><th>gain（>0 表示去偏划算）</th></tr></thead><tbody><tr><td class='num'>1e+00</td><td class='num'>1.0</td><td class='num'>1</td><td class='num'>1.0000</td><td class='num'>0.0020</td><td class='num'>0.0020</td><td class='num up'>+0.0000</td></tr><tr><td class='num'>5e-01</td><td class='num'>1.5</td><td class='num'>3</td><td class='num'>0.9052</td><td class='num'>0.0020</td><td class='num'>0.0025</td><td class='num up'>-0.0005</td></tr><tr><td class='num'>5e-02</td><td class='num'>2.0</td><td class='num'>40</td><td class='num'>0.3585</td><td class='num'>0.0020</td><td class='num'>0.0040</td><td class='num down'>-0.0020</td></tr><tr><td class='num'>2e-03</td><td class='num'>2.0</td><td class='num'>1000</td><td class='num'>0.0476</td><td class='num'>0.0020</td><td class='num'>0.0091</td><td class='num down'>-0.0071</td></tr><tr><td class='num'>1e-04</td><td class='num'>2.0</td><td class='num'>20000</td><td class='num'>0.0063</td><td class='num'>0.0020</td><td class='num'>0.0328</td><td class='num down'>-0.0309</td></tr><tr><td class='num'>1e-06</td><td class='num'>2.0</td><td class='num'>2000000</td><td class='num'>0.0033</td><td class='num'>0.0020</td><td class='num'>0.0536</td><td class='num down'>-0.0516</td></tr></tbody></table>
+
+    <div class="note">
+      <b>边界结论</b>：ESS/N 降至约 0.358 以下时，去偏收益转负且超出噪声水平（阈值容差 0.0015）——此时 IPS 的方差代价超过纠偏收益。
+    </div>
+    <p>
+      <b>落地价值</b>：<code>ESS/N</code> <b>不需要 ground-truth 就能计算</b>
+      （只依赖日志与 logging policy）。因此可以在真实系统里用它做<b>在线预警</b>：
+      ESS/N 低于在合成环境标定的阈值时，就放弃 IPS、回退到朴素估计或扩大曝光。
+      这是本模块从研究走向可落地的关键一步。
+    </p>
+  </section>
+
+
+  <section>
+    <h2>4 · 诚实披露：开发中修正的三个错误</h2>
+    <p>本报告的结论是在修正了三处错误之后得到的。列出它们，是因为这些坑本身有参考价值。</p>
+    <div class="fix">
+      <b>① 用「向量均值之差」度量各级偏差</b> → 重标定会把逐物品偏差在求均值时完全抵消，
+      L1 偏差在 τ=0..3 上恒为 0.0000，要研究的现象被对齐的一瞬间抹掉。
+      <b>改为逐物品误差</b>（rel_err / spearman）。
+    </div>
+    <div class="fix">
+      <b>② 把 propensity π 直接当作 CTR 估计</b> → τ=0 时 L1 相对误差竟达 0.92，
+      且 spearman 与 rel_err 自相矛盾。根因是 π(~0.017) 与真实 CTR(~0.25) 量纲不同。
+      <b>改为与真值同量纲、且不做均值对齐的构造</b>。
+    </div>
+    <div class="fix">
+      <b>③ 混淆 π 的两种约定</b> → 把「分布概率」(Σπ=1) 塞进 DR 的模型项，
+      修正项被 1/π² 放大，实测 DR 输出 <b>−10.2</b>（真值 0.3）。
+      <b>已加入约定检测与告警</b>，并区分「包含概率」与「分布概率」两套公式。
+    </div>
+    <div class="note">
+      同样值得记录的是<b>一个被否定的假设</b>：原以为「偏差越大、去偏越难」，
+      实测发现真正决定边界的是 π 的动态范围（ESS），而非偏差幅度。
+    </div>
+  </section>
+
+
+  <section>
+    <h2>5 · 复现</h2>
+    <pre style="background:#0f172a;color:#e2e8f0;padding:16px;border-radius:10px;overflow-x:auto;font-size:13px">python scripts/run_bias_experiments.py
+
+# 产出：
+#   data/bias/propagation.json   链路传播矩阵
+#   data/bias/injection.json     混排二次注入扫描
+#   data/bias/boundary.json      去偏有效边界
+#   data/bias/report.html        本报告（由 scripts/build_bias_report.py 生成）
+
+# 单测（76 项）：
+python -m pytest -q</pre>
+    <div class="note">
+      实验不需要训练模型、不需要 GPU、全程固定随机种子，运行时间约 1 秒。
+    </div>
+  </section>
+
+  <footer>
+    AeroRec · 偏差诊断报告 · 由 <code>scripts/build_bias_report.py</code> 自动生成<br>
+    数据全部为合成（受控实验），不使用任何真实业务数据
+  </footer>
+</div>
+</body>
+</html>

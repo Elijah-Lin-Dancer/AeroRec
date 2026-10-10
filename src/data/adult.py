@@ -1,21 +1,22 @@
-"""UCI Adult / Census Income 真实数据加载器 —— 用于路径 B：验证 DeepFM 在真实 (dense, sparse) 数据上的迁移性。
+"""UCI Adult / Census Income 真实数据加载器 —— 用于验证 DeepFM 在真实 (dense, sparse) 数据上的迁移性。
 
-背景
+用途
 ----
-路径 B 原计划用 Criteo Display Advertising Challenge 验证 DeepFM 迁移性；但构建沙箱网络
-无法访问 Criteo（官方 S3 / go.criteo.net / HuggingFace 全部被阻断）。
-UCI Adult 是一个真实、公开、可引用的二元分类数据集，结构与 CTR 任务**同构**：
+本项目的合成指标都建立在**自造分布**上，因此需要一份真实、公开、可引用的数据
+来排除「模型实现本身有问题」这一可能。UCI Adult 结构与 CTR 任务**同构**：
 
   - 6 个连续（dense）特征 + 8 个类别（sparse）特征；
-  - 正类率 ~24%，与真实 CTR 的类别不均衡（Criteo ~25%）接近；
+  - 正类率 ~24%，与 CTR 的类别不均衡量级接近；
   - 任务：预测收入是否 >50K，即 p(positive) —— 与 CTR 的 p(click) 完全同构。
 
-因此用它作为「真实 (dense_dim, sparse_cards) -> 二元」基准，验证同一个 DeepFM
-能学到真实信号。本加载器**与数据集无关**：只要产出 (dense, sparse, sparse_cards, y)
-四元组，就能替换为 Criteo（见文件底部 `load_criteo` 接入点说明）。
+本加载器**与数据集无关**：只要产出 (dense, sparse, sparse_cards, y) 四元组，
+任何同构任务都能替换进来，`DeepFM` 与 `trainer` 均无需改动。
+
+⚠️ 边界：这**不是**出行域流量的验证。它证明的是「实现能在真实数据上学到信号」，
+不证明合成指标可外推到真实出行流量。见 README「已知局限」。
 
 许可证：UCI Adult 来源于 UCI ML Repository（Becker & Kohavi, 1996；Donoho, 2019），
-研究用途自由使用，需引用。Criteo 原始数据集许可证为 CC-BY-NC-SA 4.0。
+研究用途自由使用，需引用。
 """
 from __future__ import annotations
 
@@ -142,7 +143,7 @@ def load_adult(cache_dir: str | Path = "data/adult",
         "sparse_cols": SPARSE_COLS,
         "sparse_cards": sparse_cards,
         "preprocessing": "dense: 标准化(Z-score, 训练集统计量); sparse: 缺失->0 的连续整数编码",
-        "note": "Criteo 在构建沙箱网络被阻断；UCI Adult 作为同构真实 (dense,sparse)->二元 基准。",
+        "note": "真实、公开、可引用的同构 (dense,sparse)->二元 基准，用于排除模型实现问题；不代表出行域流量。",
     }
     return {
         "dense_train": dtr, "sparse_train": str_, "y_train": ytr,
@@ -152,8 +153,7 @@ def load_adult(cache_dir: str | Path = "data/adult",
 
 
 # ---------------------------------------------------------------------------
-# Criteo 接入：已实现于 src/data/criteo.py（独立模块，与 load_adult 同构）
+# 关于接入其他真实数据集
 # ---------------------------------------------------------------------------
-# Criteo 加载器（src/data/criteo.py）已完整实现 DAC 格式解析与预处理，并单测验证；
-# 本机提供 train.txt 后运行 `scripts/validate_real_data_deepfm.py --dataset criteo` 即可。
-# 无需改动 DeepFM / trainer —— 两者都只依赖 (dense_dim, sparse_cards) 四元组。
+# 本加载器只依赖 (dense, sparse, sparse_cards, y) 这一契约；
+# 任何同构的真实数据集都可按同样方式接入，`DeepFM` / `trainer` 均无需改动。

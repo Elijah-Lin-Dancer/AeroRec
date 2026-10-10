@@ -42,6 +42,7 @@
 - [x] 可解释面板（Streamlit 四页：推荐演示 / 排序流程 / 真实 CTR 对比 / 模拟 A/B）
 - [x] 模拟 A/B 报告（多目标 CTR+CVR，点击率 / 转化率双提升）
 - [x] **真实 CTR 口径评估 + Oracle 上界**（修正热门基线的平滑稀疏偏差，结论可引用）
+- [x] **偏差传播诊断 + 去偏验证**（链路偏差传播矩阵 / IPS·SNIPS·DR 去偏 / 有效边界 `ESS/N≈0.358`，见 [tech report](docs/bias_report.md)）
 - [x] 三档数据规模：`full`（10 万用户 × 10 万物品）、`lite`（2 万 × 2 万，2GB 内存在线）、`micro`（1 万 × 1 万，1GB 内存在线、离线训练 + numpy 推理）
 - [x] 在线 Demo：GitHub Pages 项目主页 + Streamlit Community Cloud 交互面板
 - [ ] demo 视频（30 秒录屏）
@@ -77,7 +78,9 @@ streamlit run app.py                    # 交互式 Demo，默认 micro 档（~1
 AEROREC_MODE=lite  streamlit run app.py # 轻量档（~0.93GB）
 AEROREC_MODE=full  streamlit run app.py # 完整档（需 ~1.5GB 内存）
 uvicorn src.serve.app:app --port 8000    # FastAPI 服务（推荐 / 排序流程 / A/B）
-python -m pytest tests/ -q         # 冒烟测试（16 项）
+python -m pytest tests/ -q              # 冒烟测试（81 项）
+python3.11 scripts/run_bias_experiments.py   # 偏差传播 + 去偏实验（产出 data/bias/*.json）
+python3.11 scripts/build_bias_report.py      # 生成自包含 HTML 可视化报告
 ```
 
 ### 在线 Demo
@@ -245,6 +248,67 @@ DeepFM 的 FM/DNN 能自动学出数据中的隐式非线性交叉（价格敏�
 > 故仅保留以展示工业 A/B 的形式（曝光 / 点击 / 显著性检验）。
 > **对外引用请使用 ② 的真实 CTR 口径。**
 
+### ④ 研究主线：偏差传播诊断与去偏有效边界
+
+> 完整版见 **[docs/bias_report.md](docs/bias_report.md)**（tech report 级）；
+> 可视化版见 `data/bias/report.html`（自包含单文件，21 KB，含内联 SVG，可离线打开）。
+
+本项目的**独有资源**是可控 ground-truth（`compute_true_ctr` 是解析已知的生成函数）——
+真实数据集只能*估计*偏差，这里可以*精确测量*，且曝光策略自造、propensity 是**闭式已知**的。
+这使「去偏估计能否还原真值」可以被严格检验。
+
+**结论一：偏差的主要危害是排序反转，不是水平偏移。**
+
+链路偏差传播矩阵（60 物品、300 请求 × 5 坑位、α=5）：
+
+| 曝光偏斜 τ | 排序级 spearman（越接近 1 越好） | 曝光最少 / 最多 | KL | Gini |
+|---|---|---|---|---|
+| 0.0 | +0.7834 | 13 / 33 | 0.0195 | 0.1102 |
+| 0.5 | +0.6935 | 14 / 36 | 0.0298 | 0.1395 |
+| 1.0 | +0.5442 | 6 / 58 | 0.1100 | 0.2647 |
+| 2.0 | −0.1750 | 2 / 95 | 0.3412 | 0.4551 |
+| 3.0 | **−0.5717** | **0 / 159** | 0.6985 | 0.6240 |
+
+**spearman 从 +0.78 一路跌到 −0.57，符号反转**——排行榜被搞反了。
+只看「平均 CTR 偏高多少」会得出「偏差可控」的结论，却完全看不见排序级的破坏。
+
+**结论二：IPS 纠正的是「估计目标」，不是「坏估计」。**
+
+naive 池化 CTR 对 `T_exp = Σ truth·π`（曝光分布下的平均真实 CTR）**几乎完全无偏**（误差 ≤ 0.008）。
+看似存在的偏差来自 `T_exp ≠ T_pop = mean(truth)`——即 estimand 改变了，而非 estimator 出错。
+**只有当需要跨策略比较或离线评估新策略时，去偏才是必要的。**
+
+**结论三：去偏的有效边界由 propensity 动态范围决定，而非偏差强度。**
+
+实测**边界 `ESS/N ≈ 0.358`**：低于该值时 IPS/SNIPS 的方差代价超过纠偏收益，收益转负。
+
+| π 范围 | `π_max/π_min` | **ESS/N** | naive err | SNIPS err | gain |
+|---|---|---|---|---|---|
+| [1, 1] | 1 | 1.0000 | 0.0020 | 0.0020 | +0.0000 |
+| [0.5, 1.5] | 3 | 0.9052 | 0.0020 | 0.0025 | −0.0005 |
+| [0.05, 2.0] | 40 | **0.3585** | 0.0020 | 0.0040 | −0.0020 ← 边界 |
+| [1e-4, 2.0] | 20 000 | 0.0063 | 0.0020 | 0.0328 | −0.0309 |
+| [1e-6, 2.0] | 2 000 000 | 0.0033 | 0.0020 | 0.0536 | −0.0516 |
+
+注意 `naive err` **恒为 0.0020**——边界说的不是「naive 何时开始不准」，
+而是「花方差代价去纠正那 0.002，何时开始不划算」。
+
+`ESS/N` 是本项目给出的**唯一可落地的判据**：它只需 propensity 与样本量，
+**不需要 ground-truth**——而「偏差有多大」在真实系统里恰恰不可测。
+落地接口 `ess_warning_from_log(log, threshold=0.358)`。
+
+**结论四：偏差的二次注入有符号。** 混排基础分 `w_base` 若注入的是**已在候选集中的热度**，有害（项目默认取 0.0）；
+若注入**独立于现有信号的信息**，有益。这统一解释了项目早期的 `w_base` 例外。
+
+> **被实测推翻的两个假设（如实写出）**：
+> ① 原以为「τ 越大去偏越容易亏本」——实测**正相反**，τ 越大去偏赚得越多（+0.07 → +0.16），
+> 因为 τ 只拉大 `T_exp` 与 `T_pop` 的差距，而 propensity 是闭式已知的。真正的边界是 π 动态范围。
+> ② 原以为「π 越集中 ESS 越小」——实测 ESS 由**最小的 π** 主导：`π=[0.99, 其余均分]` 的 ESS 高达 499，
+> 而 `π=[1e-8, 其余均分]` 的 ESS = 1。
+
+> **局限**：0.358 是在本项目合成数据的规模与先验下测出的，**不可直接迁移到其他系统**（可迁移的是方法）。
+> 且本实验的 propensity 为闭式已知，真实系统需估计 propensity，会引入本实验不存在的误差，**实际边界会更严苛**。
+
 ## 目录结构
 
 ```
@@ -277,9 +341,19 @@ src/
   serve/engine_micro.py       推荐引擎（micro 档，加载 numpy 权重，无 torch/sklearn）
   serve/app.py                FastAPI 服务
   app.py                      Streamlit 交互 Demo（根目录，支持 lite/full 切换）
+  bias/policy.py              曝光策略与闭式 propensity（均匀 / 热度^τ / 位置 1/rank^η）
+  bias/injectors.py           偏差注入器（build_biased_log 为去偏实验唯一数据入口）
+  bias/metrics.py             偏差度量：曝光分布（KL/Gini）+ 统计偏差 + 排序偏差
+  bias/propagation.py         链路偏差传播矩阵 + 混排二次注入
+  bias/estimators.py          去偏估计量 IPS/SNIPS/DR + 交叉拟合 + ESS + π 约定检测
+  bias/boundary.py            去偏有效边界扫描 + ess_warning_from_log 落地接口
+  bias/report.py              自包含 HTML 报告生成（内联 SVG，零依赖）
 tests/test_data.py         数据 / 特征 / 召回 冒烟测试
 tests/test_rank.py         排序层 / 混排 / 降级 冒烟测试
 tests/test_ab.py           模拟 A/B 冒烟测试
+tests/test_bias_*.py       偏差诊断 / 去偏估计 / 边界 / 报告 测试（6 文件 64 用例）
+docs/bias_report.md          偏差传播诊断与去偏验证 tech report
+data/bias/                   偏差实验产物（propagation/injection/boundary.json + report.html）
 artifacts/micro/           离线预训练的在线权重（numpy，约 29KB）
 requirements.txt           完整依赖（含 torch，本地/离线）
 requirements_streamlit.txt 在线依赖（仅 numpy + streamlit，用于免费档部署）
@@ -298,12 +372,11 @@ requirements_streamlit.txt 在线依赖（仅 numpy + streamlit，用于免费�
 
 主动列出，避免被误读：
 
-- **合成指标向真实出行流量的外推性仍未证明，但框架迁移性已在两个真实公开数据集上验证。**
-  同一套 `DeepFM`（与合成链路完全一致的实现）在两份真实、公开、可引用的数据上取得验证 AUC：
-  **Criteo Display Advertising Challenge**（真实 CTR，13 稠密 + 26 稀疏，全量 100 万行，验证 AUC **0.7733**，
-  见 `data/real_validation/result.json`）与 **UCI Adult / Census Income**（同构 `(dense, sparse)→二元`，
-  验证 AUC **0.9183**）。两者证明模型实现能在真实数据上学到信号。
-  **然而**这两份数据**都不是出行域流量**；合成指标（AUC 0.8019、相对热门 +28.5%）
+- **合成指标向真实出行流量的外推性仍未证明。**
+  已用一份真实、公开、可引用的同构数据集（**UCI Adult / Census Income**，`(dense, sparse)→二元`，
+  验证 AUC **0.9183**，见 `data/real_validation/result.json`）验证同一份 `DeepFM` 实现
+  能在真实数据上学到信号——这**排除了「模型实现本身有问题」**这一可能。
+  **然而**该数据**不是出行域流量**，也不是 CTR 任务；合成指标（AUC 0.8019、相对热门 +28.5%）
   向真实出行流量的外推性**仍待验证**。
 - **A/B 为离线反事实重放，非真实在线实验。** `simulate_ab` 在合成日志上重放，
   不含网络效应、用户反馈循环与长短期收益的差异，仅用于验证统计流程（两比例 z 检验）实现是否正确。
@@ -315,6 +388,13 @@ requirements_streamlit.txt 在线依赖（仅 numpy + streamlit，用于免费�
   修复后用 `plan_epochs(target_updates=400)`（`src/rank/trainer.py`）反推 epoch，lite 回到 +13.9%。
   教训：同一套模型跑多档位时，训练预算要用"目标更新次数"统一约束，否则小规模档位会悄悄欠拟合。
 - **本项目的贡献是「工程链路复现 + 评估口径的诚实性」，不是算法创新。** 这一点在「方法」一节已声明。
+- **偏差实验的 propensity 为闭式已知，且边界数值不可迁移。** 本项目的去偏实验建立在「曝光策略自造、
+  故 propensity 是策略参数的确定性函数」这一前提上——这是能精确测量去偏误差的原因，
+  但真实系统必须*估计* propensity，会引入本实验里不存在的误差，**实际有效边界会更严苛**。
+  实测边界 `ESS/N ≈ 0.358` 是在本项目合成数据的规模与先验下得到的，
+  **可迁移的是方法（用 ESS/N 作预警），不是这个数值**。详见 [docs/bias_report.md](docs/bias_report.md)。
+- **偏差实验规模有限、且未覆盖用户侧偏好偏差。** 传播矩阵为 60 物品 × 300 请求 × 5 坑位，
+  边界实验 `n_records = 20000`；且仅建模曝光/位置偏差，未涉及「同一用户内跨物品的选择偏差」。
 
 ## 待办（Roadmap）
 
@@ -326,112 +406,22 @@ requirements_streamlit.txt 在线依赖（仅 numpy + streamlit，用于免费�
 - [x] W5–W6：架构图 / 复现文档 / 量化结果 / 在线 Demo（GitHub Pages + Streamlit Cloud）
 - [x] W7：评估口径修正 —— 发现并修正 A/B 基线稀疏性偏差、混排 `w_base` 热度二次注入
 - [x] W8：可复现性修复（训练随机性未播种）+ 依赖版本约束 + 诚实边界披露
-- [x] 路径 B：真实数据验证 —— 用 **Criteo**（真实 CTR 基准，20 万行）验证 DeepFM 迁移性，验证 AUC 0.7583；并保留 UCI Adult（同构基准）作为快速自检，验证 AUC 0.9183
+- [x] W9：真实数据一致性检查 —— 用 UCI Adult（真实 `(dense,sparse)→二元` 基准）验证同一份 `DeepFM`
+  在真实数据上仍能学到信号（验证 AUC **0.9183**），排除「模型实现本身有问题」
+- [x] **W10：研究主线 —— 偏差传播诊断 + 去偏验证**
+  - M1 曝光策略与闭式 propensity（50 万 × 3 坑位下 π 求和 = 1.0，经验频率偏差 0.00033 < 1 SE）
+  - M2 偏差度量与既有现象复现（平滑 CTR 0.5220 vs 真实 0.4476）
+  - M3 链路偏差传播矩阵（**排序反转 +0.7834 → −0.5717**）+ 二次注入自检
+  - M4 去偏估计量 IPS / SNIPS / DR（含 π 两种约定的检测与告警）
+  - M5 去偏有效边界（**`ESS/N ≈ 0.358`**，含 60 种子平均与噪声判据）
+  - M6 自包含 HTML 可视化报告 + 本文档
+  - **产出**：[docs/bias_report.md](docs/bias_report.md)、`src/bias/`（6 模块）、`data/bias/report.html`
 
-### 规划中：从「工程复现」升级为「研究作品」
+### 可能的后继方向
 
-> **为什么需要这一步**：项目目前是**高完成度的工程复现**——链路完整、评估诚实，
-> 但模型与流程均为已有方法的标准实现。评审的合理追问是「**你的贡献是什么**」。
-> 下面的 A / B 两条正是为了给出一个「自己的发现」而非「自己的实现」。
-
-#### A. 偏差传播诊断 + 去偏验证（主线，约 2–3 周）
-
-本项目独有、而真实数据集**做不到**的资源是**可控 ground-truth**：
-真实数据只能*估计*偏差，这里可以*精确测量*。而项目已经撞上两个偏差现象——
-热门基线的稀疏性偏差（平滑 CTR 0.6231 vs 真实 0.2528，偏差 **+0.3704**）、
-以及混排 `w_base` 的热度二次注入。两者本质同源：**偏差会在链路中累积与被二次注入**。
-
-把这一点形式化为研究问题：
-
-1. 将偏差形式化为**可注入的实验变量**（曝光偏差 / 位置偏差 / 热度偏差 / 选择偏差）；
-2. 做**链路偏差传播矩阵**——量化召回 → 排序 → 混排各级分别把指标扭曲了多少；
-3. 接入因果推断去偏估计器（**IPS / DR**），用 ground-truth 验证「去偏后的估计能否还原真值」；
-4. 给出**偏差诊断基准**与去偏方法的有效边界。
-
-产出：一份 tech report 级文档 + 可复用的偏差诊断模块。
-文献锚点：Steck 2011、Schnabel et al. 2016、Joachims et al.（Unbiased LTR）、Gilotte et al. 2018。
-
-#### B. 真实数据验证（已完成 ✅）
-
-目标：用真实公开数据集替换合成特征库，跑通同一个 `DeepFM`，证明迁移性。
-
-**主线基准：Criteo Display Advertising Challenge**（CTR / DeepFM 论文的标准真实基准，
-13 稠密 + 26 稀疏 -> p(click)，任务与本项目 DeepFM 排序器**完全同构**，接口零改动）。
-数据来源为 HuggingFace ``eldieguinpo/criteo-1M``（Criteo DAC 均匀抽样的 100 万行）。
-
-结果（完整见 `data/real_validation/result.json`）：
-
-| 指标 | 数值 |
-|---|---|
-| 训练 / 验证样本 | 900,000 / 100,000（真实 CTR 日志） |
-| 验证集正类率 | 0.2512（真实 Criteo 点击率） |
-| **DeepFM 验证 AUC** | **0.7733** |
-| LR 基线 验证 AUC | 0.7717 |
-| 常数基线 AUC | 0.5000 |
-| DeepFM 相对常数提升 | +0.2733 |
-| 训练预算（梯度更新次数） | 3,516 |
-
-> **数据规模效应**：同一脚本在 20 万行上得 AUC 0.7583、100 万行上得 **0.7733**——高基数稀疏特征
-> 需要足够样本才能学稳，这与「训练预算陷阱」同源（都要用数据规模与更新次数共同定标）。
-> 20 万行的结果保留在 `data/real_validation/result_criteo_200k.json` 作为规模对照。
-
-> **可复现性**：Criteo 两次独立运行（20 万行）DeepFM 的 AUC 逐位一致（0.7583）；
-> UCI Adult 亦复现一致（0.9183），印证了 W8 的随机性播种修复。唯一非确定性来自 LR 基线——
-> 它在弱 CPU 上 150 次迭代未完全收敛，故在结果中如实标注为"未收敛的对照基线"，
-> 不代表 DeepFM 有抖动。
-
-**框架迁移性已在真实 CTR 数据上验证**：同一份 `DeepFM` 实现在真实 Criteo（100 万行）上
-AUC **0.7733**（>> 0.5），略高于同数据 LR 基线 0.7717，说明深度交叉项在真实数据上带来增量。
-
-**保留 UCI Adult 作为快速自检**：`src/data/adult.py` 用同构的真实 `(dense, sparse)→二元` 基准
-（6 连续 + 8 类别，验证集正类率 0.2393），验证 AUC **0.9183**（相对常数 +0.4183）。它数据小、
-网络稳、跑得快，适合做 CI / 冒烟验证。
-
-**Criteo 接入（已实现并跑通）**
-
-`src/data/criteo.py` 同时支持两种真实格式（按扩展名自动分派）：
-- **parquet**（`criteo-1M`）：列名即 `label, I1..I13, C1..C26`，稠密缺失为 `NaN`、稀疏为整数哈希码；
-- **DAC 文本**（`train.txt`）：tab 分隔，缺失为空串。
-
-预处理：稠密缺失→0、`log1p`、Z-score（仅训练集统计量）；稀疏按字段建频率词表、缺失 / 低频 OOV→0。
-与 `DeepFM` 接口同构，**模型零改动**。解析逻辑已用构造样本 + 真实 parquet 单测
-（`tests/test_criteo.py`、`tests/test_criteo_real.py`）。
-
-一键运行：
-
-```bash
-# 1) 获取数据（本沙箱网络不可达官方源，需自行获取后放到 data/criteo/）
-#    - 推荐：HuggingFace eldieguinpo/criteo-1M -> criteo_1M.parquet（约 45MB / 100 万行）
-#    - 或：  Kaggle criteo-display-advertising-challenge -> train.txt（全量约 11GB）
-# 2) 验证（parquet 或 train.txt 均可；下例跑全量 100 万行，约 76s）
-python scripts/validate_real_data_deepfm.py --dataset criteo \
-    --criteo-path data/criteo/criteo_1M.parquet --criteo-rows 1000000
-```
-
-> **工程提示**：本沙箱容器 CPU 配额仅 4 核，而 PyTorch 默认按物理核数（32）开线程，
-> 严重超订会让每步耗时飙到秒级。验证脚本已内置线程上限（`AEROREC_THREADS`，默认 4，
-> 见脚本顶部注释），这是真实环境里常见、但容易被忽略的性能坑。
-
-值得注意的是：**Criteo 仍非出行域流量**。它只是最接近的公共代理 + 最被认可的 CTR 基准，
-不代表在出行真实流量上验证过——这条已写入「已知局限」。
-
-#### C.（备选）服务工程深度
-
-P99 延迟 / QPS 曲线 / 冷启动 / 增量特征更新。属工程信号强化，与研究向申请收益有限。
-
-### ⚠️ 真实数据集选型说明（避免走弯路）
-
-- **路径 B 已用 Criteo 跑通真实 CTR 验证**：数据来源为 HuggingFace `eldieguinpo/criteo-1M`
-  （Criteo DAC 均匀抽样，100 万行），取 20 万行训练，验证 AUC 0.7583。Criteo 官方源
-  （ailab / S3 / go.criteo.net）在本沙箱网络被阻断，故改用该等价抽样镜像；两者同为 Criteo DAC 数据。
-  UCI Adult 保留为快速自检基线（网络稳、跑得快）。
-- **MovieLens 不适合本项目的偏差研究**：它没有记录曝光策略与 propensity，
-  无法做 IPS 去偏验证；且在出行特征库（`aff_*` / 里程 / 时段 / 出发到达）上无法直接迁移，
-  强行适配需 1–2 周且只能部分对齐。
-- 若要为路径 A 配真实数据，正确选择是 **Coat**（Schnabel et al. 2016，
-  同时含"自选偏差集"与"随机无偏集"，是去偏研究的标准基准）
-  或 **Open Bandit Dataset**（ZOZO，含真实 propensity）。
-- 路径 B 选 **Criteo** 而非 MovieLens，是因为 Criteo 本身就是 CTR 任务，与 `DeepFM` 的接口同构。
+- 把偏差诊断接入真实数据链路：用估计出的 propensity 复跑边界实验，量化「propensity 估计误差」对边界的影响。
+- 用户侧选择偏差建模（同一用户内跨物品的偏好偏差），补齐当前单物品域的缺口。
+- 备选：服务工程深度（P99 延迟 / QPS 曲线 / 冷启动 / 增量特征更新）。属工程信号强化，与研究向申请收益有限。
 
 ---
 

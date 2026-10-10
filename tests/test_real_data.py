@@ -1,4 +1,4 @@
-"""路径 B 数据加载器测试：不依赖网络。
+"""真实数据加载器测试：不依赖网络。
 
 若本地已缓存 UCI Adult（data/adult/adult.data），则校验 (dense, sparse, sparse_cards, y)
 四元组的形状与取值；否则跳过（CI 无网络时不影响仓库其它测试）。

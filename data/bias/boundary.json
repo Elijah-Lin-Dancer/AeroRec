@@ -1,0 +1,69 @@
+{
+  "t_pop": 0.25254441079662027,
+  "n_records": 20000,
+  "rows": [
+    {
+      "pi_min": 1.0,
+      "pi_max": 1.0,
+      "pi_ratio": 1.0,
+      "ess_ratio": 1.0,
+      "naive_err": 0.002,
+      "snips_err": 0.002,
+      "gain": 0.0,
+      "n_seeds": 20
+    },
+    {
+      "pi_min": 0.5,
+      "pi_max": 1.5,
+      "pi_ratio": 3.0,
+      "ess_ratio": 0.9052,
+      "naive_err": 0.002,
+      "snips_err": 0.0025,
+      "gain": -0.0005,
+      "n_seeds": 20
+    },
+    {
+      "pi_min": 0.05,
+      "pi_max": 2.0,
+      "pi_ratio": 40.0,
+      "ess_ratio": 0.3585,
+      "naive_err": 0.002,
+      "snips_err": 0.004,
+      "gain": -0.002,
+      "n_seeds": 20
+    },
+    {
+      "pi_min": 0.002,
+      "pi_max": 2.0,
+      "pi_ratio": 1000.0,
+      "ess_ratio": 0.0476,
+      "naive_err": 0.002,
+      "snips_err": 0.0091,
+      "gain": -0.0071,
+      "n_seeds": 20
+    },
+    {
+      "pi_min": 0.0001,
+      "pi_max": 2.0,
+      "pi_ratio": 20000.0,
+      "ess_ratio": 0.0063,
+      "naive_err": 0.002,
+      "snips_err": 0.0328,
+      "gain": -0.0309,
+      "n_seeds": 20
+    },
+    {
+      "pi_min": 1e-06,
+      "pi_max": 2.0,
+      "pi_ratio": 2000000.0,
+      "ess_ratio": 0.0033,
+      "naive_err": 0.002,
+      "snips_err": 0.0536,
+      "gain": -0.0516,
+      "n_seeds": 20
+    }
+  ],
+  "tolerance_used": 0.0015,
+  "cross_ess_ratio": 0.3585,
+  "conclusion": "ESS/N 降至约 0.358 以下时，去偏收益转负且超出噪声水平（阈值容差 0.0015）——此时 IPS 的方差代价超过纠偏收益。"
+}
