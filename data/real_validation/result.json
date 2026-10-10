@@ -1,0 +1,56 @@
+{
+  "dataset": "UCI Adult / Census Income (1996)",
+  "source": "https://archive.ics.uci.edu/ml/machine-learning-databases/adult",
+  "license": "UCI ML Repository; research use (cite Becker & Kohavi 1996 / Donoho 2019)",
+  "n_total": 48842,
+  "n_train": 39074,
+  "n_val": 9768,
+  "positive_rate_total": 0.2393,
+  "positive_rate_train": 0.2393,
+  "positive_rate_val": 0.2393,
+  "n_dense": 6,
+  "dense_cols": [
+    "age",
+    "fnlwgt",
+    "education-num",
+    "capital-gain",
+    "capital-loss",
+    "hours-per-week"
+  ],
+  "sparse_cols": [
+    "workclass",
+    "education",
+    "marital-status",
+    "occupation",
+    "relationship",
+    "race",
+    "sex",
+    "native-country"
+  ],
+  "sparse_cards": [
+    9,
+    17,
+    8,
+    15,
+    7,
+    6,
+    3,
+    42
+  ],
+  "preprocessing": "dense: 标准化(Z-score, 训练集统计量); sparse: 缺失->0 的连续整数编码",
+  "note": "Criteo 在构建沙箱网络被阻断；UCI Adult 作为同构真实 (dense,sparse)->二元 基准。",
+  "model": "DeepFM (Guo et al. 2017) — 与本项目合成链路同一实现",
+  "deepfm_epochs": 6,
+  "deepfm_batch_size": 512,
+  "deepfm_updates": 462,
+  "val_auc_deepfm": 0.9183,
+  "val_auc_logistic_baseline": 0.9113,
+  "val_auc_naive_constant": 0.5,
+  "lift_over_naive": 0.4183,
+  "environment": {
+    "torch": "2.10.0+cu128",
+    "numpy": "2.3.5",
+    "sklearn": "1.8.0"
+  },
+  "elapsed_sec": 21.1
+}

@@ -10,6 +10,10 @@ data/processed/
 data/processed_lite/
 data/raw_lite/
 
+# 路径 B 真实数据：原始下载不入库（可重新拉取）；验证结果 JSON 入库作证据
+data/adult/
+data/criteo/
+
 # 环境 / 系统
 .DS_Store
 *.log
