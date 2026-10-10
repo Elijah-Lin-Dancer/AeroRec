@@ -80,3 +80,30 @@ def test_criteo_missing_file_raises():
     import pytest
     with pytest.raises(FileNotFoundError):
         load_criteo("/nonexistent/path/train.txt")
+
+
+def test_criteo_parquet_roundtrip():
+    """parquet 路径：列名 label/I*/C*、稠密含 NaN、稀疏为整数哈希码。"""
+    import pandas as pd
+    n = 6
+    df = pd.DataFrame({
+        "label": [1, 0, 1, 0, 1, 0],
+        **{f"I{i}": [float(j + i) if j != 1 else float("nan") for j in range(n)]
+           for i in range(1, N_DENSE + 1)},
+        **{f"C{i}": [(7 if j % 2 == 0 else 9) if i == 1 else (j + i) for j in range(n)]
+           for i in range(1, N_SPARSE + 1)},
+    })
+    with tempfile.NamedTemporaryFile("w", suffix=".parquet", delete=False) as f:
+        path = f.name
+    df.to_parquet(path, index=False)
+    try:
+        data = load_criteo(path, val_split=0.34)
+        assert data["n_dense"] == N_DENSE
+        assert len(data["sparse_cards"]) == N_SPARSE
+        assert data["meta"]["input_format"] == "parquet"
+        assert data["meta"]["n_train"] + data["meta"]["n_val"] == n
+        # 稠密缺失（NaN）应被填 0 后再 log1p/Z-score，不应出现 NaN
+        assert not np.isnan(data["dense_train"]).any()
+        assert not np.isnan(data["dense_val"]).any()
+    finally:
+        os.unlink(path)

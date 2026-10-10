@@ -28,8 +28,15 @@ import time
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import numpy as np  # noqa: E402
+import scipy.sparse as sp  # noqa: E402
 import torch  # noqa: E402
 import sklearn  # noqa: E402
+
+# 线程数必须显式限制：本沙箱容器 CPU 配额只有 4 核，而 torch 默认按物理核数（32）开线程，
+# 严重超订会让每条小算子陷入上下文切换、单步耗时飙到秒级（实测 tiny 模型可达 4s/step）。
+# AEROREC_THREADS 可控，默认取 4。
+_THREADS = int(os.environ.get("AEROREC_THREADS", "4"))
+torch.set_num_threads(_THREADS)
 from sklearn.linear_model import LogisticRegression  # noqa: E402
 from sklearn.metrics import roc_auc_score  # noqa: E402
 from sklearn.preprocessing import OneHotEncoder  # noqa: E402
@@ -39,12 +46,17 @@ from src.rank.trainer import (DEEFM_BATCH_SIZE, DeepFMRanker,  # noqa: E402
 
 
 def lr_baseline(dtr, str_, ytr, dva, sva, yva):
+    """线性对照基线：dense + 稀疏 one-hot 的 LogisticRegression（全程稀疏，避免稠密爆内存）。
+
+    Criteo 有 26 个稀疏字段、词表可达百万级，若用 toarray() 变稠密会直接 OOM；
+    这里保持 scipy 稀疏，LR 直接吃稀疏输入。
+    """
     enc = OneHotEncoder(handle_unknown="ignore")
     ohe_tr = enc.fit_transform(str_)
     ohe_va = enc.transform(sva)
-    Xtr = np.hstack([dtr, ohe_tr.toarray() if hasattr(ohe_tr, "toarray") else ohe_tr])
-    Xva = np.hstack([dva, ohe_va.toarray() if hasattr(ohe_va, "toarray") else ohe_va])
-    clf = LogisticRegression(max_iter=2000).fit(Xtr, ytr)
+    Xtr = sp.hstack([sp.csr_matrix(dtr), ohe_tr]).tocsr()
+    Xva = sp.hstack([sp.csr_matrix(dva), ohe_va]).tocsr()
+    clf = LogisticRegression(max_iter=150, solver="lbfgs").fit(Xtr, ytr)
     return float(roc_auc_score(yva, clf.predict_proba(Xva)[:, 1]))
 
 
@@ -99,6 +111,7 @@ def main():
             "torch": torch.__version__,
             "numpy": np.__version__,
             "sklearn": sklearn.__version__,
+            "torch_threads": _THREADS,
         },
         "elapsed_sec": round(time.time() - t0, 1),
     }
