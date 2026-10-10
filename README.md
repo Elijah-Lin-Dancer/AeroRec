@@ -43,6 +43,7 @@
 - [x] 模拟 A/B 报告（多目标 CTR+CVR，点击率 / 转化率双提升）
 - [x] **真实 CTR 口径评估 + Oracle 上界**（修正热门基线的平滑稀疏偏差，结论可引用）
 - [x] **偏差传播诊断 + 去偏验证**（链路偏差传播矩阵 / IPS·SNIPS·DR 去偏 / 有效边界 `ESS/N≈0.358`，见 [tech report](docs/bias_report.md)）
+- [x] **真实数据迁移性验证**：Criteo 真实 CTR 基准（100 万行，AUC **0.7733**）+ UCI Adult（**0.9183**）
 - [x] 三档数据规模：`full`（10 万用户 × 10 万物品）、`lite`（2 万 × 2 万，2GB 内存在线）、`micro`（1 万 × 1 万，1GB 内存在线、离线训练 + numpy 推理）
 - [x] 在线 Demo：GitHub Pages 项目主页 + Streamlit Community Cloud 交互面板
 - [ ] demo 视频（30 秒录屏）
@@ -78,9 +79,11 @@ streamlit run app.py                    # 交互式 Demo，默认 micro 档（~1
 AEROREC_MODE=lite  streamlit run app.py # 轻量档（~0.93GB）
 AEROREC_MODE=full  streamlit run app.py # 完整档（需 ~1.5GB 内存）
 uvicorn src.serve.app:app --port 8000    # FastAPI 服务（推荐 / 排序流程 / A/B）
-python -m pytest tests/ -q              # 冒烟测试（81 项）
+python -m pytest tests/ -q              # 冒烟测试（86 项）
 python3.11 scripts/run_bias_experiments.py   # 偏差传播 + 去偏实验（产出 data/bias/*.json）
 python3.11 scripts/build_bias_report.py      # 生成自包含 HTML 可视化报告
+python3.11 scripts/validate_real_data_deepfm.py --dataset adult   # 真实数据迁移性验证（UCI Adult）
+# 真实 Criteo 验证需本机下载数据放入 data/criteo/（见「真实数据验证」一节）
 ```
 
 ### 在线 Demo
@@ -348,12 +351,18 @@ src/
   bias/estimators.py          去偏估计量 IPS/SNIPS/DR + 交叉拟合 + ESS + π 约定检测
   bias/boundary.py            去偏有效边界扫描 + ess_warning_from_log 落地接口
   bias/report.py              自包含 HTML 报告生成（内联 SVG，零依赖）
+  data/criteo.py              Criteo 真实 CTR 加载器（parquet / DAC 文本双格式）
+  data/adult.py               UCI Adult 真实数据加载器（快速自检）
+scripts/validate_real_data_deepfm.py  真实数据迁移性验证（Criteo / Adult）
 tests/test_data.py         数据 / 特征 / 召回 冒烟测试
 tests/test_rank.py         排序层 / 混排 / 降级 冒烟测试
 tests/test_ab.py           模拟 A/B 冒烟测试
 tests/test_bias_*.py       偏差诊断 / 去偏估计 / 边界 / 报告 测试（6 文件 64 用例）
+tests/test_criteo*.py      Criteo 加载器单测（构造样本 + 真实 parquet 兼容性）
+tests/test_real_data.py    UCI Adult 加载器测试
 docs/bias_report.md          偏差传播诊断与去偏验证 tech report
 data/bias/                   偏差实验产物（propagation/injection/boundary.json + report.html）
+data/real_validation/        真实数据验证结果（Criteo 100 万 / 20 万行 + Adult）
 artifacts/micro/           离线预训练的在线权重（numpy，约 29KB）
 requirements.txt           完整依赖（含 torch，本地/离线）
 requirements_streamlit.txt 在线依赖（仅 numpy + streamlit，用于免费档部署）
@@ -372,30 +381,18 @@ requirements_streamlit.txt 在线依赖（仅 numpy + streamlit，用于免费�
 
 主动列出，避免被误读：
 
-- **合成指标向真实出行流量的外推性仍未证明。**
-  已用一份真实、公开、可引用的同构数据集（**UCI Adult / Census Income**，`(dense, sparse)→二元`，
-  验证 AUC **0.9183**，见 `data/real_validation/result.json`）验证同一份 `DeepFM` 实现
-  能在真实数据上学到信号——这**排除了「模型实现本身有问题」**这一可能。
-  **然而**该数据**不是出行域流量**，也不是 CTR 任务；合成指标（AUC 0.8019、相对热门 +28.5%）
+- **合成指标向真实出行流量的外推性仍未证明，但框架迁移性已在两个真实公开数据集上验证。**
+  同一套 `DeepFM`（与合成链路完全一致的实现）在两份真实、公开、可引用的数据上取得验证 AUC：
+  **Criteo Display Advertising Challenge**（真实 CTR，13 稠密 + 26 稀疏，全量 100 万行，验证 AUC **0.7733**，
+  见 `data/real_validation/result.json`）与 **UCI Adult / Census Income**（同构 `(dense, sparse)→二元`，
+  验证 AUC **0.9183**）。两者证明模型实现能在真实数据上学到信号。
+  **然而**这两份数据**都不是出行域流量**；合成指标（AUC 0.8019、相对热门 +28.5%）
   向真实出行流量的外推性**仍待验证**。
-- **真实数据一致性检查原计划使用 Criteo，因环境网络限制未完成（如实记录）。**
-  更理想的验证基准是 **Criteo Display Advertising Challenge**——它是 CTR / DeepFM 的标准真实基准，
-  任务与本项目排序器**完全同构**（13 稠密 + 26 稀疏 → p(click)），且是 CTR 任务而非分类任务，
-  比 UCI Adult 更贴近本项目。我为此**实现了完整的加载器**（支持 DAC `train.txt` 与 HuggingFace
-  `criteo-1M` parquet 两种格式，含缺失处理、`log1p` 长尾压缩、Z-score、按字段建词表与 OOV 合并）
-  并**通过单元测试**，且验证脚本设计为**模型零改动**（只要产出 `(dense, sparse, sparse_cards, y)`
-  四元组即可直接喂给同一个 `DeepFMRanker`）。
-  **失败原因不是代码，而是数据获取**：构建沙箱中 Criteo 官方 ailab 与 S3 `criteo-labs`
-  均返回 404，`go.criteo.net` 返回重定向后不可达，HuggingFace CDN 连接超时，**数据文件无法下载**
-  （该不可达性在本次记录时已复核确认）。
-  加载器与验证脚本在本地拿到数据文件后即可运行，但**在本环境中始终未能用真实数据端到端跑通**，
-  因此该路径**未被采用为对外结论**，真实数据校验以 UCI Adult 为准。
-  相关实现与移除过程保留在 git 历史中（`d26078c` 实现加载器并单测、`07b30ea` 接入验证脚本、
-  `672be1f` 移除该产线），此处如实记录该取舍及其原因。
-  （补充说明：`07b30ea` 的提交信息写作「跑通 DeepFM 迁移性验证」，措辞**不准确**——
-  该提交只是接入了脚本与配置，端到端从未在本环境用真实 Criteo 数据跑通。
-  这条不准确的提交信息本身就是移除该产线的原因之一：**一份无法验证的声明留在仓库里，
-  会让文档与事实不符。**）
+- **Criteo 上深度交叉项未显现出明显优势（如实记录）。** 100 万行档 DeepFM 验证 AUC **0.7733**，
+  同数据 LR 基线 **0.7716**，**差距仅 0.0017**——在单次运行下难以排除随机性（未做多种子方差估计）。
+  因此本节只声称「同一份实现能处理真实 CTR 数据、学到强信号（≫ 0.5）」，
+  **不声称**深度交叉项在真实数据上带来增量。Criteo 以高基数稀疏类别特征为主，
+  线性模型在此类任务上本就接近强基线，这一结果与文献观察一致。
 - **A/B 为离线反事实重放，非真实在线实验。** `simulate_ab` 在合成日志上重放，
   不含网络效应、用户反馈循环与长短期收益的差异，仅用于验证统计流程（两比例 z 检验）实现是否正确。
 - **出行业务规则的收益未经真实数据检验。** 「里程兑换」「多段行程优先」等规则来自实习启发，
@@ -435,10 +432,72 @@ requirements_streamlit.txt 在线依赖（仅 numpy + streamlit，用于免费�
   - M6 自包含 HTML 可视化报告 + 本文档
   - **产出**：[docs/bias_report.md](docs/bias_report.md)、`src/bias/`（6 模块）、`data/bias/report.html`
 
+- [x] **W11：真实数据验证（路径 B）—— 用 Criteo 真实 CTR 基准验证 DeepFM 迁移性**
+  - Criteo Display Advertising Challenge（13 稠密 + 26 稀疏 → p(click)，与本项目排序器**完全同构**）
+  - 100 万行：验证 AUC **0.7733**；20 万行：**0.7583**（规模对照，两次独立运行逐位一致）
+  - 加载器支持 parquet 与 DAC 文本两种格式，模型**零改动**
+  - 保留 UCI Adult 作快速自检（**0.9183**）
+
+### 真实数据验证（路径 B，已完成）
+
+**主线基准：Criteo Display Advertising Challenge**——CTR / DeepFM 论文的标准真实基准，
+任务与本项目排序器**完全同构**（13 稠密 + 26 稀疏 → p(click)），接口零改动。
+数据来源为 HuggingFace `eldieguinpo/criteo-1M`（Criteo DAC 均匀抽样的 100 万行）。
+
+| 指标 | 数值 |
+|---|---|
+| 训练 / 验证样本 | 900,000 / 100,000 |
+| 验证集正类率 | 0.2512（真实 Criteo 点击率） |
+| **DeepFM 验证 AUC** | **0.7733** |
+| LR 基线 验证 AUC | 0.7716 |
+| 常数基线 AUC | 0.5000 |
+| 训练预算（梯度更新次数） | 3,516 |
+
+> **数据规模效应**：同一脚本 20 万行得 AUC 0.7583、100 万行得 **0.7733**——高基数稀疏特征需要
+> 足够样本才能学稳。20 万行结果保留在 `data/real_validation/result_criteo_200k.json` 作为对照。
+
+> **可复现性**：20 万行与 100 万行两档均**独立重跑并逐位复现**（0.7583 / 0.7733）。
+> 唯一非确定性来自 LR 基线——它在弱 CPU 上 150 次迭代未完全收敛，
+> 故在结果中标注为"未收敛的对照基线"，不代表 DeepFM 有抖动。
+
+**结论的口径（保守）**：DeepFM 在真实 Criteo 上 AUC **0.7733 ≫ 0.5**，即**同一份实现能处理真实 CTR 数据**。
+但与 LR 基线（0.7716）**仅差 0.0017**，不足以支撑「深度交叉项在真实数据上有增量」——
+该说法需要多种子方差估计才能成立，本项目未做，故**不声称**。
+
+**Criteo 接入**：`src/data/criteo.py` 同时支持两种真实格式（按扩展名分派）——
+parquet（`criteo-1M`：`label, I1..I13, C1..C26`，稠密缺失 `NaN`、稀疏整数哈希码）
+与 DAC 文本（`train.txt`：tab 分隔，缺失为空串）。
+预处理：稠密缺失→0、`log1p`、Z-score（仅训练集统计量）；稀疏按字段建频率词表、低频/OOV→0。
+解析逻辑已用构造样本 + 真实 parquet 双路单测（`tests/test_criteo.py`、`tests/test_criteo_real.py`）。
+
+一键运行：
+
+```bash
+# 1) 获取数据（本沙箱无法直连官方源，需本机下载后放入 data/criteo/，该目录已 gitignore）
+#    - 推荐：HuggingFace eldieguinpo/criteo-1M -> criteo_1M.parquet（约 45MB / 100 万行）
+# 2) 验证（约 161s / 100 万行）
+python scripts/validate_real_data_deepfm.py --dataset criteo \
+    --criteo-path data/criteo/criteo_1M.parquet --criteo-rows 1000000
+```
+
+> **工程提示**：本沙箱 CPU 配额仅 4 核，而 PyTorch 默认按物理核数（32）开线程，严重超订会让每步
+> 耗时飙到秒级。验证脚本已内置线程上限（`AEROREC_THREADS`，默认 4）——真实环境里常见但易忽略的坑。
+> 另：LR 基线全程保持 scipy 稀疏（26 字段 one-hot 稠密化会直接 OOM）。
+
+**诚实边界**：Criteo 仍**非出行域流量**，它只是最接近的公共代理 + 最被认可的 CTR 基准，
+**不代表在出行真实流量上验证过**。
+
+**数据获取的说明**：Criteo 官方源（ailab / S3 `criteo-labs` / `go.criteo.net`）在构建沙箱中均不可达
+（404 或重定向后超时），HuggingFace CDN 亦超时，故数据文件由**本机下载后上传**。
+选择 `eldieguinpo/criteo-1M` 是因为它与官方 DAC 同源（均匀抽样镜像），且体量适合本项目。
+
 ### 可能的后继方向
 
 - 把偏差诊断接入真实数据链路：用估计出的 propensity 复跑边界实验，量化「propensity 估计误差」对边界的影响。
 - 用户侧选择偏差建模（同一用户内跨物品的偏好偏差），补齐当前单物品域的缺口。
+- **为路径 A 配真实数据**：正确选择是 **Coat**（Schnabel et al. 2016，同时含"自选偏差集"与
+  "随机无偏集"，是去偏研究的标准基准）或 **Open Bandit Dataset**（ZOZO，含真实 propensity）。
+  MovieLens **不适合**——它未记录曝光策略与 propensity，无法做 IPS 去偏验证。
 - 备选：服务工程深度（P99 延迟 / QPS 曲线 / 冷启动 / 增量特征更新）。属工程信号强化，与研究向申请收益有限。
 
 ---
