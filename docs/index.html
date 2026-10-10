@@ -37,6 +37,11 @@
   .btn { display: inline-block; background: var(--accent); color: #fff; text-decoration: none;
          padding: 10px 22px; border-radius: 8px; font-weight: 600; }
   .svg-wrap { text-align: center; overflow-x: auto; }
+  /* 首屏数据声明：醒目但不喧宾夺主 */
+  .banner { background: #eef4ff; border: 1px solid #bfdbfe; border-left: 4px solid #2563eb;
+            border-radius: 8px; padding: 12px 16px; margin-top: 18px; font-size: 14px;
+            color: #1e3a5f; line-height: 1.65; }
+  .banner b { color: #1d4ed8; }
   footer { text-align: center; color: var(--muted); font-size: 13px; margin-top: 36px; }
   @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
 </style>
@@ -47,6 +52,15 @@
     <span class="badge">本科 AI 出国申请作品 · 工程型 · 交叉学科（AI + 出行/交通）</span>
     <h1>AeroRec · 出行智能推荐中台</h1>
     <p class="subtitle">开源、可复现的出行场景智能推荐系统 —— 召回 → DeepFM 排序 → 5 步混排 → 降级 → 真实 CTR 评估</p>
+
+    <p class="banner">
+      <b>数据说明</b>：本项目全部数据由 <code>src/data/synthetic_generator.py</code>
+      <b>合成生成</b>（固定随机种子），<b>不使用、也不声称使用任何真实业务数据</b>。
+      选择合成数据是因为它让「潜在真实 CTR」成为已知量，从而能够构造
+      <b>Oracle 上界</b>并给出<b>不依赖平滑估计</b>的评估口径——这是本项目量化结论得以成立的前提。
+      代价是：指标衡量的是<b>方法在受控条件下的有效性</b>，而非<b>线上可迁移性</b>，
+      完整局限清单见 README「诚实边界与局限性」。
+    </p>
   </header>
 
   <section>
