@@ -77,6 +77,19 @@ st.caption("召回 → DeepFM CTR 排序 → 5 步混排 → 降级兜底 → �
 
 page = st.sidebar.radio("导航", ["推荐演示", "排序流程", "真实 CTR 对比", "模拟 A/B"])
 st.sidebar.caption(f"当前模式：**{mode}**")
+
+# 研究主线的入口。
+# 这里只放链接、不嵌内容：`data/bias/report.html` 是带独立版式的完整文档，
+# 用 st.components.v1.html 嵌进本页会出现「iframe 高度写死 → 只能在小框里滚」
+# 与「两套视觉语言打架」两个问题，且流式沙箱下叠 iframe 有额外风险。
+# 报告本质是「读」的成果，GitHub 上的渲染体验更好，故以链接形式给出。
+st.sidebar.divider()
+st.sidebar.markdown(
+    "**研究主线**：偏差传播诊断 + 去偏有效边界\n\n"
+    "- [tech report](https://github.com/Elijah-Lin-Dancer/AeroRec/blob/main/docs/bias_report.md)\n"
+    "- [可视化报告（HTML）](https://github.com/Elijah-Lin-Dancer/AeroRec/blob/main/data/bias/report.html)\n"
+    "- [完整仓库](https://github.com/Elijah-Lin-Dancer/AeroRec)"
+)
 n_users_max = {"micro": 9_999, "lite": 19_999}.get(mode, 99_999)
 
 # 口径声明放在导航之后、且默认折叠：

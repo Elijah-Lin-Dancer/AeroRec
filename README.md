@@ -12,6 +12,8 @@
 
 > **快速体验**：[项目主页](https://elijah-lin-dancer.github.io/AeroRec/) · [交互 Demo（Streamlit Cloud）](https://aerorec.streamlit.app)
 >
+> **研究主线**（偏差传播诊断 + 去偏有效边界）：[tech report](docs/bias_report.md) · [可视化报告（HTML）](data/bias/report.html)
+>
 > <!-- ⚠️ 待办：上面两处 HF Spaces 链接目前写着预估地址 `spaces/<你的用户名>/AeroRec`。
 >      创建 Space 后请把 `<你的用户名>` 替换为真实账号，并把 docs/index.html 第 187 行同步更新。 -->
 
@@ -254,7 +256,8 @@ DeepFM 的 FM/DNN 能自动学出数据中的隐式非线性交叉（价格敏�
 ### ④ 研究主线：偏差传播诊断与去偏有效边界
 
 > 完整版见 **[docs/bias_report.md](docs/bias_report.md)**（tech report 级）；
-> 可视化版见 `data/bias/report.html`（自包含单文件，21 KB，含内联 SVG，可离线打开）。
+> 可视化版见 **[data/bias/report.html](data/bias/report.html)**（自包含单文件，21 KB，含内联 SVG，
+> 零外链零脚本，可离线打开；GitHub 上点开后可用 [htmlpreview](https://htmlpreview.github.io/) 或在本地直接打开）。
 
 本项目的**独有资源**是可控 ground-truth（`compute_true_ctr` 是解析已知的生成函数）——
 真实数据集只能*估计*偏差，这里可以*精确测量*，且曝光策略自造、propensity 是**闭式已知**的。
