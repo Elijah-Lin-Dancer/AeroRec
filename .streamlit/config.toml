@@ -1,5 +1,6 @@
-# Streamlit Cloud 运行时配置
-# 关键点：社区版 Cloud 的反向代理场景下，若不显式放开 CORS / XSRF，
+# Streamlit 运行时配置
+#
+# [server] 关键点：社区版 Cloud 的反向代理场景下，若不显式放开 CORS / XSRF，
 # 内嵌 iframe 或跨域访问会出现 WebSocket 握手被拒（页面一直 "Connecting..."）。
 [server]
 enableCORS = true
@@ -9,5 +10,18 @@ headless = true
 [browser]
 gatherUsageStats = false
 
+# [theme] 与项目其余可视化保持同一套配色（见 src/bias/report.py 的 C 字典）。
+#
+# 为什么必须显式改 primaryColor：
+#   Streamlit 默认主色是红色 (#FF4B4B)。在本项目语境里红色有两重误导——
+#   一是「红=差」的直觉（虽然本项目不是金融产品，但访客的第一印象仍在此）；
+#   二是本项目自己的偏差报告已固定「绿=好 / 红=差」的语义色，
+#   若交互页用红色作主色，两处视觉语言会打架。
+#   故主色统一为 project blue #2563eb，红色只保留给真正的告警。
 [theme]
 base = "light"
+primaryColor = "#2563eb"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f7f8fa"
+textColor = "#1a1d23"
+font = "sans serif"

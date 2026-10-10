@@ -6,11 +6,11 @@
 
 [![Python](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Demo](https://img.shields.io/badge/🚀%20Demo-Streamlit%20Cloud-ff4b4b)](https://aerorec.streamlit.app)
+[![Demo](https://img.shields.io/badge/🚀%20Demo-Streamlit%20Cloud-ff4b4b)](https://aerorec-tourism.streamlit.app)
 [![Streamlit](https://img.shields.io/badge/built%20with-Streamlit-ff4b4b)](https://streamlit.io/)
 [![Pages](https://img.shields.io/badge/🌐%20Homepage-GitHub%20Pages-blue)](https://elijah-lin-dancer.github.io/AeroRec/)
 
-> **快速体验**：[项目主页](https://elijah-lin-dancer.github.io/AeroRec/) · [交互 Demo（Streamlit Cloud）](https://aerorec.streamlit.app)
+> **快速体验**：[项目主页](https://elijah-lin-dancer.github.io/AeroRec/) · [交互 Demo（Streamlit Cloud）](https://aerorec-tourism.streamlit.app)
 >
 > **研究主线**（偏差传播诊断 + 去偏有效边界）：[tech report](docs/bias_report.md) · [可视化报告（HTML）](data/bias/report.html)
 >
@@ -97,7 +97,7 @@ python3.11 scripts/validate_real_data_deepfm.py --dataset adult   # 真实数据
 ### 在线 Demo
 
 - **项目主页（GitHub Pages）**：https://elijah-lin-dancer.github.io/AeroRec/
-- **交互面板（Streamlit Community Cloud）**：https://aerorec.streamlit.app
+- **交互面板（Streamlit Community Cloud）**：https://aerorec-tourism.streamlit.app
 
 ## 数据与复现
 
