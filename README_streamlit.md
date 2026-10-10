@@ -120,11 +120,16 @@
 ## 本地运行
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements.txt   # 部署依赖（仅 numpy + streamlit，与 Cloud 一致）
 streamlit run app.py                     # 默认 micro 档（1万×1万×50万，约 130MB）
 AEROREC_MODE=lite  streamlit run app.py  # 轻量档（2万×2万×100万，约 960MB）
 AEROREC_MODE=full  streamlit run app.py  # 完整档（10万×10万×500万，需大内存）
 ```
+
+> 若要复现**完整档**或离线重训模型（`full` 模式、`src.build_online_artifacts`），
+> 需先安装完整依赖：`pip install -r requirements_full.txt`（含 torch / sklearn / pandas）。
+> 根目录的 `requirements.txt` 之所以只有 numpy + streamlit，是因为 Streamlit Cloud
+> 只读这个文件——若写入 torch，1GB 免费实例会因 643MB 的固有导入开销而 OOM。
 
 若 `artifacts/micro/` 缺失，先离线生成模型权重（需 torch，约 2 分钟）：
 
@@ -136,7 +141,8 @@ python -m src.build_online_artifacts micro
 
 ```
 app.py                        # Streamlit 入口
-requirements.txt              # 运行依赖（在线侧无需 torch / sklearn）
+requirements.txt              # 部署依赖（仅 numpy + streamlit；Cloud 读取本文件）
+requirements_full.txt         # 完整依赖（含 torch / sklearn，本地训练与离线复现用）
 artifacts/micro/              # 离线预训练权重（numpy 格式）
   deepfm_ctr.npz              #   DeepFM 权重
   cvr_lr.npz                  #   LR(CVR) 系数

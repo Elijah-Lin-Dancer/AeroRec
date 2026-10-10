@@ -102,16 +102,20 @@ license: mit
 ## 本地运行
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements.txt   # 部署依赖（仅 numpy + streamlit）
 streamlit run app.py                     # 默认 lite 档（2万×2万×100万）
 AEROREC_MODE=full streamlit run app.py   # 完整档（10万×10万×500万，需较大内存）
 ```
+
+> 完整档与离线重训需 `pip install -r requirements_full.txt`（含 torch / sklearn / pandas）。
+> 根目录 `requirements.txt` 只放 numpy + streamlit，是为了适配 1GB 免费实例
+> （`import torch` 的固有开销为 643MB，与数据规模无关）。
 
 ## 目录结构（与本 Space 相关部分）
 
 ```
 app.py                     # Streamlit 入口（本 Space 的 app_file）
-requirements.txt           # 运行依赖
+requirements.txt           # 部署依赖（仅 numpy + streamlit）
 src/
   config_lite.py           # 轻量档配置
   data/synthetic_generator_lite.py

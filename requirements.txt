@@ -1,25 +1,27 @@
-# AeroRec — 推荐中台依赖
+# AeroRec — Streamlit Community Cloud 部署依赖
 #
-# 为什么这里写成「下限 + 主版本上限」而不是全锁定（==）？
-#   1. 这份仓库要同时跑在三种环境：本地开发、Streamlit Cloud、离线构建机。
-#      全锁 == 会让 Cloud 的镜像构建在某次依赖下线后直接失败。
-#   2. 但完全不设上限同样有代价：实测 numpy / scikit-learn 的**大版本跃迁**
-#      会改变浮点归约顺序，让 DeepFM 的 AUC 在第 4 位小数上漂移。
-#   因此采用「主版本上限」策略：允许补丁与小版本更新，挡住破坏性跃迁。
+# ⚠️ 这个文件必须叫 requirements.txt
+#    Streamlit Cloud 只读取**根目录的 requirements.txt**，不会自动识别
+#    requirements_streamlit.txt / requirements_spaces.txt。
+#    若不在此处收敛依赖，Cloud 会按完整清单安装 torch —— 而 `import torch`
+#    的固有开销为 643MB（与数据规模无关），在 1GB 免费实例上必然 OOM，
+#    本项目「训练与推理解耦」的设计会被完全绕过。
 #
-# 关于可复现性：
-#   指标的完全可复现**不依赖**于锁定依赖版本，而依赖于训练代码显式播种。
-#   见 src/rank/trainer.py —— 权重初始化被安排在种子设定之后。
-#   验证方式：在 numpy 2.3.5 / torch 2.10 与 numpy 2.4.6 / torch 2.14
-#   两套环境下执行 `python -m src.eval.evaluate`，输出逐字节一致。
-numpy>=1.24,<3
-pandas>=2.0,<4
-scikit-learn>=1.3,<2
-torch>=2.0,<3
-fastapi>=0.100,<1
-uvicorn>=0.23,<1
-streamlit>=1.30,<2
+# 为什么在线侧不需要 torch / scikit-learn / pandas：
+#   1GB 内存上限是硬约束。实测各组件累计导入开销：
+#     裸 Python 9MB → +numpy 25MB → +sklearn 176MB → +torch 643MB → +streamlit 676MB
+#   本项目采用「离线预训练 + numpy 推理」：权重已由
+#       python -m src.build_online_artifacts micro
+#   预先导出到 artifacts/micro/*.npz，在线侧只用 numpy 复现前向计算。
+#   实测峰值内存约 130MB（解耦前 840MB），相对 1GB 上限余量约 8 倍。
+#
+# 需要完整训练 / 离线复现 / 跑测试时，请安装 requirements_full.txt：
+#       pip install -r requirements_full.txt
+#
+# 关于版本策略（与 requirements_full.txt 一致）：采用「主版本上限」而非全锁定。
+#   全锁 == 会让 Cloud 镜像在依赖下线后构建失败；完全不设上限则可能因
+#   numpy 大版本跃迁改变浮点归约顺序，使 AUC 在第 4 位小数漂移。
+#   指标的完全可复现**不依赖**锁定版本，而依赖训练代码显式播种（见 src/rank/trainer.py）。
 
-# 测试依赖（README「快速开始」第 4 步用到；此前漏列，导致 pytest 报 ModuleNotFoundError）
-pytest>=7.0,<9
-# 后续可选: plotly, matplotlib, shap
+numpy>=1.24,<3
+streamlit>=1.30,<2

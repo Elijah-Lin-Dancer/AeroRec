@@ -73,7 +73,7 @@ flowchart TB
 ## 快速开始
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements_full.txt   # 完整依赖（含 torch / sklearn，本地开发与离线复现用）
 python -m src.pipeline_demo        # 数据 + 四路召回 + 融合 + 样例推荐
 python -m src.eval.evaluate        # LR vs DeepFM AUC + 真实 CTR 对比 + Oracle 上界
 python -m src.build_online_artifacts micro  # 离线生成在线权重（首次需先跑一次）
@@ -81,6 +81,12 @@ streamlit run app.py                    # 交互式 Demo，默认 micro 档（~1
 AEROREC_MODE=lite  streamlit run app.py # 轻量档（~0.93GB）
 AEROREC_MODE=full  streamlit run app.py # 完整档（需 ~1.5GB 内存）
 uvicorn src.serve.app:app --port 8000    # FastAPI 服务（推荐 / 排序流程 / A/B）
+```
+
+> **`requirements.txt` 为什么只有 numpy + streamlit**：Streamlit Community Cloud
+> 只读取根目录的 `requirements.txt`。若把它写成完整依赖，Cloud 会安装 torch
+> （固有导入开销 643MB，与数据规模无关），在 1GB 免费实例上必然 OOM。
+> 故根目录的 `requirements.txt` 是**部署专用**，完整依赖见 `requirements_full.txt`。
 python -m pytest tests/ -q              # 冒烟测试（86 项）
 python3.11 scripts/run_bias_experiments.py   # 偏差传播 + 去偏实验（产出 data/bias/*.json）
 python3.11 scripts/build_bias_report.py      # 生成自包含 HTML 可视化报告
@@ -367,8 +373,8 @@ docs/bias_report.md          偏差传播诊断与去偏验证 tech report
 data/bias/                   偏差实验产物（propagation/injection/boundary.json + report.html）
 data/real_validation/        真实数据验证结果（Criteo 100 万 / 20 万行 + Adult）
 artifacts/micro/           离线预训练的在线权重（numpy，约 29KB）
-requirements.txt           完整依赖（含 torch，本地/离线）
-requirements_streamlit.txt 在线依赖（仅 numpy + streamlit，用于免费档部署）
+requirements.txt           部署依赖（仅 numpy + streamlit，Streamlit Cloud 读这个）
+requirements_full.txt      完整依赖（含 torch / sklearn / pandas，本地开发与离线复现）
 ```
 
 ## 诚实边界与局限性
