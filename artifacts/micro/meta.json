@@ -17,6 +17,6 @@
     32
   ],
   "deepfm_epochs": 3,
-  "built_at": "2026-10-03 23:07:19",
+  "built_at": "2026-10-10 18:12:08",
   "note": "由 src/build_online_artifacts.py 离线生成；在线侧以纯 numpy 加载，不依赖 torch/sklearn。"
 }
