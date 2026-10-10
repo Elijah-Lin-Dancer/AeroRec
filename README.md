@@ -39,10 +39,10 @@
 - [x] 降级兜底：CTR 服务超时 → 历史平均 CTR 兜底
 - [x] 离线评估：LR vs DeepFM 的 AUC 对比 + 推荐列表真实 CTR 对比
 - [x] 服务化 API（FastAPI：推荐 / 排序流程 / A/B）
-- [x] 可解释面板（Streamlit：推荐演示 / 排序流程 / A/B 报告）
+- [x] 可解释面板（Streamlit 四页：推荐演示 / 排序流程 / 真实 CTR 对比 / 模拟 A/B）
 - [x] 模拟 A/B 报告（多目标 CTR+CVR，点击率 / 转化率双提升）
 - [x] **真实 CTR 口径评估 + Oracle 上界**（修正热门基线的平滑稀疏偏差，结论可引用）
-- [x] 双档数据规模：`full`（10 万用户 × 10 万物品）与 `lite`（2 万 × 2 万，供 2GB 内存的在线 Demo）
+- [x] 三档数据规模：`full`（10 万用户 × 10 万物品）、`lite`（2 万 × 2 万，2GB 内存在线）、`micro`（1 万 × 1 万，1GB 内存在线、离线训练 + numpy 推理）
 - [x] 在线 Demo：GitHub Pages 项目主页 + Streamlit Community Cloud 交互面板
 - [ ] demo 视频（30 秒录屏）
 
