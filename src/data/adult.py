@@ -152,14 +152,8 @@ def load_adult(cache_dir: str | Path = "data/adult",
 
 
 # ---------------------------------------------------------------------------
-# Criteo 接入点（一旦数据集可达即可启用，无需改动 DeepFM / trainer）
+# Criteo 接入：已实现于 src/data/criteo.py（独立模块，与 load_adult 同构）
 # ---------------------------------------------------------------------------
-# def load_criteo(path: str | Path, n_rows: int | None = None) -> dict:
-#     """把 Criteo DAC 格式（label, I1..I13, C1..C26）预处理成与上面同构的返回。
-#     关键步骤：
-#       dense: I1..I13 缺失->0, 取 log1p, 再 Z-score 标准化；
-#       sparse: C1..C26 用哈希或频率截断编码为整数类别（见 README 选型说明）；
-#       sparse_cards = [每列 vocabulary 大小]；dense_dim = 13。
-#     预处理完成后直接复用 DeepFMRanker(dense_dim=13, sparse_cards=...) 训练即可。
-#     """
-#     ...
+# Criteo 加载器（src/data/criteo.py）已完整实现 DAC 格式解析与预处理，并单测验证；
+# 本机提供 train.txt 后运行 `scripts/validate_real_data_deepfm.py --dataset criteo` 即可。
+# 无需改动 DeepFM / trainer —— 两者都只依赖 (dense_dim, sparse_cards) 四元组。

@@ -1,18 +1,25 @@
-"""路径 B 验证脚本：用真实公开数据集（UCI Adult）验证同一个 DeepFM 能学到真实信号。
+"""路径 B 验证脚本：用真实公开数据集验证同一个 DeepFM 能学到真实信号。
+
+支持两种真实基准（与 DeepFM 完全同构，模型零改动）：
+  - adult  （默认）UCI Adult / Census Income，已在本沙箱跑通（验证 AUC 0.9183）
+  - criteo Criteo Display Advertising Challenge，CTR 标准基准；需本机提供 train.txt
+    （本沙箱网络不可达，详见 README「路径 B / Criteo 接入」）
 
 运行：
-    python scripts/validate_real_data_deepfm.py
+    python scripts/validate_real_data_deepfm.py                      # 默认 adult
+    python scripts/validate_real_data_deepfm.py --dataset criteo \\
+        --criteo-path data/criteo/train.txt --criteo-rows 1000000
 
 产出：
     data/real_validation/result.json   实验元信息 + 指标（AUC / 基线对照 / 环境）
     stdout                             人类可读摘要
 
 注意：本脚本不改动任何合成链路代码；它只复用 src.rank.trainer.DeepFMRanker，
-传入真实 (dense, sparse, sparse_cards) 四元组。若改用 Criteo，只需把
-src.data.adult.load_adult 换成同构的 load_criteo（见 src/data/adult.py 接入点）。
+传入真实 (dense, sparse, sparse_cards) 四元组。
 """
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import sys
@@ -27,7 +34,6 @@ from sklearn.linear_model import LogisticRegression  # noqa: E402
 from sklearn.metrics import roc_auc_score  # noqa: E402
 from sklearn.preprocessing import OneHotEncoder  # noqa: E402
 
-from src.data.adult import load_adult  # noqa: E402
 from src.rank.trainer import (DEEFM_BATCH_SIZE, DeepFMRanker,  # noqa: E402
                               plan_epochs)
 
@@ -43,8 +49,19 @@ def lr_baseline(dtr, str_, ytr, dva, sva, yva):
 
 
 def main():
+    ap = argparse.ArgumentParser(description="路径 B：真实数据验证 DeepFM 迁移性")
+    ap.add_argument("--dataset", choices=["adult", "criteo"], default="adult")
+    ap.add_argument("--criteo-path", default="data/criteo/train.txt")
+    ap.add_argument("--criteo-rows", type=int, default=1_000_000)
+    args = ap.parse_args()
+
     t0 = time.time()
-    data = load_adult()
+    if args.dataset == "criteo":
+        from src.data.criteo import load_criteo  # noqa: E402
+        data = load_criteo(args.criteo_path, n_rows=args.criteo_rows)
+    else:
+        from src.data.adult import load_adult  # noqa: E402
+        data = load_adult()
     meta = data["meta"]
     print(f"[validate] 数据集={meta['dataset']}  训练={meta['n_train']}  验证={meta['n_val']}  "
           f"正类率(val)={meta['positive_rate_val']}")

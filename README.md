@@ -359,7 +359,8 @@ requirements_streamlit.txt 在线依赖（仅 numpy + streamlit，用于免费�
 > （官方 S3 / go.criteo.net / HuggingFace 全部被阻断）。改用 **UCI Adult / Census Income**
 > —— 真实、公开、可引用，结构与 CTR 任务**同构**（6 连续 + 8 类别特征，验证集正类率 0.2393
 > 与 CTR 类别不均衡接近），任务为预测收入 >50K（即 p(positive)，与 p(click) 同构）。
-> 加载器 `src/data/adult.py` 与数据集无关，Criteo 文件一旦可达即可通过同构接口直接替换。
+> 加载器现已独立实现于 `src/data/criteo.py`（与 `load_adult` 完全同构，模型零改动），
+> 并**经单元测试验证解析逻辑**；Criteo 文件在本机可达后即可一键跑出真实 AUC（见下方「Criteo 接入」）。
 
 结果（完整见 `data/real_validation/result.json`）：
 
@@ -376,6 +377,26 @@ requirements_streamlit.txt 在线依赖（仅 numpy + streamlit，用于免费�
 这一步把「合成 → 真实的迁移性未验证」这条局限，变成「**已在真实 `(dense, sparse)→二元` 数据上验证**」；
 出行域真实 CTR（Criteo）仍是最贴近的待验证基准（见下方选型说明）。
 
+**Criteo 接入（已实现，沙箱网络阻断 → 本机一键运行）**
+
+`src/data/criteo.py` 实现了完整 Criteo DAC 格式解析：标签 + 13 稠密（缺失→0、`log1p`、Z-score）
++ 26 稀疏（缺失 / 低频 OOV→0 的频率词表整数编码）。与 `DeepFM` 接口同构，**模型零改动**。
+解析逻辑已用构造样本单测（`tests/test_criteo.py`，无需网络 / 真实文件）。
+
+本机运行（先把 `train.txt` 放到 `data/criteo/`，建议取 1e6 行验证）：
+
+```bash
+# 获取数据（本沙箱均不可达，需在本机执行其一）
+#   - Kaggle:        criteo-display-advertising-challenge（需登录）
+#   - 经典镜像:      dac.tar.gz（官方 S3 / go.criteo.net 现已 404，可自行检索可用镜像）
+python scripts/validate_real_data_deepfm.py --dataset criteo \
+    --criteo-path data/criteo/train.txt --criteo-rows 1000000
+```
+
+预期：合理 DeepFM 在 Criteo 公开基线上 AUC ≈ 0.79–0.80（与文献基线持平），即「排序模型在
+真实 CTR 任务上可用」的生产级证据。**注意**：Criteo 仍非出行域流量；它只是最接近的公共代理 +
+最被认可的基准，不代表在出行真实流量上验证过。
+
 #### C.（备选）服务工程深度
 
 P99 延迟 / QPS 曲线 / 冷启动 / 增量特征更新。属工程信号强化，与研究向申请收益有限。
@@ -385,7 +406,7 @@ P99 延迟 / QPS 曲线 / 冷启动 / 增量特征更新。属工程信号强化
 - **路径 B 实际采用 UCI Adult 而非 Criteo**：Criteo 在构建沙箱网络被阻断
   （官方 S3 / go.criteo.net / HuggingFace 均 404 或连接超时）。UCI Adult 作为同构的真实
   `(dense, sparse)→二元` 基准已验证迁移性；Criteo 仍是最贴近出行域 CTR 的待验证基准，
-  加载器接入点见 `src/data/adult.py` 底部 `load_criteo` 注释。
+  加载器已实现于 `src/data/criteo.py`（经单测验证解析逻辑），本机提供 `train.txt` 即可运行。
 - **MovieLens 不适合本项目的偏差研究**：它没有记录曝光策略与 propensity，
   无法做 IPS 去偏验证；且在出行特征库（`aff_*` / 里程 / 时段 / 出发到达）上无法直接迁移，
   强行适配需 1–2 周且只能部分对齐。
