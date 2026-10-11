@@ -39,9 +39,9 @@ TEXT: dict[str, dict[str, str]] = {
         "zh": "AeroRec · 出行智能推荐中台",
     },
     "hero.sub": {
-        "en": "Undergrad AI portfolio · an engineering-grade recommendation pipeline "
+        "en": "An engineering-grade recommendation pipeline "
               "(controlled experiment on synthetic data)",
-        "zh": "本科 AI 申请作品 · 工程化复现工业级推荐链路（合成数据受控实验）",
+        "zh": "工程化复现工业级推荐链路（合成数据受控实验）",
     },
     "chip.recall": {"en": "4-way Recall", "zh": "四路召回"},
     "chip.rank": {"en": "DeepFM CTR Ranking", "zh": "DeepFM CTR 排序"},
@@ -522,14 +522,14 @@ TEXT: dict[str, dict[str, str]] = {
 
     # ------------------------------------------------------------ footer
     "foot.body": {
-        "en": "<b>AeroRec</b> · Travel Recommendation Platform · Undergrad AI portfolio<br>"
+        "en": "<b>AeroRec</b> · Travel Recommendation Platform<br>"
               "This instance runs the micro tier (10k users × 10k items × 500k impressions); data is "
               "script-generated and reproducible; the model is offline pre-trained + numpy inference, "
               "with no torch / sklearn on the online side.<br>"
               "<a href=\"https://github.com/Elijah-Lin-Dancer/AeroRec\">Repository</a> · "
               "<a href=\"https://github.com/Elijah-Lin-Dancer/AeroRec/blob/main/docs/bias_report.md\">Bias-diagnosis tech report</a> · "
               "<a href=\"https://github.com/Elijah-Lin-Dancer/AeroRec/blob/main/data/bias/report.html\">Visual report</a>",
-        "zh": "<b>AeroRec</b> · 出行智能推荐中台 · 本科 AI 申请作品<br>"
+        "zh": "<b>AeroRec</b> · 出行智能推荐中台<br>"
               "本实例运行 micro 档（1 万用户 × 1 万物品 × 50 万曝光），数据由脚本合成、可复现；"
               "模型为离线预训练 + numpy 推理，在线侧不依赖 torch / sklearn。<br>"
               "<a href=\"https://github.com/Elijah-Lin-Dancer/AeroRec\">完整仓库</a> · "

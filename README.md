@@ -2,7 +2,7 @@
 
 > 面向出行消费场景（机票 / 酒店 / 商城 / 营销 / 直播）的开源智能推荐中台。
 > 工程化复现工业级推荐链路：**召回 → CTR 动态排序 → 降级兜底 → 服务化 → 可解释 → 真实 CTR 评估**。
-> 本科 AI 出国申请作品 · 工程型 · 交叉学科（AI + 出行/交通）
+> 工程型 · 交叉学科（AI + 出行/交通）
 
 [![Python](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -164,7 +164,7 @@ python3.11 scripts/validate_real_data_deepfm.py --dataset adult   # 真实数据
 公开推荐数据集（如 MovieLens）属于电影评分域，直接搬用会丢掉「里程兑换、多段行程、商务×早班机」
 这条出行特有的业务线——而那正是本项目相对通用推荐 demo 的差异点。
 
-**3. 固定种子 = 一键复现，这是申请作品的基本要求。**
+**3. 固定种子 = 一键复现，这是可复现性的基本要求。**
 任何人 `git clone` 后执行 `python -m src.eval.evaluate`，都能得到与本文档**逐字节一致**的数字
 （跨环境一致性验证见下「离线评估结果」一节）。一旦改用真实数据并涉及抓取与清洗，复现链条就会断裂。
 
@@ -534,13 +534,12 @@ requirements_full.txt      完整依赖（含 torch / sklearn / pandas，本地�
 - [x] W3：DeepFM 排序 + 5 步混排流程 + 降级策略 + 离线评估（AUC / 真实 CTR）
 - [x] W4：FastAPI 服务化 + 可解释面板（Streamlit）+ 模拟 A/B 报告
 - [x] W5–W6：架构图 / 复现文档 / 量化结果 / 在线 Demo（GitHub Pages + Streamlit Cloud）
-- [x] W7：评估口径修正 —— 发现并修正 A/B 基线稀疏性偏差、混排 `w_base` 热度二次注入
-- [x] W8：可复现性修复（训练随机性未播种）+ 依赖版本约束 + 诚实边界披露
-- [x] W9：真实数据一致性检查 —— 用 UCI Adult（真实 `(dense,sparse)→二元` 基准）验证同一份 `DeepFM`
-  在真实数据上仍能学到信号（验证 AUC **0.9183**），排除「模型实现本身有问题」
-- [x] **W10：研究主线 —— 偏差传播诊断 + 去偏验证**
+- [x] W7：评估口径 —— 真实 CTR 口径 + Oracle 上界；混排默认 `w_base = 0`
+- [x] W8：可复现性（训练显式播种）+ 依赖版本约束 + 诚实边界披露
+- [x] W9：真实数据验证 —— UCI Adult（验证 AUC **0.9183**）
+- [x] **W10：偏差传播诊断 + 去偏验证**
   - M1 曝光策略与闭式 propensity（50 万 × 3 坑位下 π 求和 = 1.0，经验频率偏差 0.00033 < 1 SE）
-  - M2 偏差度量与既有现象复现（平滑 CTR 0.5220 vs 真实 0.4476）
+  - M2 偏差度量（平滑 CTR 0.5220 vs 真实 0.4476）
   - M3 链路偏差传播矩阵（**排序反转 +0.8466 → −0.4955**）+ 二次注入自检
   - M4 去偏估计量 IPS / SNIPS / DR（含 π 两种约定的检测与告警）
   - M5 去偏有效边界（**`ESS/N ≈ 0.358`**，含 60 种子平均与噪声判据）
@@ -549,7 +548,7 @@ requirements_full.txt      完整依赖（含 torch / sklearn / pandas，本地�
 
 - [x] **W11：真实数据验证（路径 B）—— 用 Criteo 真实 CTR 基准验证 DeepFM 迁移性**
   - Criteo Display Advertising Challenge（13 稠密 + 26 稀疏 → p(click)，与本项目排序器**完全同构**）
-  - 100 万行：验证 AUC **0.7733**；20 万行：**0.7583**（规模对照，两次独立运行逐位一致）
+  - 100 万行：验证 AUC **0.7733**；20 万行：**0.7583**
   - 加载器支持 parquet 与 DAC 文本两种格式，模型**零改动**
   - 保留 UCI Adult 作快速自检（**0.9183**）
 
@@ -613,7 +612,7 @@ python scripts/validate_real_data_deepfm.py --dataset criteo \
 - **为路径 A 配真实数据**：正确选择是 **Coat**（Schnabel et al. 2016，同时含"自选偏差集"与
   "随机无偏集"，是去偏研究的标准基准）或 **Open Bandit Dataset**（ZOZO，含真实 propensity）。
   MovieLens **不适合**——它未记录曝光策略与 propensity，无法做 IPS 去偏验证。
-- 备选：服务工程深度（P99 延迟 / QPS 曲线 / 冷启动 / 增量特征更新）。属工程信号强化，与研究向申请收益有限。
+- 备选：服务工程深度（P99 延迟 / QPS 曲线 / 冷启动 / 增量特征更新）。属工程信号强化，对研究贡献的边际收益有限。
 
 ---
 
