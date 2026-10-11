@@ -171,6 +171,18 @@ python3.11 scripts/validate_real_data_deepfm.py --dataset adult   # 真实数据
 > 因此本文档的指标衡量的是**方法在受控条件下的有效性**，而非**线上可迁移性**。
 > 完整的局限清单见文末「诚实边界与局限性」。
 
+### 数据许可
+
+| 数据 | 是否入库 | 许可 / 使用条款 |
+| --- | --- | --- |
+| 合成数据（`data/processed*`，由 `synthetic_generator*.py` 生成） | 否（`.gitignore`，可一键重生成） | 本项目自产，随仓库按 **MIT** 许可分发 |
+| UCI Adult / Census Income（`data/adult/`） | 否（由加载器按需下载） | [UCI Machine Learning Repository](https://archive.ics.uci.edu/dataset/2/adult)；引用 Kohavi & Becker (1996)。仅用于学术用途 |
+| Criteo Display Advertising Challenge（`data/criteo/`） | 否（需自行获取） | 抽样版来源为 HuggingFace `eldieguinpo/criteo-1M`（Criteo DAC 均匀抽样 100 万行），许可 **CC-BY-NC-SA 4.0**（研究 / 教学用途，禁商用） |
+| 真实数据验证结果（`data/real_validation/*.json`） | 是 | 仅含聚合指标与运行环境元信息，不含任何原始数据行，随仓库 MIT 分发 |
+
+要点：**原始真实数据一律不入库**（见 `.gitignore`），仓库只提交验证结果的 JSON 作为证据；
+上表与 `data/real_validation/result*.json` 内的 `license` 字段保持一致。
+
 ### 复现性 CI：每次提交自动复算 + 零漂移门禁
 
 `.github/workflows/repro.yml` 在每次 push / PR 时于**干净机器**上自动执行三件事：
