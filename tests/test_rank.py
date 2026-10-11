@@ -1,11 +1,10 @@
 """排序层（DeepFM / Mixer / Degrade）与推理特征 冒烟测试。"""
 import numpy as np
-
-from src.data.synthetic_generator import generate_items, generate_users, generate_logs
-from src.feature.store import build_training_matrix, build_candidate_features, feature_dim
-from src.rank.trainer import DeepFMRanker
-from src.rank.mixer import Mixer
+from src.data.synthetic_generator import generate_items, generate_logs, generate_users
+from src.feature.store import build_candidate_features, build_training_matrix, feature_dim
 from src.rank.degrade import DegradeRanker, compute_recent_ctr
+from src.rank.mixer import Mixer
+from src.rank.trainer import DeepFMRanker
 
 
 def _small(n_items=1000, n_users=200, imp=10):
@@ -34,6 +33,23 @@ def test_deepfm_predict():
     ctr = dfm.predict_ctr(dense[:50], sparse[:50])
     assert ctr.shape == (50,)
     assert (ctr >= 0).all() and (ctr <= 1).all()
+
+
+def test_deepfm_seed_controls_init():
+    """seed 参数决定初始化随机性：同 seed 初值逐位一致，不同 seed 不同（多种子验证的基础）。"""
+    from src.config import SEED
+    cards = [10]
+
+    def first_param(m):
+        return next(m.model.parameters()).detach().numpy().copy()
+
+    a1 = DeepFMRanker(3, cards, embed_dim=4, dnn_hidden=(8,), seed=SEED)
+    a2 = DeepFMRanker(3, cards, embed_dim=4, dnn_hidden=(8,), seed=SEED)
+    b = DeepFMRanker(3, cards, embed_dim=4, dnn_hidden=(8,), seed=SEED + 1)
+    d = DeepFMRanker(3, cards, embed_dim=4, dnn_hidden=(8,))   # 默认 seed == SEED
+    assert (first_param(a1) == first_param(a2)).all()           # 同 seed 可复现
+    assert (first_param(a1) == first_param(d)).all()            # 默认值向后兼容
+    assert not (first_param(a1) == first_param(b)).all()        # 不同 seed 初值不同
 
 
 def test_mixer_scatter_dedupe():

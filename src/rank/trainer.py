@@ -43,15 +43,17 @@ class DeepFMRanker:
     def __init__(self, dense_dim: int, sparse_cards: list[int],
                  embed_dim: int = 16, dnn_hidden: tuple = (64, 32),
                  lr: float = 1e-3, epochs: int = 2, batch_size: int = 2048,
-                 device: str = "cpu"):
+                 device: str = "cpu", seed: int = SEED):
         self.dense_dim = dense_dim
         self.sparse_cards = sparse_cards
         # 权重初始化必须发生在全局随机种子被设定之后。
         # DeepFM.__init__ 内部会做 xavier_uniform_ / normal_(std=0.01)，
         # 若不先播种，网络初值会取决于进程全局 RNG 的残余状态，
         # 导致同一份代码在不同依赖版本/不同调用顺序下产出不同的指标。
-        torch.manual_seed(SEED)
-        np.random.seed(SEED)
+        # seed 可显式传入（默认项目基准 SEED）——真实数据多种子验证用。
+        self.seed = int(seed)
+        torch.manual_seed(self.seed)
+        np.random.seed(self.seed)
         self.model = DeepFM(dense_dim, sparse_cards, embed_dim, dnn_hidden).to(device)
         self.lr = lr
         self.epochs = epochs
@@ -60,8 +62,8 @@ class DeepFMRanker:
 
     def fit(self, dense, sparse, y, val_dense=None, val_sparse=None, val_y=None):
         # 训练阶段的随机性是显式的：打乱顺序（randperm）与 Dropout 掩码都依赖全局 RNG。
-        torch.manual_seed(SEED)
-        np.random.seed(SEED)
+        torch.manual_seed(self.seed)
+        np.random.seed(self.seed)
         dense_t = torch.tensor(dense)
         sparse_t = torch.tensor(sparse, dtype=torch.long)
         y_t = torch.tensor(y, dtype=torch.float32).unsqueeze(1)

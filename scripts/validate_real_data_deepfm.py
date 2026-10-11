@@ -41,6 +41,7 @@ from sklearn.linear_model import LogisticRegression  # noqa: E402
 from sklearn.metrics import roc_auc_score  # noqa: E402
 from sklearn.preprocessing import OneHotEncoder  # noqa: E402
 
+from src.config import SEED  # noqa: E402
 from src.rank.trainer import (DEEFM_BATCH_SIZE, DeepFMRanker,  # noqa: E402
                               plan_epochs)
 
@@ -65,6 +66,9 @@ def main():
     ap.add_argument("--dataset", choices=["adult", "criteo"], default="adult")
     ap.add_argument("--criteo-path", default="data/criteo/train.txt")
     ap.add_argument("--criteo-rows", type=int, default=1_000_000)
+    ap.add_argument("--seeds", type=int, default=1,
+                    help="DeepFM 训练种子数；>1 时重复训练并报告 mean±std 误差棒。"
+                         "种子序列为 SEED..SEED+N-1，故 --seeds 1 与历史单种子结果完全一致。")
     args = ap.parse_args()
 
     t0 = time.time()
@@ -85,14 +89,27 @@ def main():
     print(f"[validate] DeepFM 训练：{len(data['y_train'])} 样本 × {epochs} epoch / "
           f"batch {DEEFM_BATCH_SIZE} → {n_updates} 次梯度更新")
 
-    ranker = DeepFMRanker(
-        data["n_dense"], data["sparse_cards"],
-        embed_dim=16, dnn_hidden=(64, 32),
-        epochs=epochs, batch_size=DEEFM_BATCH_SIZE,
-    ).fit(data["dense_train"], data["sparse_train"], data["y_train"],
-          val_dense=data["dense_val"], val_sparse=data["sparse_val"], val_y=data["y_val"])
+    # 多种子误差棒：单次 AUC 受初始化与打乱顺序的随机性影响，
+    # seeds>1 时重复训练并报告 mean±std，让迁移性结论带上不确定度。
+    # 种子序列 SEED..SEED+N-1 → --seeds 1 与历史单种子结果逐字节可复现。
+    seed_list = [SEED + i for i in range(max(1, args.seeds))]
+    auc_per_seed: list[float] = []
+    for i, seed in enumerate(seed_list):
+        t_seed = time.time()
+        ranker = DeepFMRanker(
+            data["n_dense"], data["sparse_cards"],
+            embed_dim=16, dnn_hidden=(64, 32),
+            epochs=epochs, batch_size=DEEFM_BATCH_SIZE,
+            seed=seed,
+        ).fit(data["dense_train"], data["sparse_train"], data["y_train"],
+              val_dense=data["dense_val"], val_sparse=data["sparse_val"], val_y=data["y_val"])
+        auc = float(roc_auc_score(
+            data["y_val"], ranker.predict_ctr(data["dense_val"], data["sparse_val"])))
+        auc_per_seed.append(auc)
+        print(f"[validate] [{i + 1}/{len(seed_list)}] seed={seed}  "
+              f"val AUC = {auc:.4f}  ({time.time() - t_seed:.1f}s)")
 
-    auc_deepfm = float(roc_auc_score(data["y_val"], ranker.predict_ctr(data["dense_val"], data["sparse_val"])))
+    auc_deepfm = auc_per_seed[0]
     auc_lr = lr_baseline(data["dense_train"], data["sparse_train"], data["y_train"],
                         data["dense_val"], data["sparse_val"], data["y_val"])
     auc_naive = 0.5  # 常数预测
@@ -106,8 +123,7 @@ def main():
         "val_auc_deepfm": round(auc_deepfm, 4),
         "val_auc_logistic_baseline": round(auc_lr, 4),
         "val_auc_naive_constant": auc_naive,
-        "lift_over_naive": round(auc_deepfm - auc_naive, 4),
-        "environment": {
+        "lift_over_naive": round(auc_deepfm - auc_naive, 4),        "environment": {
             "torch": torch.__version__,
             "numpy": np.__version__,
             "sklearn": sklearn.__version__,
@@ -115,6 +131,13 @@ def main():
         },
         "elapsed_sec": round(time.time() - t0, 1),
     }
+    if len(seed_list) > 1:
+        mean_auc = float(np.mean(auc_per_seed))
+        std_auc = float(np.std(auc_per_seed, ddof=1))
+        result["seeds"] = seed_list
+        result["val_auc_deepfm_per_seed"] = [round(a, 4) for a in auc_per_seed]
+        result["val_auc_deepfm_mean"] = round(mean_auc, 4)
+        result["val_auc_deepfm_std"] = round(std_auc, 4)
     out_path = os.path.join("data", "real_validation", "result.json")
     with open(out_path, "w", encoding="utf-8") as f:
         json.dump(result, f, ensure_ascii=False, indent=2)
@@ -124,6 +147,10 @@ def main():
     print(f"  训练 / 验证样本     : {result['n_train']} / {result['n_val']}")
     print(f"  验证集正类率        : {result['positive_rate_val']}")
     print(f"  DeepFM 验证 AUC     : {auc_deepfm:.4f}")
+    if len(seed_list) > 1:
+        print(f"  DeepFM AUC(mean±std) : {result['val_auc_deepfm_mean']:.4f} "
+              f"± {result['val_auc_deepfm_std']:.4f}  (n={len(seed_list)})")
+        print(f"  逐种子 AUC           : {result['val_auc_deepfm_per_seed']}")
     print(f"  LR 基线 验证 AUC     : {auc_lr:.4f}")
     print(f"  常数基线 AUC         : {auc_naive:.4f}")
     print(f"  DeepFM 相对常数提升   : {auc_deepfm - auc_naive:+.4f}")
