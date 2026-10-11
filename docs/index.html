@@ -26,6 +26,7 @@
   th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); }
   th { color: var(--muted); font-weight: 600; font-size: 13px; }
   .up { color: #16a34a; font-weight: 700; }
+  .down { color: #dc2626; font-weight: 700; }
   .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 8px; }
   .feature { background: var(--bg); border-radius: 10px; padding: 14px 16px; font-size: 14px; }
   .feature b { display: block; margin-bottom: 4px; }
@@ -42,6 +43,7 @@
             border-radius: 8px; padding: 12px 16px; margin-top: 18px; font-size: 14px;
             color: #1e3a5f; line-height: 1.65; }
   .banner b { color: #1d4ed8; }
+  .links { margin-top: 16px; font-size: 14px; color: var(--muted); }
   footer { text-align: center; color: var(--muted); font-size: 13px; margin-top: 36px; }
   @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
 </style>
@@ -51,7 +53,7 @@
   <header>
     <span class="badge">工程型 · 交叉学科（AI + 出行/交通）</span>
     <h1>AeroRec · 出行智能推荐中台</h1>
-    <p class="subtitle">开源、可复现的出行场景智能推荐系统 —— 召回 → DeepFM 排序 → 5 步混排 → 降级 → 真实 CTR 评估</p>
+    <p class="subtitle">开源、可复现的出行场景智能推荐系统 —— 召回 → DeepFM 排序 → 5 步混排 → 降级 → 服务化 → 真实 CTR 评估 + 偏差传播诊断</p>
 
     <p class="banner">
       <b>数据说明</b>：本项目全部数据由 <code>src/data/synthetic_generator.py</code>
@@ -60,6 +62,13 @@
       <b>Oracle 上界</b>并给出<b>不依赖平滑估计</b>的评估口径——这是本项目量化结论得以成立的前提。
       代价是：指标衡量的是<b>方法在受控条件下的有效性</b>，而非<b>线上可迁移性</b>，
       完整局限清单见 README「诚实边界与局限性」。
+    </p>
+
+    <p class="links">
+      <a href="https://github.com/Elijah-Lin-Dancer/AeroRec">源码仓库</a> ·
+      <a href="https://github.com/Elijah-Lin-Dancer/AeroRec/blob/main/docs/bias_report.md">研究主线 tech report</a> ·
+      <a href="https://github.com/Elijah-Lin-Dancer/AeroRec/blob/main/docs/research_highlight.md">research one-pager (EN)</a> ·
+      <a href="https://github.com/Elijah-Lin-Dancer/AeroRec/actions/workflows/repro.yml">复现性 CI</a>
     </p>
   </header>
 
@@ -104,7 +113,7 @@
         <!-- 服务层 -->
         <rect x="150" y="480" width="460" height="64" rx="10" fill="#faf5ff" stroke="#9333ea"/>
         <text x="380" y="506" text-anchor="middle" font-size="16" font-weight="700" fill="#7e22ce">服务层</text>
-        <text x="380" y="528" text-anchor="middle" font-size="12" fill="#475569">FastAPI / Streamlit 可解释面板</text>
+        <text x="380" y="528" text-anchor="middle" font-size="12" fill="#475569">FastAPI / Streamlit 可解释面板（六页 · 中英双语）</text>
 
         <!-- 输出 -->
         <rect x="150" y="596" width="460" height="64" rx="10" fill="#eef4ff" stroke="#2563eb"/>
@@ -131,8 +140,8 @@
       <div class="feature"><b>CTR 排序</b>DeepFM（FM + DNN）预估点击率，轻量 LR 预估转化率，多目标打分。</div>
       <div class="feature"><b>5 步混排</b>复刻工业混排：归一化 → CTR 加权 → 分层排序 → 同品类打散 → 分页去重。</div>
       <div class="feature"><b>降级兜底</b>CTR 服务异常时退化为历史平均 CTR，保证核心链路不挂。</div>
-      <div class="feature"><b>可解释面板</b>Streamlit 三页：推荐演示 / 排序流程 / A/B 报告。</div>
-      <div class="feature"><b>服务化</b>FastAPI 提供 <code>/recommend</code> <code>/explain</code> <code>/ab</code> 接口。</div>
+      <div class="feature"><b>可解释面板</b>Streamlit 六页、中英双语：推荐演示 / <b>偏差诊断</b> / 排序流程 / 真实 CTR 对比 / 模拟 A/B / 模型与验证。</div>
+      <div class="feature"><b>服务化</b>FastAPI 提供 <code>/recommend</code> <code>/explain</code> <code>/ab</code> 接口（含 400/503/500 异常处理）。</div>
     </div>
   </section>
 
@@ -176,7 +185,77 @@
   </section>
 
   <section>
-    <h2>示例推荐（某用户 Top5）</h2>
+    <h2>④ 研究主线：偏差传播诊断与去偏有效边界</h2>
+    <p style="font-size:14px;color:#5f6672">
+      本项目的独有资源是<b>可控 ground-truth</b>——曝光策略自造、propensity 闭式已知，使「去偏估计能否还原真值」可被严格检验。
+      （完整版见 <a href="https://github.com/Elijah-Lin-Dancer/AeroRec/blob/main/docs/bias_report.md">tech report</a>）
+    </p>
+
+    <h3>结论一：偏差的主要危害是排序反转，不是水平偏移</h3>
+    <table>
+      <tr><th>曝光偏斜 τ</th><th>排序级 spearman</th><th>曝光最少 / 最多</th><th>KL</th><th>Gini</th></tr>
+      <tr><td>0.0</td><td>+0.8466</td><td>32 / 62</td><td>0.0103</td><td>0.0812</td></tr>
+      <tr><td>1.0</td><td>+0.6229</td><td>20 / 104</td><td>0.0944</td><td>0.2464</td></tr>
+      <tr><td>2.0</td><td>−0.0516</td><td>0 / 212</td><td>0.3658</td><td>0.4690</td></tr>
+      <tr><td>3.0</td><td class="down">−0.4955</td><td>0 / 287</td><td>0.6845</td><td>0.6211</td></tr>
+    </table>
+    <p style="font-size:13.5px;color:#5f6672;margin-top:10px">
+      spearman 从 <b>+0.8466 一路跌到 −0.4955</b>，在 τ≈2.0 处符号反转——排行榜被搞反了。
+      只看「平均 CTR 偏高多少」会得出「偏差可控」，却完全看不见排序级的破坏。
+    </p>
+
+    <h3>结论二：去偏的有效边界由 propensity 动态范围决定，而非偏差强度</h3>
+    <p style="font-size:13.5px;color:#5f6672">
+      实测边界 <b>ESS/N ≈ 0.358</b>：低于该值时 IPS/SNIPS 的方差代价超过纠偏收益，收益转负。
+      它是本项目给出的唯一可落地判据——<b>只需 propensity 与样本量，不需要 ground-truth</b>；
+      落地接口 <code>ess_warning_from_log(log, threshold=0.358)</code>。
+    </p>
+    <div class="note" style="background:#eef4ff;border-left-color:#2563eb">
+      <b>诚实边界</b>：本实验 propensity 闭式已知，真实系统须<b>估计</b> propensity，会引入本实验不存在的误差，
+      实际边界<b>更严苛</b>。可迁移的是<b>方法</b>（用 ESS/N 作预警），不是 0.358 这个数值。
+    </div>
+  </section>
+
+  <section>
+    <h2>真实数据迁移性验证</h2>
+    <p style="font-size:14px;color:#5f6672">
+      同一套 <code>DeepFM</code> 实现（与合成链路完全一致）在两份真实、公开、可引用的数据上验证——证明<b>实现能在真实数据上学到信号</b>。
+    </p>
+    <table>
+      <tr><th>数据集</th><th>任务</th><th>规模</th><th>DeepFM 验证 AUC</th><th>对照</th></tr>
+      <tr><td><b>Criteo</b> Display Advertising Challenge</td><td>13 稠密 + 26 稀疏 → p(click)</td><td>100 万行</td><td class="up"><b>0.7733</b></td><td>LR 0.7716 / 常数 0.5000</td></tr>
+      <tr><td>Criteo（规模对照）</td><td>同上</td><td>20 万行</td><td>0.7583</td><td>3 种子 0.7586 ± 0.0007</td></tr>
+      <tr><td><b>UCI Adult</b> / Census Income</td><td>同构 (dense, sparse) → 二元</td><td>快速自检</td><td class="up"><b>0.9183</b></td><td>—</td></tr>
+    </table>
+    <div class="note">
+      <b>保守口径</b>：Criteo 上 DeepFM 与 LR 基线仅差 <b>0.0017</b>（100 万行），<b>不声称</b>深度交叉项在真实数据上有增量；
+      本节只声称「同一份实现能处理真实 CTR 数据、学到强信号（≫ 0.5）」。
+      且 Criteo <b>非出行域流量</b>，只是最接近的公共代理 + 最被认可的 CTR 基准。
+    </div>
+  </section>
+
+  <section>
+    <h2>在线部署：训练 / 推理解耦 + 推理基准</h2>
+    <p style="font-size:14px;color:#5f6672">
+      免费在线实例内存下限为 <b>690MB</b>。实测「框架基线」：<code>torch + sklearn + numpy + streamlit = 673MB</code>，只剩 16.7MB，<b>必然 OOM</b>；
+      解耦后 <code>numpy + streamlit = 73MB</code>，留给数据 617MB。故在线侧<b>只加载 numpy 权重</b>，用纯 numpy 复现前向计算，<b>服务期不加载 torch</b>。
+    </p>
+    <table>
+      <tr><th>指标（micro 档，本机实测）</th><th>值</th></tr>
+      <tr><td>冷启动 · 模块导入 / 引擎构造</td><td>0.21 s / 0.08 s</td></tr>
+      <tr><td>延迟 · P50 / P99</td><td><b>0.70 ms</b> / 0.95 ms</td></tr>
+      <tr><td>吞吐 · 单线程 QPS</td><td>~1378</td></tr>
+      <tr><td>峰值内存 · RSS</td><td><b>~129 MB</b>（脚本内置断言校验未加载 torch）</td></tr>
+      <tr><td>端到端峰值（真实 streamlit 进程 + 浏览器）</td><td>~297 MB（相对 690MB 下限余量 2.3×）</td></tr>
+    </table>
+    <p style="font-size:13.5px;color:#5f6672;margin-top:10px">
+      PyTorch 与 numpy 前向<b>逐样本等价</b>（最大偏差 1.19e-07）——在线演示的仍是同一个已训练模型，只是换了运行时。
+      基准可复现：<code>python scripts/bench_inference.py --mode micro</code>。
+    </p>
+  </section>
+
+  <section>
+    <h2>示例推荐（某用户 Top5，示意）</h2>
     <table>
       <tr><th>#</th><th>物品</th><th>类目</th><th>预估 CTR</th><th>预估 CVR</th></tr>
       <tr><td>1</td><td>航线-03010</td><td>航线</td><td>38.6%</td><td>16.2%</td></tr>
@@ -189,14 +268,33 @@
   </section>
 
   <section>
+    <h2>复现与质量门禁</h2>
+    <div class="grid">
+      <div class="feature"><b>107 项测试</b>pytest 全量套件（含偏差诊断 / 去偏估计 / 在线引擎 / FastAPI），CI 每次提交自动跑。</div>
+      <div class="feature"><b>零漂移门禁</b>CI 只装 numpy 重跑偏差实验，<code>git diff --exit-code</code> 校验 <code>data/bias/*.json</code> 逐字节一致。</div>
+      <div class="feature"><b>在线内存纪律</b>CI 断言在线件不加载 torch / sklearn / pandas。</div>
+      <div class="feature"><b>静态检查</b>ruff（lint）+ mypy（类型）接入 CI。</div>
+    </div>
+    <div class="note" style="background:#eef4ff;border-left-color:#2563eb">
+      数据与依赖均<b>精确锁定</b>（<code>requirements.txt</code>）；训练代码显式播种（<code>src/rank/trainer.py</code>）。
+      一键复现见下方「快速开始」与 README。
+    </div>
+  </section>
+
+  <section>
     <h2>快速开始</h2>
-    <pre>pip install -r requirements.txt
-python -m src.pipeline_demo      # 数据 + 四路召回 + 融合
-python -m src.eval.evaluate      # LR vs DeepFM AUC + 真实 CTR + Oracle 上界
+    <pre>pip install -r requirements_full.txt   # 完整依赖（含 torch / sklearn，本地开发与离线复现用）
+python -m src.pipeline_demo        # 数据 + 四路召回 + 融合 + 样例推荐
+python -m src.eval.evaluate        # LR vs DeepFM AUC + 真实 CTR + Oracle 上界
 python -m src.build_online_artifacts micro   # 离线导出 numpy 权重（约 2 分钟）
-streamlit run app.py             # 交互式 Demo（默认 micro 档，进程峰值约 297MB）
-AEROREC_MODE=lite streamlit run app.py       # 切到 lite 档（约 960MB）
-python -m pytest tests/ -q       # 冒烟测试（16 项）</pre>
+streamlit run app.py               # 交互式 Demo（默认 micro 档，进程峰值约 297MB）
+AEROREC_MODE=lite streamlit run app.py       # 切到 lite 档（约 0.93GB）
+uvicorn src.serve.app:app --port 8000        # FastAPI 服务（推荐 / 排序 / A/B）
+python -m pytest tests/ -q         # 冒烟测试（107 项）</pre>
+    <div class="note">
+      <code>requirements.txt</code> 只有 <code>numpy + streamlit</code>，是 Streamlit Cloud 的<b>部署专用</b>依赖；
+      本地开发与离线复现请装 <code>requirements_full.txt</code>。
+    </div>
   </section>
 
   <div class="cta">
