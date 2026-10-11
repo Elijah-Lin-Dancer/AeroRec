@@ -12,13 +12,48 @@
 
 > **快速体验**：[项目主页](https://elijah-lin-dancer.github.io/AeroRec/) · [交互 Demo（Streamlit Cloud）](https://aerorec-tourism.streamlit.app)
 >
-> **研究主线**（偏差传播诊断 + 去偏有效边界）：[tech report](docs/bias_report.md) · [可视化报告（HTML）](data/bias/report.html)
+> **研究主线**（偏差传播诊断 + 去偏有效边界）：[tech report](docs/bias_report.md) · [可视化报告（HTML）](data/bias/report.html) · [research one-pager (EN)](docs/research_highlight.md)
 >
 > <!-- ⚠️ 待办：上面两处 HF Spaces 链接目前写着预估地址 `spaces/<你的用户名>/AeroRec`。
 >      创建 Space 后请把 `<你的用户名>` 替换为真实账号，并把 docs/index.html 第 187 行同步更新。 -->
 
 
 ---
+
+## English TL;DR
+
+**AeroRec** is an engineering-grade **travel recommendation platform** (flights / hotels / shopping / deals / live)
+that reproduces an industrial pipeline end-to-end on a **reproducible synthetic dataset**:
+4-way recall → DeepFM CTR ranking → 5-step mixing → graceful degradation → FastAPI / Streamlit serving →
+interpretable panels + true-CTR evaluation.
+
+- **Live demo (bilingual EN / 中文, toggle in the sidebar)**: <https://aerorec-tourism.streamlit.app>
+- **Research thread — bias-propagation diagnosis + debiasing effective boundary**: under biased exposure,
+  the ranking-level Spearman correlation **inverts from +0.85 (τ=0) to −0.50 (τ=3)**; debiasing (IPS/SNIPS/DR)
+  only pays off while the **effective sample size `ESS/N ≳ 0.358`**. See the
+  [tech report](docs/bias_report.md) · [visual report (HTML)](data/bias/report.html).
+- **Real-data transferability**: the *same* DeepFM implementation reaches **AUC 0.7733** (1 M rows) /
+  **0.7583** (200 k) on the Criteo benchmark — evidence that the implementation transfers to real data,
+  *not* that Criteo weights rank travel items (different feature schema).
+- **Online serving discipline**: pure-**numpy** forward pass, **no `torch` at serve time**;
+  engine process peak ≈ **129 MB**, single-thread **P50 ≈ 0.7 ms / P99 ≈ 1 ms**.
+
+> ⚠️ Everything is synthetic data; the online demo's numbers are for interaction only.
+> Citable conclusions use the offline **full tier** (100 k × 100 k × 5 M).
+
+## 效果预览 / Preview
+
+<p align="center">
+  <img src="docs/assets/demo_en.png" width="49%">
+  <img src="docs/assets/bias_en.png" width="49%">
+  <img src="docs/assets/model_en.png" width="49%">
+  <img src="docs/assets/bias_zh.png" width="49%">
+</p>
+
+> Demo 全站支持**中英文一键切换**（侧边栏顶部 🌐 Language / 语言，默认 English）。
+
+---
+
 
 ## 背景与动机
 
@@ -41,7 +76,8 @@
 - [x] 降级兜底：CTR 服务超时 → 历史平均 CTR 兜底
 - [x] 离线评估：LR vs DeepFM 的 AUC 对比 + 推荐列表真实 CTR 对比
 - [x] 服务化 API（FastAPI：推荐 / 排序流程 / A/B）
-- [x] 可解释面板（Streamlit 四页：推荐演示 / 排序流程 / 真实 CTR 对比 / 模拟 A/B）
+- [x] 可解释面板（Streamlit **六页、中英双语可切换**：推荐演示 / 偏差诊断 / 排序流程 / 真实 CTR 对比 / 模拟 A/B / 模型与验证）
+- [x] **在线推理性能基准**（micro 档实测：冷启动 init ≈ 0.08s、单线程 P50 ≈ 0.7ms / P99 ≈ 1ms、峰值 RSS ≈ 129MB、服务期不加载 torch，见 `scripts/bench_inference.py`）
 - [x] 模拟 A/B 报告（多目标 CTR+CVR，点击率 / 转化率双提升）
 - [x] **真实 CTR 口径评估 + Oracle 上界**（修正热门基线的平滑稀疏偏差，结论可引用）
 - [x] **偏差传播诊断 + 去偏验证**（链路偏差传播矩阵 / IPS·SNIPS·DR 去偏 / 有效边界 `ESS/N≈0.358`，见 [tech report](docs/bias_report.md)）
@@ -211,8 +247,26 @@ CUDA 版明显大于 CPU 版），与数据规模无关。** 673MB 的框架基�
 即便按最坏的 0.078 核折算（约 12.8× 减速）也在 **24s** 量级，不会触发超时；
 单次推荐 **1 ms**、冷启动 **0.53s**，交互体感不受影响。
 
+#### 在线推理基准（`scripts/bench_inference.py`，可复现）
+
+对**在线推理路径**（加载 numpy 权重 → 召回 → DeepFM/LR 前向 → 混排 → 组装结果，**不含训练**）
+做标准化计时。命令 `python scripts/bench_inference.py --mode micro`，结果写入 `data/bench.json`：
+
+| 指标 | 值 | 说明 |
+|---|---|---|
+| 冷启动 · 模块导入 | 0.21 s | 子进程纯导入在线引擎模块 |
+| 冷启动 · 引擎构造 | 0.08 s | 即时数据生成 + numpy 权重加载 |
+| 延迟 · P50 | **0.70 ms** | 单进程单线程串行，600 次取样（剔除 warm-up） |
+| 延迟 · P95 / P99 | 0.85 ms / **0.95 ms** | 同上 |
+| 吞吐 · 单线程 QPS | **~1378** | = 1 / 平均延迟，仅作数量级参考 |
+| 峰值内存 · RSS | **~129 MB** | 引擎进程（**未加载 torch**，脚本内置断言校验） |
+
+> 环境：AMD EPYC 9K65 / Python 3.11 / numpy 2.3.5。性能对机器敏感，引用时请连同环境一并给出。
+> 注意：本地基准机快于 Streamlit 免费实例（CPU 下限 0.078 核），故线上延迟会更高，但数量级一致。
+
 ```
-python -m src.build_online_artifacts micro   # 离线生成/刷新在线权重（需 torch，约 2 分钟）
+python scripts/bench_inference.py --mode micro   # 跑在线推理基准，产出 data/bench.json
+python -m src.build_online_artifacts micro        # 离线生成/刷新在线权重（需 torch，约 2 分钟）
 ```
 
 ## 方法
