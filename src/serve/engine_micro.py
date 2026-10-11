@@ -39,19 +39,18 @@ from __future__ import annotations
 
 import gc
 import json
-import os
 from pathlib import Path
 
 import numpy as np
 
-from src.config_scale import SEED, N_USERS, N_ITEMS, TOP_K, CATEGORIES
+from src.config_scale import CATEGORIES, N_ITEMS, N_USERS, SEED, TOP_K
 from src.data.synthetic_generator_lite import build_dataset_np
-from src.feature.lite_store import LiteFeatureStore, bincount_stats, SPARSE_CARD, N_DENSE
-from src.rank.numpy_deepfm import NumpyDeepFM, load_npz
-from src.rank.numpy_lr import NumpyOneHot, NumpyLogisticRegression
-from src.rank.mixer import Mixer
+from src.eval.ab import compare_rankers, simulate_ab
+from src.feature.lite_store import SPARSE_CARD, LiteFeatureStore, bincount_stats
 from src.rank.degrade import DegradeRanker
-from src.eval.ab import simulate_ab, compare_rankers
+from src.rank.mixer import Mixer
+from src.rank.numpy_deepfm import NumpyDeepFM, load_npz
+from src.rank.numpy_lr import NumpyLogisticRegression, NumpyOneHot
 
 _CAT = list(CATEGORIES)
 ROUTE_CAT = 0
@@ -86,7 +85,6 @@ class LiteRuleRecall:
     def __init__(self, items: dict, users: dict, miles_threshold: float = 0.10):
         self.items, self.users = items, users
         self.miles_threshold = float(miles_threshold)
-        n = len(items["item_id"])
         self.by_miles = np.where(items["is_miles_ticket"] > 0)[0]
         self.by_cat = {c: np.where(items["category_idx"] == c)[0]
                        for c in range(len(_CAT))}
@@ -170,7 +168,7 @@ class MicroRecommendationEngine:
         # ---------- 召回层 ----------
         self.pop = LitePopularRecall(self.n_items, top_k=200).fit(
             self.logs["item_id"], self.logs["clicked"])
-        trips_by_user = [[] for _ in range(self.n_users)]
+        trips_by_user: list = [[] for _ in range(self.n_users)]
         for u, o, d, off in zip(self.trips["user_id"], self.trips["origin_idx"],
                                 self.trips["dest_idx"], self.trips["depart_offset"]):
             trips_by_user[int(u)].append((int(o), int(d), int(off)))
@@ -239,7 +237,7 @@ class MicroRecommendationEngine:
         ranked = self.mixer.mix(cands, base, score, cats)
         info = {int(i): (b, c, v) for i, b, c, v in zip(arr, base, ctr, cvr)}
         out = []
-        for r, iid in enumerate(ranked):
+        for r, iid in enumerate(ranked[:top_k]):
             b, c, v = info[int(iid)]
             out.append({
                 "rank": r + 1,

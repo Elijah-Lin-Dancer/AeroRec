@@ -11,13 +11,13 @@ from sklearn.preprocessing import OneHotEncoder
 
 from src.config import TOP_K
 from src.data.synthetic_generator import build_dataset
-from src.feature.store import build_training_matrix, build_candidate_features, feature_dim
+from src.eval.ab import simulate_ab
+from src.feature.store import build_candidate_features, build_training_matrix, feature_dim
+from src.rank.degrade import DegradeRanker, compute_recent_ctr
+from src.rank.mixer import Mixer
+from src.rank.trainer import DeepFMRanker
 from src.recall.baselines import PopularRecall
 from src.recall.rule import RuleRecall
-from src.rank.trainer import DeepFMRanker
-from src.rank.mixer import Mixer
-from src.rank.degrade import DegradeRanker, compute_recent_ctr
-from src.eval.ab import simulate_ab
 
 
 class RecommendationEngine:
@@ -82,7 +82,7 @@ class RecommendationEngine:
         ranked = self.mixer.mix(cands, base, score, cats)
         info = {iid: (b, c, v) for iid, b, c, v in zip(cands, base, ctr, cvr)}
         out = []
-        for r, iid in enumerate(ranked):
+        for r, iid in enumerate(ranked[:top_k]):
             b, c, v = info[iid]
             out.append({
                 "rank": r + 1,
@@ -141,7 +141,10 @@ class RecommendationEngine:
 
         rng = np.random.default_rng(seed)
         item_ids_all = self.items["item_id"].to_numpy()
-        rng_rank = lambda uid, k: rng.choice(item_ids_all, size=k, replace=False).tolist()
+
+        def rng_rank(uid, k):
+            return rng.choice(item_ids_all, size=k, replace=False).tolist()
+
         k = top_k or self.top_k
 
         # 样本用户：取历史有点击的用户，保证其候选/特征可用

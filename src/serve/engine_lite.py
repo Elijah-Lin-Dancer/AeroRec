@@ -38,13 +38,13 @@ import numpy as np
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import OneHotEncoder
 
-from src.config_scale import SEED, N_USERS, N_ITEMS, TOP_K, CATEGORIES, MODE as SCALE_MODE
+from src.config_scale import CATEGORIES, N_ITEMS, N_USERS, SEED, TOP_K
 from src.data.synthetic_generator_lite import build_dataset_np
-from src.feature.lite_store import LiteFeatureStore, bincount_stats, SPARSE_CARD, N_DENSE
-from src.rank.trainer import DeepFMRanker, plan_epochs, DEEFM_BATCH_SIZE
-from src.rank.mixer import Mixer
-from src.rank.degrade import DegradeRanker
 from src.eval.ab import simulate_ab
+from src.feature.lite_store import N_DENSE, SPARSE_CARD, LiteFeatureStore, bincount_stats
+from src.rank.degrade import DegradeRanker
+from src.rank.mixer import Mixer
+from src.rank.trainer import DEEFM_BATCH_SIZE, DeepFMRanker, plan_epochs
 
 _CAT = list(CATEGORIES)
 ROUTE_CAT = 0
@@ -81,7 +81,6 @@ class LiteRuleRecall:
         self.route_ids = np.where(items["category_idx"] == ROUTE_CAT)[0]
         pop = items["popularity"][self.route_ids]
         self.pop_norm = pop / (pop.max() if pop.size and pop.max() > 0 else 1.0)
-        rd = items["popularity"]
         self._i_is_miles = items["is_miles_ticket"][self.route_ids]
         self._i_miles_req = items["miles_required"][self.route_ids]
         self._i_stock = items["stock"][self.route_ids]
@@ -170,7 +169,7 @@ class LiteRecommendationEngine:
         self.pop = LitePopularRecall(self.n_items, top_k=200).fit(
             self.logs["item_id"], self.logs["clicked"])
 
-        trips_by_user = [[] for _ in range(self.n_users)]
+        trips_by_user: list = [[] for _ in range(self.n_users)]
         for u, o, d, off in zip(self.trips["user_id"], self.trips["origin_idx"],
                                 self.trips["dest_idx"], self.trips["depart_offset"]):
             trips_by_user[int(u)].append((int(o), int(d), int(off)))
@@ -252,7 +251,7 @@ class LiteRecommendationEngine:
         ranked = self.mixer.mix(cands, base, score, cats)
         info = {int(i): (b, c, v) for i, b, c, v in zip(arr, base, ctr, cvr)}
         out = []
-        for r, iid in enumerate(ranked):
+        for r, iid in enumerate(ranked[:top_k]):
             b, c, v = info[int(iid)]
             out.append({
                 "rank": r + 1,
@@ -332,7 +331,7 @@ class LiteRecommendationEngine:
 
     def baseline_bias(self, top_n: int = 200, sample_user: int = 0) -> dict:
         """热门榜「平滑 CTR vs 真实 CTR」偏差，用于透明化稀疏性偏差。"""
-        from src.data.synthetic_generator import compute_true_ctr
+        from src.data.generator_common import compute_true_ctr
 
         try:
             ids = np.asarray(self.pop.recall(top_n), dtype=np.int64)
