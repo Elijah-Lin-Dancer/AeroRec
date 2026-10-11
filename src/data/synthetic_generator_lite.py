@@ -18,11 +18,24 @@ from __future__ import annotations
 import numpy as np
 
 from src.config_scale import (
-    SEED, N_USERS, N_ITEMS, IMPRESSIONS_PER_USER, CATEGORIES,
-    CTR_BASE, QUALITY_W, GAMMA_PRICE, GAMMA_BIZ_MORNING, GAMMA_MILES,
-    BETA0, BETA_QUALITY, BETA_MILES, BETA_PRICE, CVR_NOISE_STD,
+    BETA0,
+    BETA_MILES,
+    BETA_PRICE,
+    BETA_QUALITY,
+    CATEGORIES,
+    CTR_BASE,
+    CVR_NOISE_STD,
+    GAMMA_BIZ_MORNING,
+    GAMMA_MILES,
+    GAMMA_PRICE,
+    IMPRESSIONS_PER_USER,
+    N_ITEMS,
+    N_USERS,
+    QUALITY_W,
+    SEED,
 )
-from src.data.generator_common import CAT_BIAS as _CAT_BIAS, sigmoid as _sigmoid
+from src.data.generator_common import CAT_BIAS as _CAT_BIAS
+from src.data.generator_common import sigmoid as _sigmoid
 
 _CAT = list(CATEGORIES)
 
@@ -169,7 +182,7 @@ def generate_logs_np(rng, items: dict, users: dict,
     }
 
 
-def build_dataset_np(seed: int = SEED):
+def build_dataset_np(seed: int | np.random.Generator = SEED):
     """一次性生成轻量档全量数据（numpy 字典），供在线 Demo 即时使用。"""
     rng = np.random.default_rng(seed)
     items = generate_items_np(rng, N_ITEMS)

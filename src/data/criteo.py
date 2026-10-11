@@ -61,7 +61,7 @@ CRITEO_NOTE = (
 # ---------------------------------------------------------------------------
 def _read_lines(path: Path, n_rows: int | None):
     """返回行迭代器；若给定 n_rows 则只读前 n_rows 行（用于小样本快速验证）。"""
-    with open(path, "r", encoding="utf-8", errors="replace") as f:
+    with open(path, encoding="utf-8", errors="replace") as f:
         for i, line in enumerate(f):
             if n_rows is not None and i >= n_rows:
                 break
@@ -70,7 +70,7 @@ def _read_lines(path: Path, n_rows: int | None):
 
 def _build_vocab(lines, max_card: int) -> list[dict]:
     """第一遍：统计每稀疏字段词频，取 top-(max_card-1) 建码表（码 0 固定留给 OOV / 缺失）。"""
-    counters = [collections.Counter() for _ in range(N_SPARSE)]
+    counters: list[collections.Counter] = [collections.Counter() for _ in range(N_SPARSE)]
     for line in lines:
         parts = line.split("\t")
         if len(parts) != 1 + N_DENSE + N_SPARSE:
@@ -200,9 +200,9 @@ def _assemble(dense_raw, sparse_codes, y, sparse_cards, max_card, val_split, see
 
     meta = {
         **source_meta,
-        "n_total": int(len(y)),
-        "n_train": int(len(train_idx)),
-        "n_val": int(len(val_idx)),
+        "n_total": len(y),
+        "n_train": len(train_idx),
+        "n_val": len(val_idx),
         "positive_rate_total": round(float(y.mean()), 4),
         "positive_rate_train": round(float(ytr.mean()), 4),
         "positive_rate_val": round(float(yva.mean()), 4),

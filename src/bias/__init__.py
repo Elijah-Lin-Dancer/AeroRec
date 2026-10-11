@@ -17,4 +17,4 @@
 """
 from __future__ import annotations
 
-__all__ = ["policy", "metrics", "estimators", "propagation", "boundary", "report"]
+__all__ = ["boundary", "estimators", "metrics", "policy", "propagation", "report"]

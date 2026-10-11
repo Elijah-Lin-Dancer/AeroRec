@@ -33,7 +33,7 @@ micro 档与 full/lite 共用同一套生成公式、随机种子与全部算法
 """
 from pathlib import Path
 
-from src.config_lite import *  # noqa: F401,F403  继承 lite 档全部定义（含 full 档类目/城市/时段等）
+from src.config_lite import *  # noqa: F403  继承 lite 档全部定义（含 full 档类目/城市/时段等）
 
 # ---- 覆盖：数据规模（唯一改动点，相对 lite 再减半）----
 N_USERS = 10_000

@@ -35,6 +35,8 @@
 """
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 
 
@@ -163,13 +165,14 @@ def save_npz(params: dict, path) -> None:
                 flat[f"{k}__len"] = np.array([len(v)])
         else:
             flat[k] = np.asarray(v)
-    np.savez_compressed(path, **flat)
+    np.savez_compressed(path, **flat)  # type: ignore[arg-type]  # numpy 存盘桩把 **kwds 误标为 bool
 
 
 def load_npz(path) -> dict:
     """加载 .npz 还原参数字典（不需要 torch）。"""
     z = np.load(path, allow_pickle=True)
-    out, handled = {}, set()
+    out: dict[str, Any] = {}
+    handled: set[str] = set()
     for k in z.files:
         if k.endswith("__len"):
             base = k[: -len("__len")]

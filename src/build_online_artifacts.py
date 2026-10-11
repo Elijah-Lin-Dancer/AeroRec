@@ -44,20 +44,21 @@ def main(mode: str = "micro") -> None:
     os.environ["AEROREC_MODE"] = mode
 
     t0 = time.time()
-    import numpy.random as npr
-
     import importlib
+
+    import numpy.random as npr
 
     # 必须在设置 AEROREC_MODE 之后再导入配置解析器
     import src.config_scale as cs
     importlib.reload(cs)
 
-    from src.data.synthetic_generator_lite import build_dataset_np
-    from src.feature.lite_store import LiteFeatureStore, SPARSE_CARD, N_DENSE
-    from src.rank.trainer import DeepFMRanker, plan_epochs, DEEFM_BATCH_SIZE
-    from src.rank.numpy_deepfm import export_from_ranker, save_npz
     from sklearn.linear_model import LogisticRegression
     from sklearn.preprocessing import OneHotEncoder
+
+    from src.data.synthetic_generator_lite import build_dataset_np
+    from src.feature.lite_store import N_DENSE, SPARSE_CARD, LiteFeatureStore
+    from src.rank.numpy_deepfm import export_from_ranker, save_npz
+    from src.rank.trainer import DEEFM_BATCH_SIZE, DeepFMRanker, plan_epochs
 
     print(f"[build] mode={mode}  N_USERS={cs.N_USERS}  N_ITEMS={cs.N_ITEMS}  "
           f"曝光={cs.N_USERS * cs.IMPRESSIONS_PER_USER}")

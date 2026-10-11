@@ -7,7 +7,6 @@ import os
 
 import numpy as np
 import pytest
-
 from src.data import adult
 
 ADULT_CACHE = os.path.join("data", "adult", "adult.data")

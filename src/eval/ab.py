@@ -40,6 +40,7 @@ Oracle 池 = 热门候选 ∪ 规则候选 ∪ 随机采样（**必须包含其�
 from __future__ import annotations
 
 import math
+from typing import Any
 
 import numpy as np
 
@@ -150,13 +151,14 @@ def compare_rankers(users, items, rankers: dict, sample_users, top_k: int = 10,
         return compute_true_ctr(users, items, np.full(len(ids), int(uid)), ids)
 
     # 预先算出每个方法在每个用户上的列表（避免重复调用）
-    method_ids = {name: [] for name in rankers}
+    method_ids: dict[str, list] = {name: [] for name in rankers}
     for uid in sample_users:
         for name, fn in rankers.items():
             method_ids[name].append(list(fn(int(uid), top_k)))
 
     # ---- 构造逐用户 Oracle：池必须包含所有方法的结局 ----
-    oracle_scores, method_scores = [], {name: [] for name in rankers}
+    oracle_scores: list = []
+    method_scores: dict[str, list] = {name: [] for name in rankers}
     for i, uid in enumerate(sample_users):
         pool_parts = [np.asarray(ids) for ids in
                       (method_ids[name][i] for name in rankers)]
@@ -218,7 +220,7 @@ def baseline_bias_table(pop_recall, users, items, top_n: int = 200,
 
     参数 pop_recall 需为已 fit 的 `PopularRecall`（含 top_items_ 与 ctr 列）。
     """
-    out = {}
+    out: dict[str, Any] = {}
     try:
         ids = pop_recall.recall(top_n)
         smooth = float(pop_recall.top_items_["ctr"].mean())

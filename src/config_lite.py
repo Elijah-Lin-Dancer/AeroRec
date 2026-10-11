@@ -22,7 +22,7 @@
 """
 from pathlib import Path
 
-from src.config import *  # noqa: F401,F403  继承类目 / 城市 / 时段 / 生成系数等全部定义
+from src.config import *  # noqa: F403  继承类目 / 城市 / 时段 / 生成系数等全部定义
 
 # ---- 覆盖：数据规模（唯一改动点）----
 N_USERS = 20_000

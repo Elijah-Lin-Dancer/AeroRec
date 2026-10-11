@@ -16,7 +16,7 @@ import pandas as pd
 import torch
 import torch.nn as nn
 
-from src.config import SEED, CATEGORIES, CITIES, TIME_SLOTS
+from src.config import CATEGORIES, CITIES, SEED, TIME_SLOTS
 
 # ---- 特征定义（用户级 / 物品级，与交互级特征库互补）----
 USER_DENSE_COLS = [
@@ -137,7 +137,7 @@ class TwoTowerRecall:
         self.train_sample = train_sample
         self.lr = lr
         self.device = device
-        self.model = None
+        self.model: nn.Module | None = None
         self.user_vecs_ = None
         self.item_vecs_ = None
         self.user_ids_ = None

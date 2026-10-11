@@ -1,8 +1,7 @@
 """模拟 A/B 冒烟测试。"""
 import numpy as np
-
-from src.data.synthetic_generator import generate_items, generate_users, compute_true_cvr
-from src.eval.ab import simulate_ab, proportion_ztest
+from src.data.synthetic_generator import compute_true_cvr, generate_items, generate_users
+from src.eval.ab import proportion_ztest, simulate_ab
 
 
 def test_proportion_ztest_significant():

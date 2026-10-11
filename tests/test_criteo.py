@@ -11,9 +11,7 @@ import os
 import tempfile
 
 import numpy as np
-
-from src.data.criteo import (N_DENSE, N_SPARSE, _build_vocab, _encode,
-                             load_criteo)
+from src.data.criteo import N_DENSE, N_SPARSE, _build_vocab, _encode, load_criteo
 
 # 26 个类别字段统一用一个稳定 token，只有 C1 故意放入频率差异以触发 OOV
 _SPARSE_FLAT = ["x"] * N_SPARSE

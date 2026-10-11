@@ -3,9 +3,10 @@
 召回层负责从全量物品中产出"候选集"，交给下游排序层精排。
 这里实现两类可解释、易复现的召回，作为中台基线与兜底来源。
 """
+from collections import defaultdict
+
 import numpy as np
 import pandas as pd
-from collections import defaultdict
 
 
 class PopularRecall:
@@ -36,21 +37,21 @@ class ItemCFRecall:
     def fit(self, logs: pd.DataFrame):
         # 仅用"点击"行为构建物品共现
         clicked = logs[logs["clicked"] == 1]
-        cooc = defaultdict(int)
+        cooc: dict[tuple[int, int], int] = defaultdict(int)
         user_items = defaultdict(set)
         for uid, iid in zip(clicked["user_id"], clicked["item_id"]):
             user_items[uid].add(iid)
-        for items in user_items.values():
-            items = list(items)
-            for a in range(len(items)):
-                for b in range(len(items)):
+        for item_set in user_items.values():
+            item_list = list(item_set)
+            for a in range(len(item_list)):
+                for b in range(len(item_list)):
                     if a != b:
-                        cooc[(items[a], items[b])] += 1
+                        cooc[(item_list[a], item_list[b])] += 1
 
         # 物品出现次数用于余弦式归一化
-        item_cnt = defaultdict(int)
-        for items in user_items.values():
-            for i in items:
+        item_cnt: dict[int, int] = defaultdict(int)
+        for item_set in user_items.values():
+            for i in item_set:
                 item_cnt[i] += 1
 
         sim = {}
@@ -65,7 +66,7 @@ class ItemCFRecall:
         return self
 
     def recall(self, user_clicked_items: list, k: int = 10) -> list:
-        scores = defaultdict(float)
+        scores: dict[int, float] = defaultdict(float)
         for iid in set(user_clicked_items):
             for (a, b), s in self.sim_.items():
                 if a == iid and b not in user_clicked_items:

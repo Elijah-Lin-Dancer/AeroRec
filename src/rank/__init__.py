@@ -24,11 +24,11 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:  # 仅类型检查时导入，运行时不触发
     from src.rank.deepfm import DeepFM
-    from src.rank.trainer import DeepFMRanker
-    from src.rank.mixer import Mixer
     from src.rank.degrade import DegradeRanker, compute_recent_ctr
+    from src.rank.mixer import Mixer
+    from src.rank.trainer import DeepFMRanker
 
-__all__ = ["DeepFM", "DeepFMRanker", "Mixer", "DegradeRanker", "compute_recent_ctr"]
+__all__ = ["DeepFM", "DeepFMRanker", "DegradeRanker", "Mixer", "compute_recent_ctr"]
 
 # 名称 -> 所属子模块（惰性加载映射）
 _LAZY = {

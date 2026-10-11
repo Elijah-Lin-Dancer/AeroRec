@@ -4,6 +4,8 @@
 算法服务故障而中断。合成数据无时间戳，故"近 7 天"用全量曝光日志的平均 CTR 近似，
 工程语义（缓存一份聚合 CTR 做兜底）保持一致。
 """
+from typing import Any
+
 import numpy as np
 
 
@@ -27,7 +29,7 @@ def compute_recent_ctr(logs, alpha: float = 5.0) -> dict:
 class DegradeRanker:
     """包装 CTR 预估器，失败时降级到历史平均 CTR。"""
 
-    def __init__(self, predictor, fallback_ctr_map: dict, fallback_default: float = 0.05):
+    def __init__(self, predictor, fallback_ctr_map: Any, fallback_default: float = 0.05):
         self.predictor = predictor            # callable(dense, sparse) -> ctr array
         self.fallback_ctr_map = fallback_ctr_map
         self.fallback_default = fallback_default

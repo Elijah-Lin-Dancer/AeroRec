@@ -10,7 +10,6 @@ import os
 
 import numpy as np
 import pytest
-
 from src.data.criteo import N_DENSE, N_SPARSE, load_criteo
 
 _PARQUET = os.path.join("data", "criteo", "criteo_1M.parquet")

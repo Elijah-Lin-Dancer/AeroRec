@@ -11,12 +11,21 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-
-from src.bias.policy import (ExposurePolicy, _normalize, inverse_rank_weights,
-                             popularity_propensity, position_propensity,
-                             sample_exposure, uniform_propensity)
-from src.bias.injectors import (build_biased_log, inject_exposure_popularity,
-                               inject_exposure_position, inject_uniform)
+from src.bias.injectors import (
+    build_biased_log,
+    inject_exposure_popularity,
+    inject_exposure_position,
+    inject_uniform,
+)
+from src.bias.policy import (
+    ExposurePolicy,
+    _normalize,
+    inverse_rank_weights,
+    popularity_propensity,
+    position_propensity,
+    sample_exposure,
+    uniform_propensity,
+)
 
 
 # ----------------------------------------------------------------------

@@ -88,7 +88,8 @@ class Mixer:
 
     def _scatter(self, records) -> list:
         """贪心打散：连续同类目不超过 max_same_category，超出的延后到队尾。"""
-        result, deferred = [], []
+        result: list = []
+        deferred: list = []
         for rec in records:
             iid, c = rec
             recent = [r[1] for r in result[-self.max_same_category:]]

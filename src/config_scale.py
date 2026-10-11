@@ -29,9 +29,9 @@ import os
 MODE = os.environ.get("AEROREC_MODE", "micro").lower()
 
 if MODE == "lite":
-    from src.config_lite import *  # noqa: F401,F403
+    from src.config_lite import *  # noqa: F403
 elif MODE in ("micro", "online", "cloud"):
-    from src.config_micro import *  # noqa: F401,F403
+    from src.config_micro import *  # noqa: F403
     MODE = "micro"
 else:
     raise ValueError(

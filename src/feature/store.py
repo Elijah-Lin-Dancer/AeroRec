@@ -11,7 +11,7 @@
 import numpy as np
 import pandas as pd
 
-from src.config import FEATURE_VERSION, CATEGORIES
+from src.config import CATEGORIES, FEATURE_VERSION
 
 # 连续特征（进入 DNN / FM 一阶）
 DENSE_COLS = [
@@ -120,7 +120,7 @@ def build_candidate_features(user_id: int, item_ids, users: pd.DataFrame,
 
 def feature_dim() -> tuple[int, int, list[int]]:
     """返回 (dense 维数, sparse 字段数, 各 sparse 字段的取值数)。"""
-    from src.config import TIME_SLOTS, HOUR_SLOTS
+    from src.config import HOUR_SLOTS, TIME_SLOTS
     sparse_card = [len(CATEGORIES), len(TIME_SLOTS) + 1, len(HOUR_SLOTS)]
     return len(DENSE_COLS), len(SPARSE_COLS), sparse_card
 

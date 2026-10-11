@@ -31,9 +31,18 @@ from __future__ import annotations
 import numpy as np
 
 from src.config import (
-    SEED, CAT_BIAS_STD, CATEGORIES,
-    CTR_BASE, QUALITY_W, GAMMA_PRICE, GAMMA_BIZ_MORNING, GAMMA_MILES,
-    BETA0, BETA_QUALITY, BETA_MILES, BETA_PRICE,
+    BETA0,
+    BETA_MILES,
+    BETA_PRICE,
+    BETA_QUALITY,
+    CAT_BIAS_STD,
+    CATEGORIES,
+    CTR_BASE,
+    GAMMA_BIZ_MORNING,
+    GAMMA_MILES,
+    GAMMA_PRICE,
+    QUALITY_W,
+    SEED,
 )
 
 

@@ -17,22 +17,41 @@ import numpy as np
 import pandas as pd
 
 from src.config import (
-    SEED, N_USERS, N_ITEMS, ITEMS_PER_CAT, IMPRESSIONS_PER_USER,
-    MAX_TRIPS_PER_USER, CATEGORIES, CITIES, TIME_SLOTS, HOUR_SLOTS,
-    CTR_BASE, QUALITY_W, GAMMA_PRICE, GAMMA_BIZ_MORNING, GAMMA_MILES, CAT_BIAS_STD,
-    BETA0, BETA_QUALITY, BETA_MILES, BETA_PRICE, CVR_NOISE_STD,
-    ITEMS_PATH, USERS_PATH, TRIPS_PATH, LOGS_PATH, PROC_DIR,
+    BETA0,
+    BETA_MILES,
+    BETA_PRICE,
+    BETA_QUALITY,
+    CATEGORIES,
+    CITIES,
+    CTR_BASE,
+    CVR_NOISE_STD,
+    GAMMA_BIZ_MORNING,
+    GAMMA_MILES,
+    GAMMA_PRICE,
+    HOUR_SLOTS,
+    IMPRESSIONS_PER_USER,
+    ITEMS_PATH,
+    LOGS_PATH,
+    MAX_TRIPS_PER_USER,
+    N_ITEMS,
+    N_USERS,
+    PROC_DIR,
+    QUALITY_W,
+    SEED,
+    TIME_SLOTS,
+    TRIPS_PATH,
+    USERS_PATH,
 )
 
 # 固定类目偏置与 sigmoid：已下沉到 `generator_common`（pandas-free），
 # 此处再导出以保持向后兼容；三档生成器共用同一组偏置，确保真实 CTR 分布可比。
-from src.data.generator_common import CAT_BIAS as _CAT_BIAS, sigmoid as _sigmoid  # noqa: E402
+from src.data.generator_common import CAT_BIAS as _CAT_BIAS
+from src.data.generator_common import compute_true_ctr as compute_true_ctr
+from src.data.generator_common import compute_true_cvr as compute_true_cvr
 
 # 真实 CTR/CVR 公式与配对特征提取已下沉到 pandas-free 的 `generator_common`，
 # 此处再导出以保持向后兼容（原 `from src.data.synthetic_generator import compute_true_ctr` 仍可用）。
-from src.data.generator_common import (  # noqa: E402
-    pair_features as _pair_features, compute_true_ctr, compute_true_cvr,
-)
+from src.data.generator_common import sigmoid as _sigmoid
 
 
 def generate_items(rng, n_items=N_ITEMS) -> pd.DataFrame:

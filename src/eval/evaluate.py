@@ -18,18 +18,18 @@
 """
 import numpy as np
 from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import OneHotEncoder
 from sklearn.metrics import roc_auc_score
+from sklearn.preprocessing import OneHotEncoder
 
 from src.config import SEED, TOP_K
-from src.data.synthetic_generator import build_dataset, compute_true_ctr
-from src.feature.store import build_training_matrix, build_candidate_features, feature_dim
-from src.rank.trainer import DeepFMRanker
-from src.rank.mixer import Mixer
+from src.data.synthetic_generator import build_dataset
+from src.eval.ab import baseline_bias_table, compare_rankers
+from src.feature.store import build_candidate_features, build_training_matrix, feature_dim
 from src.rank.degrade import DegradeRanker, compute_recent_ctr
+from src.rank.mixer import Mixer
+from src.rank.trainer import DeepFMRanker
 from src.recall.baselines import PopularRecall
 from src.recall.rule import RuleRecall
-from src.eval.ab import compare_rankers, baseline_bias_table
 
 
 def _lr_features(dense, sparse, sparse_cards):

@@ -10,11 +10,17 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-
-from src.bias.metrics import (bias_summary, ctr_bias, ctr_mae,
-                              exposure_distribution, exposure_gini,
-                              exposure_kl, ndcg_at_k, smoothed_ctr,
-                              topk_overlap)
+from src.bias.metrics import (
+    bias_summary,
+    ctr_bias,
+    ctr_mae,
+    exposure_distribution,
+    exposure_gini,
+    exposure_kl,
+    ndcg_at_k,
+    smoothed_ctr,
+    topk_overlap,
+)
 
 
 # ----------------------------------------------------------------------

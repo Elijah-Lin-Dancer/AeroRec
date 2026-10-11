@@ -227,7 +227,7 @@ def build_report(out_dir: str = "data/bias") -> str:
 """]
 
     # ---------- 0. 方法要点 ----------
-    parts.append(f"""
+    parts.append("""
   <section>
     <h2>0 · 为什么这件事只有合成数据能做</h2>
     <p>
@@ -349,7 +349,7 @@ def build_report(out_dir: str = "data/bias") -> str:
     # ---------- 3. 去偏边界 ----------
     if bnd:
         rows = bnd["rows"]
-        parts.append(f"""
+        parts.append("""
   <section>
     <h2>3 · 去偏的有效边界</h2>
     <p>
@@ -397,7 +397,7 @@ def build_report(out_dir: str = "data/bias") -> str:
 """)
 
     # ---------- 4. 诚实披露 ----------
-    parts.append(f"""
+    parts.append("""
   <section>
     <h2>4 · 诚实披露：开发中修正的三个错误</h2>
     <p>本报告的结论是在修正了三处错误之后得到的。列出它们，是因为这些坑本身有参考价值。</p>

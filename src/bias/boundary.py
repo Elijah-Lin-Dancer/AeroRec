@@ -33,10 +33,11 @@
 """
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 
-from src.bias.estimators import (effective_sample_size, naive_estimate,
-                                 snips_estimate)
+from src.bias.estimators import effective_sample_size, naive_estimate, snips_estimate
 from src.bias.policy import popularity_propensity
 
 
@@ -183,7 +184,7 @@ def find_boundary(grid, ess_ratio_threshold: float = 0.4) -> dict:
     for row in grid:
         by_tau.setdefault(row["tau"], []).append(row)
 
-    out = {"per_tau": [], "ess_threshold": float(ess_ratio_threshold)}
+    out: dict[str, Any] = {"per_tau": [], "ess_threshold": float(ess_ratio_threshold)}
     for tau in sorted(by_tau):
         rows = sorted(by_tau[tau], key=lambda r: r["n_records"])
         gains = [r["gain"] for r in rows]

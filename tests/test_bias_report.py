@@ -9,7 +9,6 @@ import json
 import os
 
 import pytest
-
 from src.bias.report import build_report
 
 

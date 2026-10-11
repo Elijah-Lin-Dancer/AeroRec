@@ -7,9 +7,7 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
-
-from src.bias.boundary import (boundary_by_range, boundary_sweep,
-                              ess_warning_from_log, find_boundary)
+from src.bias.boundary import boundary_by_range, boundary_sweep, ess_warning_from_log, find_boundary
 
 
 def _truth(n=60, seed=0):

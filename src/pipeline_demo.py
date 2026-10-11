@@ -5,10 +5,10 @@
 """
 from src.config import TOP_K
 from src.data.synthetic_generator import build_dataset
-from src.recall.baselines import PopularRecall, ItemCFRecall
-from src.recall.two_tower import TwoTowerRecall
-from src.recall.rule import RuleRecall
+from src.recall.baselines import ItemCFRecall, PopularRecall
 from src.recall.fusion import RecallFusion
+from src.recall.rule import RuleRecall
+from src.recall.two_tower import TwoTowerRecall
 
 
 def main():

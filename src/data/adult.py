@@ -51,7 +51,7 @@ def _download(name: str, cache_dir: Path) -> Path:
         return dst
     url = f"{UCI_BASE}/{FILES[name]}"
     print(f"[adult] 下载 {name}: {url}")
-    urllib.request.urlretrieve(url, dst)        # noqa: S310 - 固定可信 UCI 地址
+    urllib.request.urlretrieve(url, dst)
     return dst
 
 
@@ -132,8 +132,8 @@ def load_adult(cache_dir: str | Path = "data/adult",
         "source": UCI_BASE,
         "license": "UCI ML Repository; research use (cite Becker & Kohavi 1996 / Donoho 2019)",
         "n_total": int(n_total),
-        "n_train": int(len(train_idx)),
-        "n_val": int(len(val_idx)),
+        "n_train": len(train_idx),
+        "n_val": len(val_idx),
         "positive_rate_total": round(float(y.mean()), 4),
         "positive_rate_train": round(float(ytr.mean()), 4),
         "positive_rate_val": round(float(yva.mean()), 4),

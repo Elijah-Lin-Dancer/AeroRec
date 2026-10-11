@@ -15,7 +15,7 @@ class RecallFusion:
     def __init__(self, max_candidates: int = 200, top_per_source: int = 100):
         self.max_candidates = max_candidates
         self.top_per_source = top_per_source
-        self.sources = []  # [(name, weight, callable)]
+        self.sources: list = []  # [(name, weight, callable)]
 
     def add(self, name: str, weight: float, fn):
         """注册一路召回。fn 接受 k 参数并返回 item_id 列表。"""
@@ -39,7 +39,7 @@ class RecallFusion:
         return self._merge(lists, weights)
 
     def _merge(self, ranked_lists, weights) -> list:
-        score = {}
+        score: dict[int, float] = {}
         for w, lst in zip(weights, ranked_lists):
             for rank, iid in enumerate(lst):
                 score[iid] = score.get(iid, 0.0) + w * (1.0 / (rank + 1))

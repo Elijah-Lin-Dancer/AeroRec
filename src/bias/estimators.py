@@ -39,6 +39,8 @@
 """
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 
 _EPS = 1e-9
@@ -142,7 +144,7 @@ def check_propensity_convention(propensity, tol: float = 1e-6) -> dict:
     """
     pi = np.asarray(propensity, dtype=np.float64)
     s = float(pi.sum())
-    out = {"pi_sum": s, "pi_mean": float(pi.mean()), "max_pi": float(pi.max())}
+    out: dict[str, Any] = {"pi_sum": s, "pi_mean": float(pi.mean()), "max_pi": float(pi.max())}
     if abs(s - 1.0) < tol:
         out["convention"] = "distribution"
         out["warning"] = ("Σπ=1（分布概率约定）：只能用自归一化 IPS/SNIPS。"

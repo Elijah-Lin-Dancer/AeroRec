@@ -1,14 +1,16 @@
 """数据层 + 特征库 + 召回层 冒烟测试（小规模）。"""
 import numpy as np
-
 from src.data.synthetic_generator import (
-    generate_items, generate_users, generate_trips, generate_logs,
+    generate_items,
+    generate_logs,
+    generate_trips,
+    generate_users,
 )
-from src.feature.store import build_training_matrix, feature_dim
-from src.recall.baselines import PopularRecall, ItemCFRecall
-from src.recall.two_tower import TwoTowerRecall
-from src.recall.rule import RuleRecall
+from src.feature.store import build_training_matrix
+from src.recall.baselines import ItemCFRecall, PopularRecall
 from src.recall.fusion import RecallFusion
+from src.recall.rule import RuleRecall
+from src.recall.two_tower import TwoTowerRecall
 
 
 def _small_data(n_items=1000, n_users=200, imp=10):
