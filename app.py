@@ -49,8 +49,10 @@ CPU 0.078～2 核、内存 690MB～2.7GB、存储 ≤50GB、无 GPU、无流量 
 注：以上两个页面的**可引用数值以完整档（full，10万×10万×500万）离线复现为准**；
 在线任何档位（micro/lite）的数值仅用于交互演示。
 """
+import json
 import os
 
+import numpy as np
 import streamlit as st
 
 # ⚠️ 这里**刻意不在模块顶层 `import pandas`**：
@@ -189,6 +191,62 @@ def get_engine():
 
 engine, mode = get_engine()
 
+# --------------------------------------------------------------------------
+# 研究主线交互页所需的纯 numpy 辅助（不引入 torch / sklearn / pandas）
+# --------------------------------------------------------------------------
+@st.cache_data(show_spinner="计算偏差传播扫描（约 1 秒）...")
+def _bias_full_sweep(n_items: int = 60, n_requests: int = 600, slots: int = 5,
+                     alpha: float = 5.0, seed: int = 42):
+    """对 τ∈[0,3] 逐步算「偏差传播」，缓存为一条交互扫描。
+
+    与 `scripts/run_bias_experiments.py` 同口径：真实 CTR 由对数正态合成
+    （seed=0，与可视化报告一致），曝光策略 π ∝ 热度^τ，平滑 CTR α=5。
+    返回每 τ 的 L1/L2/L3 spearman、rel_err、曝光 Gini、最少曝光，
+    以及当前 τ 的平滑 CTR 向量与曝光频率（供散点 / 柱状图用）。
+    """
+    from src.bias.propagation import run_stage_estimates, stage_error
+    from src.bias.metrics import exposure_gini
+
+    def _synth_true_ctr(n=60, s=0):
+        r = np.random.default_rng(s)
+        base = r.lognormal(mean=np.log(0.22), sigma=0.5, size=n)
+        return np.clip(base, 0.01, 0.9)
+
+    tctr = _synth_true_ctr(n_items, 0)                 # (C,)
+    taus = [round(float(x), 1) for x in np.arange(0.0, 3.0001, 0.1)]
+    rows = []
+    for tau in taus:
+        # 每 τ 独立确定性 rng（与 `propagation_matrix` 同算式），保证 demo 与
+        # 报告 propagation.json 逐点完全一致，且与扫描顺序无关。
+        rng = np.random.default_rng(seed * 1000 + int(round(float(tau) * 100)))
+        r = run_stage_estimates(tctr[None, :], n_items, float(tau), n_requests,
+                                slots, alpha, 0.0, rng)
+        e1 = stage_error(r["L1_recall"], r["true_ctr"])
+        e2 = stage_error(r["L2_rank"], r["true_ctr"])
+        e3 = stage_error(r["L3_mix"], r["true_ctr"])
+        rows.append({
+            "tau": float(tau),
+            "L1_spearman": e1["spearman"], "L2_spearman": e2["spearman"],
+            "L3_spearman": e3["spearman"],
+            "L1_rel_err": e1["rel_err"], "L2_rel_err": e2["rel_err"],
+            "L3_rel_err": e3["rel_err"],
+            "exposure_gini": float(exposure_gini(r["exposure_freq"])),
+            "impr_min": int(r["impressions"].min()),
+            "exposure_freq": np.asarray(r["exposure_freq"], dtype=np.float64).copy(),
+            "L2_est": np.asarray(r["L2_rank"], dtype=np.float64).copy(),
+        })
+    return {"taus": taus, "rows": rows, "true_ctr": np.asarray(tctr, dtype=np.float64)}
+
+
+def _bias_row_at(sweep: dict, tau: float) -> dict:
+    return min(sweep["rows"], key=lambda r: abs(r["tau"] - tau))
+
+
+@st.cache_data
+def _load_json(rel_path: str):
+    from pathlib import Path
+    return json.loads((Path(__file__).resolve().parent / rel_path).read_text(encoding="utf-8"))
+
 st.markdown(
     '<div class="hero">'
     '<h1>AeroRec · 出行智能推荐中台</h1>'
@@ -207,7 +265,8 @@ st.sidebar.markdown(
     '</div>',
     unsafe_allow_html=True,
 )
-page = st.sidebar.radio("导航", ["推荐演示", "排序流程", "真实 CTR 对比", "模拟 A/B"])
+page = st.sidebar.radio("导航", ["推荐演示", "偏差诊断", "排序流程",
+                                "真实 CTR 对比", "模拟 A/B", "模型与验证"])
 st.sidebar.caption(f"当前模式：**{mode}**")
 
 # 研究主线的入口。
@@ -498,6 +557,156 @@ elif page == "模拟 A/B":
                 "保证严格 ≥ 所有方法）。该口径不依赖任何平滑估计，**结论可引用**。\n\n"
                 "**结论**：本页数字请勿引用；请以「真实 CTR 对比」页为准。"
             )
+
+# --------------------------------------------------------------------------
+elif page == "偏差诊断":
+    st.header("链路偏差诊断（交互）")
+    st.caption(
+        "拖动「曝光偏差强度 τ」滑块，实时观察有偏曝光如何把推荐排序**搞反**——"
+        "这是本项目研究主线（偏差传播诊断 + 去偏有效边界）的交互版。"
+    )
+    with st.expander("这是什么？为什么只有合成数据能做", expanded=False):
+        st.info(
+            "推荐系统的根本难题：真实日志里你**既不知道真值、也不知道曝光策略**，"
+            "偏差混在一起拆不开。本项目用**合成数据**让每个 (用户, 物品) 的潜在真实 CTR "
+            "成为**已知量**，曝光策略的 propensity 又是策略参数的**闭式函数**——"
+            "于是「偏差 = 有偏观测 − 已知真值」可以精确测量。\n\n"
+            "下方实验**不训练任何模型**，用真实 CTR 作 ground-truth 即可，"
+            "秒级完成、固定种子可复现。",
+            icon="🧪",
+        )
+
+    tau = st.slider("曝光偏差强度 τ（0 = 均匀无偏 → 3 = 极度偏斜）", 0.0, 3.0, 2.0, 0.1,
+                    help="τ 是 popularity 曝光策略的指数：π_i ∝ 热度_i^τ。τ=0 退化为均匀曝光。")
+    sweep = _bias_full_sweep()
+    row = _bias_row_at(sweep, tau)
+    sp = row["L2_spearman"]
+
+    m1, m2, m3 = st.columns(3)
+    m1.metric("排序级 spearman", f"{sp:+.3f}",
+              help="与真实 CTR 的秩相关：≈1 同序，<0 排序被反转")
+    m2.metric("曝光 Gini", f"{row['exposure_gini']:.3f}",
+              help="曝光集中度：0=均匀，→1=极度集中")
+    m3.metric("冷门物品最少曝光", f"{int(row['impr_min'])} 次",
+              help="τ 越大，冷门物品越少被曝光，越易被平滑 CTR 高估")
+
+    if sp < -0.1:
+        st.error(
+            f"⚠️ τ={tau:.1f} 时排序已被**反转**（spearman={sp:+.3f}）："
+            "冷门物品被少数偶然点击拉高平滑 CTR，反而排到热门前面。",
+            icon="🔴",
+        )
+    elif sp > 0.3:
+        st.success(f"✅ τ={tau:.1f} 时排序与真值**基本一致**（spearman={sp:+.3f}）。",
+                   icon="🟢")
+    else:
+        st.warning(f"τ={tau:.1f} 时排序与真值**弱相关**（spearman={sp:+.3f}）。",
+                   icon="🟡")
+
+    st.subheader("排序质量随曝光偏差反转")
+    st.line_chart(
+        {
+            "τ": [round(t, 1) for t in sweep["taus"]],
+            "排序级(L2)": [r["L2_spearman"] for r in sweep["rows"]],
+            "召回级(L1)": [r["L1_spearman"] for r in sweep["rows"]],
+            "混排级(L3)": [r["L3_spearman"] for r in sweep["rows"]],
+        },
+        x="τ", y=["排序级(L2)", "召回级(L1)", "混排级(L3)"], height=340,
+    )
+    st.caption(f"当前 τ={tau:.1f} → 排序级 spearman={sp:+.3f}（零线以下即「排序被反转」区）。")
+
+    c1, c2 = st.columns(2)
+    with c1:
+        st.subheader("真实 CTR vs 平滑 CTR（当前 τ）")
+        tcr = sweep["true_ctr"]
+        l2 = row["L2_est"]
+        over = ["高估" if a > b else "低估" for a, b in zip(l2, tcr)]
+        st.scatter_chart(
+            {"真实CTR": tcr, "平滑CTR(观测)": l2, "状态": over},
+            x="真实CTR", y="平滑CTR(观测)", color="状态", height=300,
+        )
+        st.caption("点落在对角线上方 = 被高估。冷门物品（左）被拽向先验 1.0，故被系统性高估。")
+    with c2:
+        st.subheader("曝光集中度（当前 τ）")
+        ef = np.sort(row["exposure_freq"])[::-1]
+        st.bar_chart(
+            {"物品(按曝光降序)": list(range(1, len(ef) + 1)), "曝光频率": ef},
+            x="物品(按曝光降序)", y="曝光频率", color="#f59e0b", height=300,
+        )
+        st.caption("长尾被压到接近 0：少数热门独占曝光，冷门几乎不被观测。")
+
+# --------------------------------------------------------------------------
+elif page == "模型与验证":
+    st.header("模型架构与真实验证")
+    st.caption(
+        "本项目 CTR 排序器是标准 DeepFM（Guo et al. 2017）。下方证明其同一套实现"
+        "能在**真实数据**上达到业界水平 AUC，且本 Demo 在线推理与它数值等价。"
+    )
+    meta = _load_json("artifacts/micro/meta.json")
+    criteo1m = _load_json("data/real_validation/result.json")
+    criteo200k = _load_json("data/real_validation/result_criteo_200k.json")
+
+    st.subheader("在线模型架构（本 Demo 实时运行）")
+    a1, a2, a3, a4 = st.columns(4)
+    a1.metric("模型", "DeepFM")
+    a2.metric("嵌入维度", str(meta["embed_dim"]))
+    a3.metric("DNN 隐层", "→".join(str(h) for h in meta["dnn_hidden"]))
+    a4.metric("训练样本", f"{meta['train_sample']:,}")
+
+    st.caption(
+        "离线用 torch 训练，权重导出为 numpy（约 29KB）后由在线侧纯 numpy 前向加载——"
+        "PyTorch vs numpy 最大偏差 1.19e-07（构建期逐样本校验）。"
+        "在线侧**不 import torch**，峰值内存约 297MB，适配免费实例 690MB 下限。"
+    )
+
+    st.subheader("真实数据验证（Criteo Display Advertising Challenge）")
+    st.info(
+        "Criteo 是 CTR / DeepFM 论文的**标准真实基准**，任务与本项目完全同构"
+        "（13 稠密 + 26 稀疏 → p(click)）。同一套 DeepFM 实现直接换数据即可训练，"
+        "**模型零改动**。",
+        icon="✅",
+    )
+    st.bar_chart(
+        {
+            "模型/数据": ["DeepFM·1M", "LR 基线·1M", "DeepFM·200k", "常数基线"],
+            "验证 AUC": [
+                criteo1m["val_auc_deepfm"], criteo1m["val_auc_logistic_baseline"],
+                criteo200k["val_auc_deepfm"], criteo1m["val_auc_naive_constant"],
+            ],
+        },
+        x="模型/数据", y="验证 AUC", color="#2563eb", height=320,
+    )
+    st.success(
+        f"**结论**：同一 DeepFM 实现，在真实 Criteo 数据上验证 AUC = "
+        f"**{criteo1m['val_auc_deepfm']:.4f}**（100 万行）/ "
+        f"**{criteo200k['val_auc_deepfm']:.4f}**（20 万行），"
+        f"显著高于常数基线 0.5000 与 LR 基线 {criteo1m['val_auc_logistic_baseline']:.4f}。"
+    )
+
+    with st.expander("⚠️ 诚实边界：旅游模型与 Criteo 模型为何是两个模型", expanded=False):
+        st.markdown(
+            "本 Demo 的旅游推荐，使用**在合成旅游数据上训练**的 DeepFM"
+            "（特征维度：13 稠密 + 3 稀疏）；上面的 Criteo 验证使用"
+            "**在真实 Criteo 数据上训练**的 DeepFM（13 稠密 + 26 稀疏）。\n\n"
+            "两者**特征 schema 不同、不能互换用于同一份物品打分**——"
+            "因此 Criteo 验证的意义是**证明同一套实现能迁移到真实数据**（泛化性），"
+            "而非把 Criteo 权重直接拿来给旅游物品排序。\n\n"
+            "这也正是合成数据在这个项目里的定位：它让「潜在真实 CTR」成为已知量，"
+            "从而能做严谨的偏差诊断与 Oracle 上界评估；而真实数据验证则补上了"
+            "「方法在真实分布上是否仍然成立」这一环。"
+        )
+
+    st.subheader("本 Demo 的模型确实在实时推理")
+    uid = st.number_input("用户 ID", 0, n_users_max, 0, 1, key="model_uid")
+    if st.button("运行实时推理", type="primary"):
+        items = engine.recommend(int(uid), 8)
+        rows = [{"物品": it["name"], "类目": it["category"], "预估 CTR": it["ctr"]}
+                for it in items]
+        st.dataframe(rows, use_container_width=True, hide_index=True)
+        st.caption(
+            "上述 CTR 由加载的 numpy 权重**实时前向计算**得出（非硬编码）；"
+            "不同用户 / 物品分数不同，证明模型是真实在跑。"
+        )
 
 # --------------------------------------------------------------------------
 # 页脚：把「这个 Demo 是什么、还能看什么」收在一处，便于访客继续深入。

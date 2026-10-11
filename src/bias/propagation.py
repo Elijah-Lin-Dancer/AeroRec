@@ -188,9 +188,10 @@ def propagation_matrix(true_ctr, n_items: int, taus, n_requests=500, slots=5,
 
     n_items 参数保留以兼容调用方语义（全局物品数 = 候选数）。
     """
-    rng = np.random.default_rng(seed)
     rows = []
     for tau in taus:
+        # 每 τ 独立确定性 rng（与扫描顺序无关），保证 demo 与报告可逐点复现一致
+        rng = np.random.default_rng(seed * 1000 + int(round(float(tau) * 100)))
         r = run_stage_estimates(true_ctr, n_items, tau=tau, n_requests=n_requests,
                                 slots=slots, alpha=alpha, w_base=w_base, rng=rng)
         t = r["true_ctr"]
@@ -237,9 +238,10 @@ def mixing_second_injection(true_ctr, n_items: int, tau: float, w_bases,
     但相对误差先降后升——注入把估计从"有偏日志"拉向"真值"，却也引入了新的偏离。
     实测：τ=2 时 w_base 由 0→0.8，spearman 由 −0.03 升到 +0.97。
     """
-    rng = np.random.default_rng(seed)
     rows = []
     for wb in w_bases:
+        # 每 w_base 独立确定性 rng（与扫描顺序无关）
+        rng = np.random.default_rng(seed * 1000 + int(round(float(wb) * 100)))
         r = run_stage_estimates(true_ctr, n_items, tau=tau, n_requests=n_requests,
                                 slots=slots, alpha=alpha, w_base=wb, rng=rng)
         t = r["true_ctr"]
