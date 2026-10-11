@@ -143,8 +143,7 @@ python3.11 scripts/validate_real_data_deepfm.py --dataset adult   # 真实数据
   不会带来差异化价值，只会多一个部署与维护面；
 - **静态主页已由 GitHub Pages 承担**：`docs/index.html`（项目主页）已覆盖「落地页」需求，无需 Space 补位。
 
-> 故 HF Spaces 仅停留在早期规划（曾为其准备 `README_spaces.md` 与 `requirements_spaces.txt`），
-> 实际未创建；相关准备文件已归档至 `archive/`，不删除、保留为决策证据。
+> 故 HF Spaces 仅停留在早期规划（曾为其准备 `README_spaces.md` 与 `requirements_spaces.txt`），实际未创建。
 
 ## 数据与复现
 
