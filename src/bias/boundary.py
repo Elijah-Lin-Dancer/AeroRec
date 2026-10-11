@@ -172,7 +172,7 @@ def boundary_by_range(t_pop: float = 0.25, n_records: int = 20000,
             f"ESS/N 降至约 {cross:.3f} 以下时，去偏收益转负且超出噪声水平"
             f"（阈值容差 {tol:.4f}）——此时 IPS 的方差代价超过纠偏收益。"
             if cross is not None else
-            "本次扫描未观察到收益实质转负；可进一步压缩 π 下界或增大 n_seeds。"
+            "该区间未观察到收益实质转负；可进一步压缩 π 下界或增大 n_seeds。"
         ),
     }
 

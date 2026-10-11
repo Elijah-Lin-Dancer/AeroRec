@@ -149,8 +149,8 @@ class LiteRecommendationEngine:
         # 训练量/数据量比值一致，模型质量与数据规模的对应关系不被扭曲。
         #
         # 注意：**样本量自适应 ≠ 训练量自适应**。样本量随规模缩小是对的，
-        # 但此前 epoch 写死为 2，导致轻量档只有 12 次梯度更新（AUC 0.51）。
-        # 现在 epoch 由目标更新次数反推（见下方），两者共同决定训练预算。
+        # 但若固定 epoch（如 2），轻量档只有约 12 次梯度更新（AUC 仅 0.51）。
+        # 故 epoch 由目标更新次数反推（见下方），两者共同决定训练预算。
         n_total = len(self.logs["clicked"])
         if train_sample is None:
             train_sample = min(12_000, max(4_000, int(n_total * 0.02)))

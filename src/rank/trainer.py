@@ -48,7 +48,7 @@ class DeepFMRanker:
         self.sparse_cards = sparse_cards
         # 权重初始化必须发生在全局随机种子被设定之后。
         # DeepFM.__init__ 内部会做 xavier_uniform_ / normal_(std=0.01)，
-        # 若此处不先播种，网络初值将取决于进程此前消耗掉的 RNG 状态，
+        # 若不先播种，网络初值会取决于进程全局 RNG 的残余状态，
         # 导致同一份代码在不同依赖版本/不同调用顺序下产出不同的指标。
         torch.manual_seed(SEED)
         np.random.seed(SEED)
