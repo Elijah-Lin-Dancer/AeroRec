@@ -22,4 +22,5 @@ streamlit>=1.30,<2
 
 # 测试依赖（README「快速开始」第 4 步用到；缺了会导致 pytest 报 ModuleNotFoundError）
 pytest>=7.0,<9
+pytest-cov>=4.0,<7
 # 后续可选: plotly, matplotlib, shap

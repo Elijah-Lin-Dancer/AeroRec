@@ -1,0 +1,64 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aerorec"
+version = "0.1.0"
+description = "出行智能推荐中台：召回-排序-混排链路 + M3 链路偏差传播诊断（numpy 优先，在线侧零 torch）"
+requires-python = ">=3.11"
+readme = "README.md"
+license = { text = "MIT" }
+
+# 依赖以 requirements.txt / requirements_full.txt 为准（部署与本地开发分离）；
+# 此处仅声明打包元信息，不重复约束运行依赖，避免与两份 requirements 漂移。
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["src/__main__.py"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+# 聚焦「能抓真问题、可全量通过」的规则集，避免在中文语料代码库上产生海量
+# 全角标点 / 长行噪声。动态字典 + 容错降级是本项目刻意的设计风格，
+# 故不启用 PLR / S / B 等与之一致性冲突的规则。
+select = [
+    "E",    # pycodestyle 错误（缩进/空格/语法类）
+    "F",    # pyflakes（未使用导入 / 未定义名 / 未使用变量 / f-string 无占位符）
+    "I",    # isort 导入排序
+    "UP",   # pyupgrade（现代语法）
+    "RUF100", # 未使用的 # noqa
+]
+ignore = [
+    "E501",  # 中文注释/文档串行较长，长度非正确性问题
+    "RUF001", # 字符串字面量中的全角/歧义 Unicode（中文文案不可避免）
+    "RUF002", # docstring 中的全角 Unicode（中文文档串不可避免）
+    "RUF003", # 注释中的全角标点（中文注释不可避免）
+]
+
+[tool.ruff.lint.per-file-ignores]
+# 测试文件允许未使用变量与断言式写法
+"tests/**" = ["F841"]
+# 应用入口允许宽泛异常处理
+"src/serve/app.py" = ["B904"]
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+warn_unused_ignores = false
+disallow_untyped_defs = false
+check_untyped_defs = true
+no_implicit_optional = true
+exclude = ["tests"]
