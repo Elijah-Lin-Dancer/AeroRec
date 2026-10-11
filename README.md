@@ -81,7 +81,6 @@ interpretable panels + true-CTR evaluation.
 - [x] **真实数据迁移性验证**：Criteo 真实 CTR 基准（100 万行，AUC **0.7733**）+ UCI Adult（**0.9183**）
 - [x] 三档数据规模：`full`（10 万用户 × 10 万物品）、`lite`（2 万 × 2 万，2GB 内存在线）、`micro`（1 万 × 1 万，免费实例下限 690MB 内在线运行、离线训练 + numpy 推理）
 - [x] 在线 Demo：GitHub Pages 项目主页 + Streamlit Community Cloud 交互面板
-- [ ] demo 视频（30 秒录屏）
 
 ## 系统架构
 
