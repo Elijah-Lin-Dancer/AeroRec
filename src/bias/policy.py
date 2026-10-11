@@ -114,7 +114,7 @@ def sample_exposure(propensity, n_slots: int, rng: np.random.Generator,
     返回：被选中候选的**下标**数组。
 
     说明：判分与采样吃的是**同一个 propensity**，因此「经验曝光频率」应当收敛到
-    π。这条是 M1 的验收依据（见 tests/test_bias_policy.py）。
+    π。这条对应 tests/test_bias_policy.py 的验收点。
     """
     p = np.asarray(propensity, dtype=np.float64)
     n = len(p)

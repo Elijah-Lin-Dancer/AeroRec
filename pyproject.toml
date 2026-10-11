@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "aerorec"
 version = "0.1.0"
-description = "出行智能推荐中台：召回-排序-混排链路 + M3 链路偏差传播诊断（numpy 优先，在线侧零 torch）"
+description = "出行智能推荐中台：召回-排序-混排链路 + 链路偏差传播诊断（numpy 优先，在线侧零 torch）"
 requires-python = ">=3.11"
 readme = "README.md"
 license = { text = "MIT" }
@@ -19,7 +19,6 @@ addopts = "-ra"
 
 [tool.coverage.run]
 source = ["src"]
-omit = ["src/__main__.py"]
 
 [tool.coverage.report]
 show_missing = true
@@ -51,8 +50,6 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 # 测试文件允许未使用变量与断言式写法
 "tests/**" = ["F841"]
-# 应用入口允许宽泛异常处理
-"src/serve/app.py" = ["B904"]
 
 [tool.mypy]
 python_version = "3.11"

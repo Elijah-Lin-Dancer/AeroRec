@@ -1,4 +1,4 @@
-"""M6 验收：HTML 报告生成器。
+"""HTML 报告生成器。
 
 断言报告**结构完整**且**自包含**（可离线打开、可直接发送），
 因为这是交付物，不能依赖 CDN 或外部文件。
@@ -86,9 +86,9 @@ def test_report_is_self_contained(report_dir):
 def test_report_contains_key_conclusions(report_dir):
     """关键数字与结论必须真的落在报告里（避免模板化空壳）。"""
     html = open(build_report(report_dir), encoding="utf-8").read()
-    assert "偏差的主要危害" in html and "把排序搞反" in html      # M3 结论
+    assert "偏差的主要危害" in html and "把排序搞反" in html      # 偏差传播结论
     assert "数值为 0" or "实现自检" in html                       # 二次注入自检
-    assert "ESS/N" in html                                       # M5 边界
+    assert "ESS/N" in html                                       # 去偏有效边界
     assert "0.358" in html                                       # 边界阈值
     assert "不需要" in html and "ground-truth" in html            # 落地价值
 

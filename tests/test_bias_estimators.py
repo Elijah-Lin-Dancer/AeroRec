@@ -1,4 +1,4 @@
-"""M4 验收：去偏估计量（IPS / SNIPS / DR）。
+"""去偏估计量（IPS / SNIPS / DR）。
 
 本测试的核心不是"IPS 比 naive 准"，而是**分清两个估计目标**：
     T_pop = mean(truth)        ← SNIPS/IPS 的目标
@@ -134,7 +134,7 @@ def test_check_propensity_convention():
 def test_ess_drops_with_exposure_skew():
     """曝光策略越偏（τ↑），π 的动态范围越大 → ESS 下降。
 
-    这是去偏**有效边界**的直接证据（M5 会把这条曲线扫出来）。
+    这是去偏**有效边界**的直接证据（有效边界扫描会把这条曲线扫出来）。
     """
     from src.bias.policy import popularity_propensity
     h = np.linspace(0.05, 0.9, 60)

@@ -359,11 +359,11 @@ TEXT: dict[str, dict[str, str]] = {
               "这是本项目研究主线（偏差传播诊断 + 去偏有效边界）的交互版。",
     },
     "bias.map_note": {
-        "en": "📄 This page is the **interactive version of the M3 propagation matrix** in the "
+        "en": "📄 This page is the **interactive version of the bias-propagation matrix** in the "
               "[tech report](https://github.com/Elijah-Lin-Dancer/AeroRec/blob/main/docs/bias_report.md): "
               "identical model-free setup and seed — the report tabulates 5 fixed τ points, here you can sweep τ continuously.",
         "zh": "📄 本页是[技术报告](https://github.com/Elijah-Lin-Dancer/AeroRec/blob/main/docs/bias_report.md)"
-              "中 **M3 传播矩阵的交互版**：同一套免训练设置、同一随机种子——"
+              "中 **偏差传播矩阵的交互版**：同一套免训练设置、同一随机种子——"
               "报告里是 5 个固定 τ 点，这里可连续拖动 τ 扫描。",
     },
     "bias.exp_title": {"en": "What is this? Why only synthetic data can do it",

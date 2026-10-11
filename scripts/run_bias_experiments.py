@@ -99,7 +99,7 @@ def main():
         with open(path, "w", encoding="utf-8") as f:
             json.dump(payload, f, ensure_ascii=False, indent=2)
 
-    # ---- 去偏有效边界（M5）----
+    # ---- 去偏有效边界 ----
     print()
     bnd = boundary_by_range(t_pop=float(true_ctr.mean()), n_records=20000,
                             n_seeds=max(20, args.requests // 20))

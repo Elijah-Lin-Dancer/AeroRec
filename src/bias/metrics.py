@@ -12,7 +12,7 @@
    用有偏日志估计「某物品/某方法的真实 CTR」，估计值与真值之差。度量：
    - `ctr_bias`      : 平滑 CTR − 真实 CTR（**这正是 README 里已记录的现象**）。
    - `ctr_mae`       : 绝对偏差的均值。
-   这一类就是项目 W7 撞上的「热门基线稀疏性偏差」。
+   这一类就是「热门基线稀疏性偏差」。
 
 3. **排序偏差（ranking bias）**
    偏差是否改变了「谁排前面」这一结论。度量：
@@ -153,7 +153,7 @@ def bias_summary(exposure_freq=None, est_ctr=None, true_ctr=None) -> dict:
 
 def reproduce_known_phenomenon(pop_recall, users, items, top_n: int = 200,
                                sample_user: int = 0) -> dict:
-    """复现项目 W7 已记录的「热门基线平滑 CTR 偏差」现象。
+    """复现「热门基线平滑 CTR 偏差」这一已知现象。
 
     复用 `src.eval.ab.baseline_bias_table`，把既有现象纳入偏差框架——
     这是「新旧两条线接上」的证据：偏差诊断不是新开一摊，而是把已发现的问题形式化。

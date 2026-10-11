@@ -11,7 +11,7 @@
 #
 # 三个 job 的分工：
 #   bias-experiments  —— 只装 numpy，证明「偏差实验零重依赖」；
-#                       重跑 M3 传播矩阵 / 二次注入 / 去偏边界，并校验产物无漂移。
+#                       重跑传播矩阵 / 二次注入 / 去偏边界，并校验产物无漂移。
 #   online-engine     —— 装完整 requirements（numpy + streamlit），
 #                       跑 micro 档在线推理基准，断言 torch 未被加载。
 #   tests             —— 装完整依赖（含 torch / sklearn / pandas），
