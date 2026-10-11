@@ -114,7 +114,7 @@ streamlit run app.py                    # 交互式 Demo，默认 micro 档（�
 AEROREC_MODE=lite  streamlit run app.py # 轻量档（~0.93GB）
 AEROREC_MODE=full  streamlit run app.py # 完整档（需 ~1.5GB 内存）
 uvicorn src.serve.app:app --port 8000    # FastAPI 服务（推荐 / 排序流程 / A/B）
-python -m pytest tests/ -q              # 冒烟测试（86 项）
+python -m pytest tests/ -q              # 冒烟测试（107 项）
 python3.11 scripts/run_bias_experiments.py   # 偏差传播 + 去偏实验（产出 data/bias/*.json）
 python3.11 scripts/build_bias_report.py      # 生成自包含 HTML 可视化报告
 python3.11 scripts/validate_real_data_deepfm.py --dataset adult   # 真实数据迁移性验证（UCI Adult）
@@ -480,6 +480,9 @@ scripts/validate_real_data_deepfm.py  真实数据迁移性验证（Criteo / Adu
 tests/test_data.py         数据 / 特征 / 召回 冒烟测试
 tests/test_rank.py         排序层 / 混排 / 降级 冒烟测试
 tests/test_ab.py           模拟 A/B 冒烟测试
+tests/test_mixer.py        混排 5 步流程单测
+tests/test_online_engine.py 在线引擎（micro 档 numpy 前向）单测
+tests/test_api.py          FastAPI 服务接口单测（桩引擎，含 400 / 503 错误码）
 tests/test_bias_*.py       偏差诊断 / 去偏估计 / 边界 / 报告 测试（6 文件 64 用例）
 tests/test_criteo*.py      Criteo 加载器单测（构造样本 + 真实 parquet 兼容性）
 tests/test_real_data.py    UCI Adult 加载器测试
@@ -489,6 +492,9 @@ data/real_validation/        真实数据验证结果（Criteo 100 万 / 20 万�
 artifacts/micro/           离线预训练的在线权重（numpy，约 29KB）
 requirements.txt           部署依赖（仅 numpy + streamlit，Streamlit Cloud 读这个）
 requirements_full.txt      完整依赖（含 torch / sklearn / pandas，本地开发与离线复现）
+pyproject.toml             打包元信息 + pytest / ruff / mypy / coverage 配置
+CHANGELOG.md               变更日志（Keep a Changelog 风格，W 里程碑 + 日期）
+LICENSE                    MIT 许可
 ```
 
 ## 诚实边界与局限性

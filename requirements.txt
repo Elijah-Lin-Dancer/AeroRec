@@ -26,7 +26,7 @@
 #     2) streamlit 小版本更新可能改动组件默认行为（如内存占用、slider 语义），
 #        在内存下限 690MB 上放大不确定性。
 #   锁定为**本机实测通过的确切版本**，让「线上所见」与「本地所测」严格一致。
-#   所有数字均在 CI 中按同一 requirements 复算（见 .github/workflows/repro.yml）。
+#   偏差实验与在线引擎基准的数字均在 CI 中按同一 requirements 复算（见 .github/workflows/repro.yml）。
 #   注：指标的完全可复现**不依赖**锁定版本，而依赖训练代码显式播种
 #   （见 src/rank/trainer.py）；锁定解决的是「避免漂移」，不是「保证可复现」。
 #
