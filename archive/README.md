@@ -6,4 +6,4 @@
 - `requirements_spaces.txt`：HF Spaces 运行依赖（含 torch，仅规划用）。
 - `README_streamlit.md`：Streamlit Community Cloud 部署说明（内容已并入根 `README.md`，保留为历史副本）。
 
-> 这些文件不再被任何线上入口引用；如需彻底移出主仓库，可转入私有「错题本」仓库存档。
+> 这些文件不再被任何线上入口引用。
