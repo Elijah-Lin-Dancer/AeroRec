@@ -248,15 +248,43 @@ def _load_json(rel_path: str):
 # --------------------------------------------------------------------------
 # 语言选择（放在侧边栏最上方；切换会触发 rerun，后续文案随之重算）
 # --------------------------------------------------------------------------
-_lang_default = os.environ.get("AEROREC_LANG", DEFAULT_LANG).lower()
-if _lang_default not in LANGS:
-    _lang_default = DEFAULT_LANG
+# 语言来源优先级：URL ?lang= > 环境变量 AEROREC_LANG > 默认（en）。
+# 回写 URL 后可直接分享「英文界面」链接，落地即英文，无需再手动切一次。
+_env_lang = os.environ.get("AEROREC_LANG", DEFAULT_LANG).lower()
+if _env_lang not in LANGS:
+    _env_lang = DEFAULT_LANG
+
+# 读取 URL query（query API 在 streamlit>=1.30 才有；此处容错处理，缺失时退化为环境变量）
+try:
+    _qp_lang = st.query_params.get("lang", "")
+    if isinstance(_qp_lang, list):          # 兼容旧版把重复参数读成 list 的行为
+        _qp_lang = _qp_lang[0] if _qp_lang else ""
+    _qp_lang = str(_qp_lang or "").lower()
+    _has_query_api = True
+except Exception:
+    _qp_lang, _has_query_api = "", False
+
+# 只在「URL 与我们上次写回的值不同」时才采纳 URL —— 否则会把用户刚在
+# 侧边栏选好的语言回滚成上一轮的 URL 旧值（URL 回写比交互晚一轮）。
+_synced = st.session_state.get("_lang_synced")
+if _qp_lang in LANGS and _qp_lang != _synced:
+    st.session_state["lang"] = _qp_lang          # URL 显式指定 → 采纳
+elif "lang" not in st.session_state:
+    st.session_state["lang"] = _env_lang         # 首帧无 URL → 用环境变量/默认
+
 lang = st.sidebar.selectbox(
     "🌐 Language / 语言", list(LANGS),
     format_func=lambda c: LANG_LABELS[c],
-    index=list(LANGS).index(_lang_default),
     key="lang",
 )
+
+# 把当前语言回写 URL（设置 query_params 不会触发 rerun），便于分享/锚定语言。
+if _has_query_api and st.query_params.get("lang") != lang:
+    try:
+        st.query_params["lang"] = lang
+    except Exception:
+        pass
+st.session_state["_lang_synced"] = lang
 t = make_t(lang)
 
 st.markdown(
@@ -506,6 +534,9 @@ elif page == "ab":
 elif page == "bias":
     st.header(t("bias.header"))
     st.caption(t("bias.caption"))
+    # 明确本页与静态研究报告的对应关系，让审阅者一眼把「交互 demo」和「报告里的表」
+    # 对上号：同设置、同种子，只是 τ 从报告的 5 个固定点变成可连续拖动。
+    st.caption(t("bias.map_note"))
     with st.expander(t("bias.exp_title"), expanded=False):
         st.info(t("bias.exp_body"), icon="🧪")
 

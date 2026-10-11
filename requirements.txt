@@ -18,10 +18,19 @@
 # 需要完整训练 / 离线复现 / 跑测试时，请安装 requirements_full.txt：
 #       pip install -r requirements_full.txt
 #
-# 关于版本策略（与 requirements_full.txt 一致）：采用「主版本上限」而非全锁定。
-#   全锁 == 会让 Cloud 镜像在依赖下线后构建失败；完全不设上限则可能因
-#   numpy 大版本跃迁改变浮点归约顺序，使 AUC 在第 4 位小数漂移。
-#   指标的完全可复现**不依赖**锁定版本，而依赖训练代码显式播种（见 src/rank/trainer.py）。
+# 关于版本策略：在线部署侧采用**精确锁定（==）**，防止 Cloud 装包漂移。
+#   之前用「主版本上限」（numpy>=1.24,<3 / streamlit>=1.30,<2）虽然抗依赖下线，
+#   但 Cloud 每次重建都可能装到区间内更新的版本，带来两类风险：
+#     1) numpy 大版本跃迁（1.x→2.x）改变浮点归约顺序，使 AUC 在第 4 位小数漂移，
+#        令 README / 报告里引用的数字与线上重算值对不上；
+#     2) streamlit 小版本更新可能改动组件默认行为（如内存占用、slider 语义），
+#        在内存下限 690MB 上放大不确定性。
+#   锁定为**本机实测通过的确切版本**，让「线上所见」与「本地所测」严格一致。
+#   所有数字均在 CI 中按同一 requirements 复算（见 .github/workflows/repro.yml）。
+#   注：指标的完全可复现**不依赖**锁定版本，而依赖训练代码显式播种
+#   （见 src/rank/trainer.py）；锁定解决的是「避免漂移」，不是「保证可复现」。
+#
+#   ⚠️ 在线侧**严禁**出现 torch / scikit-learn / pandas（见上方内存说明）。
 
-numpy>=1.24,<3
-streamlit>=1.30,<2
+numpy==2.3.5
+streamlit==1.64.0

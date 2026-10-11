@@ -1,0 +1,137 @@
+# 复现性 CI —— 让「文档里引用的每一个数字」都可以在干净机器上一键复算。
+#
+# 为什么需要它：
+#   本项目此前出现过一次真实的「数字漂移」——代码改过、但报告里的硬编码数字没重跑，
+#   导致 demo、报告、README 三处口径对不上。审阅者一旦对照就会发现。
+#   本 workflow 把「实验 → JSON 产物」这一步固化到 CI：
+#     1) 每次 push / PR 都在干净环境重跑实验；
+#     2) 用 `git diff --exit-code` 硬校验提交进仓库的 JSON 与重算结果**逐字节一致**，
+#        任何「改了代码没更新产物」的提交都会直接变红；
+#     3) 顺带证明研究路径**只依赖 numpy**、在线引擎**不加载 torch**（内存纪律）。
+#
+# 两个 job 的分工：
+#   bias-experiments  —— 只装 numpy，证明「偏差实验零重依赖」；
+#                       重跑 M3 传播矩阵 / 二次注入 / 去偏边界，并校验产物无漂移。
+#   online-engine     —— 装完整 requirements（numpy + streamlit），
+#                       跑 micro 档在线推理基准，断言 torch 未被加载。
+
+name: reproducibility
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:        # 允许从 Actions 页手动触发
+
+# 同一分支的新推送取消旧的运行，避免排队堆积
+concurrency:
+  group: repro-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ---------------------------------------------------------------------
+  # 研究路径：零重依赖、逐字节可复现
+  # ---------------------------------------------------------------------
+  bias-experiments:
+    name: Bias experiments (numpy-only, drift-gated)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # 刻意**只装 numpy**：若偏差实验偷偷依赖了别的包，这一步之后就会失败，
+      # 从而在 CI 层面守住「研究路径零重依赖」这一设计承诺。
+      - name: Install numpy only (prove zero heavy deps)
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "numpy==2.3.5"
+
+      - name: Sanity — torch / sklearn / pandas must NOT be present
+        run: |
+          python - <<'PY'
+          import importlib.util as u, sys
+          bad = [m for m in ("torch", "sklearn", "pandas") if u.find_spec(m) is not None]
+          print("unexpected heavy deps:", bad)
+          sys.exit(1 if bad else 0)
+          PY
+
+      - name: Run bias pipeline (propagation + injection + boundary)
+        run: python scripts/run_bias_experiments.py
+
+      - name: Build HTML report from the fresh JSON
+        run: python scripts/build_bias_report.py
+
+      # 硬门禁：提交进仓库的 JSON 必须与干净环境重算结果逐字节一致。
+      # 只比对数据产物，不比对 report.html（其内含渲染版式，非数值来源）。
+      - name: Assert committed results reproduce exactly (no drift)
+        run: |
+          git diff --exit-code -- \
+            data/bias/propagation.json \
+            data/bias/injection.json \
+            data/bias/boundary.json
+          echo "✓ committed JSON matches recomputation byte-for-byte"
+
+      - name: Upload experiment artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bias-experiment-json
+          path: |
+            data/bias/propagation.json
+            data/bias/injection.json
+            data/bias/boundary.json
+            data/bias/report.html
+
+  # ---------------------------------------------------------------------
+  # 在线路径：内存纪律（不加载 torch）+ 推理基准
+  # ---------------------------------------------------------------------
+  online-engine:
+    name: Online engine (numpy inference, torch-free)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # 装**锁定版本**的在线依赖（与 Streamlit Community Cloud 完全一致）。
+      - name: Install pinned online requirements
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      # 关键断言：装了 streamlit 也不应带入 torch —— 在线侧永远走 numpy 推理路径。
+      - name: Assert requirements never pull torch
+        run: |
+          python - <<'PY'
+          import importlib.util as u, sys
+          ok = u.find_spec("streamlit") is not None
+          bad = u.find_spec("torch") is not None
+          print(f"streamlit present={ok}, torch present={bad}")
+          sys.exit(0 if (ok and not bad) else 1)
+          PY
+
+      - name: Benchmark micro engine (cold start / P50-P99 / QPS / peak RSS)
+        run: python scripts/bench_inference.py --mode micro --iters 300 --warmup 30
+
+      - name: Assert the benchmark ran without loading torch
+        run: |
+          python - <<'PY'
+          import json, sys
+          d = json.load(open("data/bench.json", encoding="utf-8"))
+          assert d["mode"] == "micro", d["mode"]
+          assert d["torch_loaded"] is False, "torch was loaded on the online path!"
+          print("✓ torch_loaded = False; peak RSS =", d["memory"]["peak_rss_mb"], "MB")
+          print("  P99 =", d["latency_ms"]["p99"], "ms; QPS =", d["throughput"]["qps_single_thread"])
+          PY
+
+      - name: Upload benchmark artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: online-bench-json
+          path: data/bench.json

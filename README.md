@@ -9,6 +9,7 @@
 [![Demo](https://img.shields.io/badge/🚀%20Demo-Streamlit%20Cloud-ff4b4b)](https://aerorec-tourism.streamlit.app)
 [![Streamlit](https://img.shields.io/badge/built%20with-Streamlit-ff4b4b)](https://streamlit.io/)
 [![Pages](https://img.shields.io/badge/🌐%20Homepage-GitHub%20Pages-blue)](https://elijah-lin-dancer.github.io/AeroRec/)
+[![Reproducibility](https://github.com/Elijah-Lin-Dancer/AeroRec/actions/workflows/repro.yml/badge.svg)](https://github.com/Elijah-Lin-Dancer/AeroRec/actions/workflows/repro.yml)
 
 > **快速体验**：[项目主页](https://elijah-lin-dancer.github.io/AeroRec/) · [交互 Demo（Streamlit Cloud）](https://aerorec-tourism.streamlit.app)
 >
@@ -160,6 +161,21 @@ python3.11 scripts/validate_real_data_deepfm.py --dataset adult   # 真实数据
 > **代价如实写出**：合成数据无法覆盖真实分布的噪声、长尾、概念漂移与采样偏差。
 > 因此本文档的指标衡量的是**方法在受控条件下的有效性**，而非**线上可迁移性**。
 > 完整的局限清单见文末「诚实边界与局限性」。
+
+### 复现性 CI：每次提交自动复算 + 零漂移门禁
+
+`.github/workflows/repro.yml` 在每次 push / PR 时于**干净机器**上自动执行三件事：
+
+1. **只装 numpy** 重跑 `scripts/run_bias_experiments.py`（偏差传播 / 二次注入 / 去偏边界），
+   随后用 `git diff --exit-code` 校验提交进仓库的 `data/bias/*.json` 与重算结果**逐字节一致**。
+   任何「改了代码却忘记重跑产物」的提交都会让 CI 变红——本项目此前正是踩过这个坑
+   （demo、报告、README 三处数字一度对不上），故把它固化成硬门禁。
+2. **断言研究路径零重依赖**：若偏差实验偷偷用上 `torch / sklearn / pandas`，CI 直接失败，
+   在流水线层面守住「研究路径只需 numpy」的设计承诺。
+3. 安装**锁定版本**的在线依赖（`requirements.txt`）跑 micro 档推理基准，
+   并断言 **`torch_loaded = false`**——把「在线侧不加载 torch」的内存纪律也交给 CI 守护。
+
+徽章状态见仓库顶部；本地一键复算见「快速开始」。
 
 ### 数据长什么样
 
