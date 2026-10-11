@@ -23,4 +23,8 @@ streamlit>=1.30,<2
 # 测试依赖（README「快速开始」第 4 步用到；缺了会导致 pytest 报 ModuleNotFoundError）
 pytest>=7.0,<9
 pytest-cov>=4.0,<7
+# FastAPI TestClient 的 HTTP 客户端：starlette 新版要求 httpx2、旧版用 httpx，
+# 两者都装，保证 fastapi/starlette 在允许区间内取到任一版本时测试都可跑。
+httpx>=0.24,<1
+httpx2>=2.0,<3
 # 后续可选: plotly, matplotlib, shap
