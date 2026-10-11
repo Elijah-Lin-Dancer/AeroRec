@@ -53,13 +53,13 @@
   <header>
     <span class="badge">工程型 · 交叉学科（AI + 出行/交通）</span>
     <h1>AeroRec · 出行智能推荐中台</h1>
-    <p class="subtitle">开源、可复现的出行场景智能推荐系统 —— 召回 → DeepFM 排序 → 5 步混排 → 降级 → 服务化 → 真实 CTR 评估 + 偏差传播诊断</p>
+    <p class="subtitle">开源、可复现的出行场景智能推荐系统：召回 → DeepFM 排序 → 5 步混排 → 降级 → 服务化 → 真实 CTR 评估 + 偏差传播诊断</p>
 
     <p class="banner">
       <b>数据说明</b>：本项目全部数据由 <code>src/data/synthetic_generator.py</code>
       <b>合成生成</b>（固定随机种子），<b>不使用、也不声称使用任何真实业务数据</b>。
       选择合成数据是因为它让「潜在真实 CTR」成为已知量，从而能够构造
-      <b>Oracle 上界</b>并给出<b>不依赖平滑估计</b>的评估口径——这是本项目量化结论得以成立的前提。
+      <b>Oracle 上界</b>并给出<b>不依赖平滑估计</b>的评估口径，这是本项目量化结论得以成立的前提。
       代价是：指标衡量的是<b>方法在受控条件下的有效性</b>，而非<b>线上可迁移性</b>，
       完整局限清单见 README「诚实边界与局限性」。
     </p>
@@ -187,7 +187,7 @@
   <section>
     <h2>④ 研究主线：偏差传播诊断与去偏有效边界</h2>
     <p style="font-size:14px;color:#5f6672">
-      本项目的独有资源是<b>可控 ground-truth</b>——曝光策略自造、propensity 闭式已知，使「去偏估计能否还原真值」可被严格检验。
+      本项目的独有资源是<b>可控 ground-truth</b>，曝光策略自造、propensity 闭式已知，使「去偏估计能否还原真值」可被严格检验。
       （完整版见 <a href="https://github.com/Elijah-Lin-Dancer/AeroRec/blob/main/docs/bias_report.md">tech report</a>）
     </p>
 
@@ -200,14 +200,14 @@
       <tr><td>3.0</td><td class="down">−0.4955</td><td>0 / 287</td><td>0.6845</td><td>0.6211</td></tr>
     </table>
     <p style="font-size:13.5px;color:#5f6672;margin-top:10px">
-      spearman 从 <b>+0.8466 一路跌到 −0.4955</b>，在 τ≈2.0 处符号反转——排行榜被搞反了。
+      spearman 从 <b>+0.8466 一路跌到 −0.4955</b>，在 τ≈2.0 处符号反转，排行榜被搞反了。
       只看「平均 CTR 偏高多少」会得出「偏差可控」，却完全看不见排序级的破坏。
     </p>
 
     <h3>结论二：去偏的有效边界由 propensity 动态范围决定，而非偏差强度</h3>
     <p style="font-size:13.5px;color:#5f6672">
       实测边界 <b>ESS/N ≈ 0.358</b>：低于该值时 IPS/SNIPS 的方差代价超过纠偏收益，收益转负。
-      它是本项目给出的唯一可落地判据——<b>只需 propensity 与样本量，不需要 ground-truth</b>；
+      它是本项目给出的唯一可落地判据：<b>只需 propensity 与样本量，不需要 ground-truth</b>；
       落地接口 <code>ess_warning_from_log(log, threshold=0.358)</code>。
     </p>
     <div class="note" style="background:#eef4ff;border-left-color:#2563eb">
@@ -219,7 +219,7 @@
   <section>
     <h2>真实数据迁移性验证</h2>
     <p style="font-size:14px;color:#5f6672">
-      同一套 <code>DeepFM</code> 实现（与合成链路完全一致）在两份真实、公开、可引用的数据上验证——证明<b>实现能在真实数据上学到信号</b>。
+      同一套 <code>DeepFM</code> 实现（与合成链路完全一致）在两份真实、公开、可引用的数据上验证，证明<b>实现能在真实数据上学到信号</b>。
     </p>
     <table>
       <tr><th>数据集</th><th>任务</th><th>规模</th><th>DeepFM 验证 AUC</th><th>对照</th></tr>
@@ -249,7 +249,7 @@
       <tr><td>端到端峰值（真实 streamlit 进程 + 浏览器）</td><td>~297 MB（相对 690MB 下限余量 2.3×）</td></tr>
     </table>
     <p style="font-size:13.5px;color:#5f6672;margin-top:10px">
-      PyTorch 与 numpy 前向<b>逐样本等价</b>（最大偏差 1.19e-07）——在线演示的仍是同一个已训练模型，只是换了运行时。
+      PyTorch 与 numpy 前向<b>逐样本等价</b>（最大偏差 1.19e-07），在线演示的仍是同一个已训练模型，只是换了运行时。
       基准可复现：<code>python scripts/bench_inference.py --mode micro</code>。
     </p>
   </section>
