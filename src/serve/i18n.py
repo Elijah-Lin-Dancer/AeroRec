@@ -86,7 +86,7 @@ TEXT: dict[str, dict[str, str]] = {
         "zh": "**数据说明**：本应用的全部数据由 `src/data/synthetic_generator.py` **合成生成**"
               "（固定随机种子，可一键复现），**不使用、也不声称使用任何真实业务数据**。\n\n"
               "选用合成数据并非取巧：它让「潜在真实 CTR」成为**已知量**，"
-              "从而能构造 **Oracle 上界**、给出**不依赖平滑估计**的评估口径——"
+              "从而能构造 **Oracle 上界**、给出**不依赖平滑估计**的评估口径，"
               "这是本项目量化结论得以成立的前提。代价是：本页展示的是"
               "**方法在受控条件下的有效性**，不代表**线上可迁移性**。",
     },
@@ -123,10 +123,10 @@ TEXT: dict[str, dict[str, str]] = {
               "CPU 0.078–2 cores, memory 690 MB–2.7 GB, no GPU; **the app sleeps after 12 h of "
               "inactivity** and wakes on access, which may take ~10 s.)",
         "zh": "ℹ️ 本实例的模型为**离线预训练 + numpy 推理**：训练阶段在本机完成，"
-              "权重导出为 numpy 数组后加载，在线侧不依赖 torch/sklearn —— "
+              "权重导出为 numpy 数组后加载，在线侧不依赖 torch/sklearn，"
               "这是在「免费实例内存受限」条件下的工程取舍，详见仓库 `src/build_online_artifacts.py`。"
               "\n\n"
-              "（平台说明：Streamlit Community Cloud 免费实例的资源为区间——CPU 0.078～2 核、"
+              "（平台说明：Streamlit Community Cloud 免费实例的资源为区间：CPU 0.078～2 核、"
               "内存 690MB～2.7GB、无 GPU；**无流量 12 小时后休眠**，访问即自动唤醒，"
               "唤醒时可能需等待约十秒。）",
     },
@@ -169,7 +169,7 @@ TEXT: dict[str, dict[str, str]] = {
     "pipe.caption": {
         "en": "Open up each step to see what it does and what the intermediate state looks like. "
               "This is where *interpretability* lands — not just the result, but the path to it.",
-        "zh": "拆开看每一步做了什么、中间态长什么样。这是「可解释」的落点——"
+        "zh": "拆开看每一步做了什么、中间态长什么样。这是「可解释」的落点，"
               "不只给结果，还给到达结果的路径。",
     },
     "pipe.s1": {"en": "① Normalize", "zh": "① 归一化"},
@@ -193,7 +193,7 @@ TEXT: dict[str, dict[str, str]] = {
               "rule recall, so popularity is reflected in the candidate set; the mixing stage does not "
               "re-inject popularity bias (see the empirical note in `src/rank/mixer.py`).",
         "zh": "候选池共 **{n}** 个物品；下表逐步展示中间态的变化。"
-              "默认 `w_base=0`——候选池已由热门 + 规则召回构成，热度信息已体现在候选集里，"
+              "默认 `w_base=0`，候选池已由热门 + 规则召回构成，热度信息已体现在候选集里，"
               "混排阶段不再二次注入热门偏差（见 `src/rank/mixer.py` 实测说明）。",
     },
     "pipe.stage.candidates": {"en": "Candidate pool (after recall)", "zh": "候选池（召回后）"},
@@ -227,7 +227,7 @@ TEXT: dict[str, dict[str, str]] = {
         "zh": "**为什么这一页最可信**：直接用**已知的潜在真实 CTR** 计算各方法 Top-K 的平均点击率，"
               "不依赖任何「平滑历史 CTR」估计，因此**不受稀疏性偏差影响**。\n\n"
               "**Oracle 上界** = 逐用户的候选池（热门 ∪ 规则 ∪ 随机）内按真实 CTR 取 Top-K，"
-              "因此它**严格 ≥ 所有被比较的方法**——这是一个有意义的天花板。",
+              "因此它**严格 ≥ 所有被比较的方法**，这是一个有意义的天花板。",
     },
     "tctr.n_users": {"en": "Sample users", "zh": "样本用户数"},
     "tctr.n_users_help": {"en": "Larger is more stable, but runtime grows linearly",
@@ -257,7 +257,7 @@ TEXT: dict[str, dict[str, str]] = {
         "zh": "**结论**：{n} 用户、Top-{k} 下，DeepFM+混排 相对 {base} "
               "提升 **{rel:+.1%}**，达到理论上界的 **{pct:.1%}**。"
               "（完整档 10万×10万×500万 的离线结果为 +28.5% / 88.4%，在线 micro 档因候选池更稀疏，"
-              "增益低于完整档——这是规模差异，不是实现差异。）",
+              "增益低于完整档，这是规模差异，不是实现差异。）",
     },
     "name.random": {"en": "Random", "zh": "随机"},
     "name.popularity": {"en": "Popularity", "zh": "热门"},
@@ -278,7 +278,7 @@ TEXT: dict[str, dict[str, str]] = {
               "forming **sparsity bias** that **overstates** the treatment gain. Rely on the "
               "*True-CTR Comparison* page instead.",
         "zh": "**本页口径受限，数值仅供参考。** 对照的热门基线按「历史日志平滑 CTR」排序，"
-              "而日志为随机曝光——曝光少的物品偶然被点击就会推高平滑 CTR，形成**稀疏性偏差**，"
+              "而日志为随机曝光，曝光少的物品偶然被点击就会推高平滑 CTR，形成**稀疏性偏差**，"
               "使实验组增益被**高估**。请以「真实 CTR 对比」页的结论为准。",
     },
     "ab.error_lite": {
@@ -355,7 +355,7 @@ TEXT: dict[str, dict[str, str]] = {
         "en": "Drag the “exposure-bias strength τ” slider to watch in real time how biased exposure "
               "**inverts** the recommendation ranking — the interactive version of this project's "
               "research thread (bias-propagation diagnosis + debiasing effective boundary).",
-        "zh": "拖动「曝光偏差强度 τ」滑块，实时观察有偏曝光如何把推荐排序**搞反**——"
+        "zh": "拖动「曝光偏差强度 τ」滑块，实时观察有偏曝光如何把推荐排序**搞反**，"
               "这是本项目研究主线（偏差传播诊断 + 去偏有效边界）的交互版。",
     },
     "bias.map_note": {
@@ -363,7 +363,7 @@ TEXT: dict[str, dict[str, str]] = {
               "[tech report](https://github.com/Elijah-Lin-Dancer/AeroRec/blob/main/docs/bias_report.md): "
               "identical model-free setup and seed — the report tabulates 5 fixed τ points, here you can sweep τ continuously.",
         "zh": "📄 本页是[技术报告](https://github.com/Elijah-Lin-Dancer/AeroRec/blob/main/docs/bias_report.md)"
-              "中 **偏差传播矩阵的交互版**：同一套免训练设置、同一随机种子——"
+              "中 **偏差传播矩阵的交互版**：同一套免训练设置、同一随机种子，"
               "报告里是 5 个固定 τ 点，这里可连续拖动 τ 扫描。",
     },
     "bias.exp_title": {"en": "What is this? Why only synthetic data can do it",
@@ -378,7 +378,7 @@ TEXT: dict[str, dict[str, str]] = {
               "runs in seconds and is seed-reproducible.",
         "zh": "推荐系统的根本难题：真实日志里你**既不知道真值、也不知道曝光策略**，"
               "偏差混在一起拆不开。本项目用**合成数据**让每个 (用户, 物品) 的潜在真实 CTR "
-              "成为**已知量**，曝光策略的 propensity 又是策略参数的**闭式函数**——"
+              "成为**已知量**，曝光策略的 propensity 又是策略参数的**闭式函数**，"
               "于是「偏差 = 有偏观测 − 已知真值」可以精确测量。\n\n"
               "下方实验**不训练任何模型**，用真实 CTR 作 ground-truth 即可，"
               "秒级完成、固定种子可复现。",
@@ -456,7 +456,7 @@ TEXT: dict[str, dict[str, str]] = {
               "forward pass online — PyTorch vs numpy max deviation 1.19e-07 (per-sample check at build "
               "time). The online side does **not import torch**; peak memory ~297 MB, fitting the free "
               "instance's 690 MB floor.",
-        "zh": "离线用 torch 训练，权重导出为 numpy（约 29KB）后由在线侧纯 numpy 前向加载——"
+        "zh": "离线用 torch 训练，权重导出为 numpy（约 29KB）后由在线侧纯 numpy 前向加载，"
               "PyTorch vs numpy 最大偏差 1.19e-07（构建期逐样本校验）。"
               "在线侧**不 import torch**，峰值内存约 297MB，适配免费实例 690MB 下限。",
     },
@@ -500,7 +500,7 @@ TEXT: dict[str, dict[str, str]] = {
         "zh": "本 Demo 的旅游推荐，使用**在合成旅游数据上训练**的 DeepFM"
               "（特征维度：13 稠密 + 3 稀疏）；上面的 Criteo 验证使用"
               "**在真实 Criteo 数据上训练**的 DeepFM（13 稠密 + 26 稀疏）。\n\n"
-              "两者**特征 schema 不同、不能互换用于同一份物品打分**——"
+              "两者**特征 schema 不同、不能互换用于同一份物品打分**，"
               "因此 Criteo 验证的意义是**证明同一套实现能迁移到真实数据**（泛化性），"
               "而非把 Criteo 权重直接拿来给旅游物品排序。\n\n"
               "这也正是合成数据在这个项目里的定位：它让「潜在真实 CTR」成为已知量，"
