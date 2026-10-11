@@ -14,10 +14,6 @@
 > **快速体验**：[项目主页](https://elijah-lin-dancer.github.io/AeroRec/) · [交互 Demo（Streamlit Cloud）](https://aerorec-tourism.streamlit.app)
 >
 > **研究主线**（偏差传播诊断 + 去偏有效边界）：[tech report](docs/bias_report.md) · [可视化报告（HTML）](data/bias/report.html) · [research one-pager (EN)](docs/research_highlight.md)
->
-> <!-- ⚠️ 待办：上面两处 HF Spaces 链接目前写着预估地址 `spaces/<你的用户名>/AeroRec`。
->      创建 Space 后请把 `<你的用户名>` 替换为真实账号，并把 docs/index.html 第 187 行同步更新。 -->
-
 
 ---
 
@@ -135,6 +131,20 @@ python3.11 scripts/validate_real_data_deepfm.py --dataset adult   # 真实数据
 
 - **项目主页（GitHub Pages）**：https://elijah-lin-dancer.github.io/AeroRec/
 - **交互面板（Streamlit Community Cloud）**：https://aerorec-tourism.streamlit.app
+
+### 部署决策：为什么没有用 HuggingFace Spaces
+
+本项目最终只保留了两个线上入口——**GitHub Pages 静态主页** + **Streamlit Community Cloud 交互 Demo**，
+没有实际创建 HuggingFace Space。如实记录原因：
+
+- **Streamlit Cloud 已满足全部交互演示需求**：双语（EN / 中文）交互面板、免费实例 **690MB 内存下限**
+  （通过「训练 / 推理解耦」解决，见下「在线 Demo 的一个工程取舍」）、可分享的稳定 URL，均已具备；
+- **再建一个 HF Space 是重复投入**：它与 Streamlit Cloud 提供的是同一类「交互式 Python Demo」入口，
+  不会带来差异化价值，只会多一个部署与维护面；
+- **静态主页已由 GitHub Pages 承担**：`docs/index.html`（项目主页）已覆盖「落地页」需求，无需 Space 补位。
+
+> 故 HF Spaces 仅停留在早期规划（曾为其准备 `README_spaces.md` 与 `requirements_spaces.txt`），
+> 实际未创建；相关准备文件已归档至 `archive/`，不删除、保留为决策证据。
 
 ## 数据与复现
 
@@ -447,7 +457,8 @@ src/
   serve/engine_lite.py        推荐引擎（lite 档，在线训练）
   serve/engine_micro.py       推荐引擎（micro 档，加载 numpy 权重，无 torch/sklearn）
   serve/app.py                FastAPI 服务
-  app.py                      Streamlit 交互 Demo（根目录，支持 lite/full 切换）
+  serve/i18n.py              双语 UI 文本目录（EN / 中文，i18n 闭包）
+  app.py                      Streamlit 交互 Demo（根目录，默认 micro，可切 lite/full，中英双语可切换）
   bias/policy.py              曝光策略与闭式 propensity（均匀 / 热度^τ / 位置 1/rank^η）
   bias/injectors.py           偏差注入器（build_biased_log 为去偏实验唯一数据入口）
   bias/metrics.py             偏差度量：曝光分布（KL/Gini）+ 统计偏差 + 排序偏差

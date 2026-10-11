@@ -1,19 +1,19 @@
 # AeroRec — Streamlit Community Cloud 部署依赖
 #
 # ⚠️ 这个文件必须叫 requirements.txt
-#    Streamlit Cloud 只读取**根目录的 requirements.txt**，不会自动识别
-#    requirements_streamlit.txt / requirements_spaces.txt。
-#    若不在此处收敛依赖，Cloud 会按完整清单安装 torch —— 而 `import torch`
-#    的固有开销为 643MB（与数据规模无关），在 1GB 免费实例上必然 OOM，
-#    本项目「训练与推理解耦」的设计会被完全绕过。
+#    Streamlit Cloud 只读取**根目录的 requirements.txt**（部署专用）；
+#    完整依赖（含 torch / scikit-learn / pandas，本地开发与离线复现用）见 requirements_full.txt。
 #
-# 为什么在线侧不需要 torch / scikit-learn / pandas：
-#   1GB 内存上限是硬约束。实测各组件累计导入开销：
-#     裸 Python 9MB → +numpy 25MB → +sklearn 176MB → +torch 643MB → +streamlit 676MB
-#   本项目采用「离线预训练 + numpy 推理」：权重已由
+# 为什么在线侧只需要 numpy + streamlit：
+#   免费实例内存下限为 690MB（官方区间 690MB–2.7GB，本项目取最坏情况的下限）。
+#   实测「框架基线」（同进程仅加载，未含数据）：
+#     torch + sklearn + numpy + streamlit = 673MB  → 690MB 下限仅剩 16.7MB，必然 OOM
+#     numpy + streamlit（解耦后）            = 73MB  → 留给数据 617MB
+#   故本项目「训练与推理解耦」：权重由
 #       python -m src.build_online_artifacts micro
-#   预先导出到 artifacts/micro/*.npz，在线侧只用 numpy 复现前向计算。
-#   实测峰值内存约 130MB（解耦前 840MB），相对 1GB 上限余量约 8 倍。
+#   预先导出到 artifacts/micro/*.npz（仅 29KB），在线侧只用 numpy 复现前向计算，
+#   不依赖 torch / scikit-learn / pandas。真实 streamlit 进程 + 浏览器驱动实测峰值约 297MB，
+#   引擎进程峰值 RSS 约 129MB（脚本 scripts/bench_inference.py 内置断言校验未加载 torch）。
 #
 # 需要完整训练 / 离线复现 / 跑测试时，请安装 requirements_full.txt：
 #       pip install -r requirements_full.txt
