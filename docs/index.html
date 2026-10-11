@@ -194,7 +194,7 @@
 python -m src.pipeline_demo      # 数据 + 四路召回 + 融合
 python -m src.eval.evaluate      # LR vs DeepFM AUC + 真实 CTR + Oracle 上界
 python -m src.build_online_artifacts micro   # 离线导出 numpy 权重（约 2 分钟）
-streamlit run app.py             # 交互式 Demo（默认 micro 档，约 130MB 内存）
+streamlit run app.py             # 交互式 Demo（默认 micro 档，进程峰值约 297MB）
 AEROREC_MODE=lite streamlit run app.py       # 切到 lite 档（约 960MB）
 python -m pytest tests/ -q       # 冒烟测试（16 项）</pre>
   </section>

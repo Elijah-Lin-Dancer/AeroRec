@@ -108,8 +108,8 @@ AEROREC_MODE=full streamlit run app.py   # 完整档（10万×10万×500万，�
 ```
 
 > 完整档与离线重训需 `pip install -r requirements_full.txt`（含 torch / sklearn / pandas）。
-> 根目录 `requirements.txt` 只放 numpy + streamlit，是为了适配 1GB 免费实例
-> （`import torch` 的固有开销为 643MB，与数据规模无关）。
+> 根目录 `requirements.txt` 只放 numpy + streamlit，是为了适配免费实例的内存下限
+> （Streamlit Community Cloud 官方为 690MB；`import torch` 会固定吃掉约 500–650MB，与数据规模无关）。
 
 ## 目录结构（与本 Space 相关部分）
 

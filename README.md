@@ -46,7 +46,7 @@
 - [x] **真实 CTR 口径评估 + Oracle 上界**（修正热门基线的平滑稀疏偏差，结论可引用）
 - [x] **偏差传播诊断 + 去偏验证**（链路偏差传播矩阵 / IPS·SNIPS·DR 去偏 / 有效边界 `ESS/N≈0.358`，见 [tech report](docs/bias_report.md)）
 - [x] **真实数据迁移性验证**：Criteo 真实 CTR 基准（100 万行，AUC **0.7733**）+ UCI Adult（**0.9183**）
-- [x] 三档数据规模：`full`（10 万用户 × 10 万物品）、`lite`（2 万 × 2 万，2GB 内存在线）、`micro`（1 万 × 1 万，1GB 内存在线、离线训练 + numpy 推理）
+- [x] 三档数据规模：`full`（10 万用户 × 10 万物品）、`lite`（2 万 × 2 万，2GB 内存在线）、`micro`（1 万 × 1 万，免费实例下限 690MB 内在线运行、离线训练 + numpy 推理）
 - [x] 在线 Demo：GitHub Pages 项目主页 + Streamlit Community Cloud 交互面板
 - [ ] demo 视频（30 秒录屏）
 
@@ -77,22 +77,22 @@ pip install -r requirements_full.txt   # 完整依赖（含 torch / sklearn，�
 python -m src.pipeline_demo        # 数据 + 四路召回 + 融合 + 样例推荐
 python -m src.eval.evaluate        # LR vs DeepFM AUC + 真实 CTR 对比 + Oracle 上界
 python -m src.build_online_artifacts micro  # 离线生成在线权重（首次需先跑一次）
-streamlit run app.py                    # 交互式 Demo，默认 micro 档（~130MB）
+streamlit run app.py                    # 交互式 Demo，默认 micro 档（峰值约 297MB）
 AEROREC_MODE=lite  streamlit run app.py # 轻量档（~0.93GB）
 AEROREC_MODE=full  streamlit run app.py # 完整档（需 ~1.5GB 内存）
 uvicorn src.serve.app:app --port 8000    # FastAPI 服务（推荐 / 排序流程 / A/B）
-```
-
-> **`requirements.txt` 为什么只有 numpy + streamlit**：Streamlit Community Cloud
-> 只读取根目录的 `requirements.txt`。若把它写成完整依赖，Cloud 会安装 torch
-> （固有导入开销 643MB，与数据规模无关），在 1GB 免费实例上必然 OOM。
-> 故根目录的 `requirements.txt` 是**部署专用**，完整依赖见 `requirements_full.txt`。
 python -m pytest tests/ -q              # 冒烟测试（86 项）
 python3.11 scripts/run_bias_experiments.py   # 偏差传播 + 去偏实验（产出 data/bias/*.json）
 python3.11 scripts/build_bias_report.py      # 生成自包含 HTML 可视化报告
 python3.11 scripts/validate_real_data_deepfm.py --dataset adult   # 真实数据迁移性验证（UCI Adult）
 # 真实 Criteo 验证需本机下载数据放入 data/criteo/（见「真实数据验证」一节）
 ```
+
+> **`requirements.txt` 为什么只有 numpy + streamlit**：Streamlit Community Cloud
+> 只读取根目录的 `requirements.txt`。若把它写成完整依赖，Cloud 会安装 torch——
+> 而 torch + sklearn + numpy + streamlit 的**框架基线已达 673MB**，超过免费实例
+> **690MB 的内存下限**，留给数据的只剩 16.7MB，必然 OOM。
+> 故根目录的 `requirements.txt` 是**部署专用**，完整依赖见 `requirements_full.txt`。
 
 ### 在线 Demo
 
@@ -142,7 +142,7 @@ python3.11 scripts/validate_real_data_deepfm.py --dataset adult   # 真实数据
 |---|---|---|---|---|
 | `full` | `src/config.py` | 10 万用户 × 10 万物品 × 500 万曝光 | ~1.5GB | 本地完整复现、**论文级可引用结果** |
 | `lite` | `src/config_lite.py` | 2 万用户 × 2 万物品 × 100 万曝光 | ~0.93GB | 2GB 内存在线实例（在线训练） |
-| `micro` | `src/config_micro.py` | 1 万用户 × 1 万物品 × 50 万曝光 | **~0.13GB** | 1GB 内存免费在线实例（离线训练 + numpy 推理） |
+| `micro` | `src/config_micro.py` | 1 万用户 × 1 万物品 × 50 万曝光 | **~0.30GB** | 免费在线实例（内存下限 690MB，离线训练 + numpy 推理） |
 
 三档**共用同一套算法代码**（`Mixer` / `DegradeRanker` / `simulate_ab` / `compare_rankers` 全部复用），
 差异仅为数据规模与特征库实现（`lite`/`micro` 走纯 numpy 路径，规避 pandas/pyarrow 的额外内存开销）。
@@ -152,20 +152,29 @@ python3.11 scripts/validate_real_data_deepfm.py --dataset adult   # 真实数据
 
 ### 在线 Demo 的一个工程取舍：把训练与推理解耦
 
-在线免费托管的**内存上限**（本项目目标平台 Streamlit Community Cloud 为 1GB）是硬约束。
-我们先量了各依赖的**固有导入开销**：
+先说清目标平台的**真实限额**（Streamlit Community Cloud 官方文档，2024-02 起未变）：
 
-| 组件 | 累计内存 |
+| 资源 | 官方限额 |
 |---|---|
-| 裸 Python | 9 MB |
-| + numpy | 25 MB |
-| + scikit-learn | 176 MB |
-| + **torch** | **643 MB** |
-| + streamlit | 676 MB |
+| CPU | **0.078 核**（下限）～ **2 核**（上限） |
+| 内存 | **690 MB**（下限）～ **2.7 GB**（上限） |
+| 存储 | 无下限 ～ 50 GB |
+| GPU | **无** |
+| 休眠 | 无流量 **12 小时**后休眠（访问即唤醒） |
 
-结论很清楚：**只要 `import torch` 就固定花掉 643MB，与数据规模无关**。
-实测把数据从 100 万曝光压到 50 万曝光，峰值内存只从 847MB 降到 840MB——
-**瓶颈是框架运行时，不是数据**。继续缩数据是徒劳的。
+> 注意这是**区间**不是固定值：所有应用共享同一池资源，压力大时会被压缩到接近下限。
+> 因此本项目的设计基准取**下限 690MB**（最坏情况），而非取 1GB 之类的「常见说法」。
+
+在这个约束下，量了两种运行方式的**框架基线**（同进程加载，未含数据）：
+
+| 进程内同时加载 | 框架基线 RSS | 690MB 下留给数据的空间 |
+|---|---|---|
+| torch + sklearn + numpy + streamlit（**解耦前**） | **673 MB** | **16.7 MB** → 必然 OOM |
+| numpy + streamlit（**解耦后**） | **73 MB** | 617 MB |
+
+**结论很清楚：只要 `import torch` 就固定吃掉约 500–650MB（随 wheel 类型与版本浮动：
+CUDA 版明显大于 CPU 版），与数据规模无关。** 673MB 的框架基线在 690MB 的下限上
+只剩 16.7MB——**连数据都装不下，继续缩数据是徒劳的**。
 
 因此把**训练与推理解耦**：
 
@@ -174,17 +183,30 @@ python3.11 scripts/validate_real_data_deepfm.py --dataset adult   # 真实数据
 3. **在线侧只加载权重**，用纯 numpy 复现前向计算（`src/rank/numpy_deepfm.py`、`src/rank/numpy_lr.py`），
    不依赖 torch / sklearn / pandas。
 
+**端到端实测**（真实 streamlit 进程 + 浏览器驱动，非估算）：
+
+| 阶段 | 进程 RSS |
+|---|---|
+| ① 仅启动 streamlit，无人访问 | 79.4 MB |
+| ② 页面加载完（引擎与数据已就位） | 187.0 MB |
+| ③ 跑完最重操作（真实 CTR 对比，200 用户 / Top-20） | **297.2 MB** ← 真实峰值 |
+
 | | 解耦前（在线训练） | 解耦后（加载 numpy 权重） |
 |---|---|---|
-| 峰值内存 | 840 MB | **126 MB** |
-| 启动耗时 | 90 s | **~1 s** |
-| 相对 1GB 上限的余量 | 1.2×（有 OOM 风险） | **约 8×** |
+| 框架基线 | 673 MB | **73 MB** |
+| 实测峰值 | 超出 690MB 下限 | **297 MB** |
+| 相对 690MB 下限的余量 | 0.98×（**必然 OOM**） | **2.3×** |
+| 启动耗时 | 数十秒（需在线训练） | **~1 s** |
 
 **数学等价性已逐样本校验**：PyTorch 与 numpy 前向的最大偏差为 **1.19e-07**；
 且重构后 `compute_true_ctr` 与重构前实现**逐位一致**（最大偏差 0.00e+00）。
 即：在线演示的**仍是同一个已训练模型**，只是换了一种运行时执行。
 
 > 这类「先量清楚约束在哪、再决定动哪一层」的判断，本身就是本项目想展示的工程能力。
+
+**算力侧同样有余量**：最重的操作是「模拟 A/B」（2000 用户），本机实测 **1.87s**。
+即便按最坏的 0.078 核折算（约 12.8× 减速）也在 **24s** 量级，不会触发超时；
+单次推荐 **1 ms**、冷启动 **0.53s**，交互体感不受影响。
 
 ```
 python -m src.build_online_artifacts micro   # 离线生成/刷新在线权重（需 torch，约 2 分钟）
