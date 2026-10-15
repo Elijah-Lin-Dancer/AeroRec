@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aerorec"
-version = "0.1.0"
+version = "0.2.0"
 description = "出行智能推荐中台：召回-排序-混排链路 + 链路偏差传播诊断（numpy 优先，在线侧零 torch）"
 requires-python = ">=3.11"
 readme = "README.md"

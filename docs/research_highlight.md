@@ -94,5 +94,5 @@ python scripts/build_bias_report.py      # → data/bias/report.html  (self-cont
 ```
 
 All numbers above are produced by these two scripts (multi-seed, byte-for-byte drift-gated in CI).
-Code anchor: tag `v0.1.0`. The same code path powers the
+Code anchor: tag `v0.2.0`. The same code path powers the
 interactive **Bias Diagnosis** page of the live demo (bilingual EN / 中文).

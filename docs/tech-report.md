@@ -2,7 +2,7 @@
 
 > 面向论文读者的技术文档。与 `README.md`（面向访客的展示页）并列；实验数字的
 > 唯一来源是 `data/bias/*.json` 与 `docs/bias_report.md`，本文档与其逐项一致（H-6）。
-> 复现命令见第 8 节；代码版本锚点为 tag `v0.1.0`。
+> 复现命令见第 8 节；代码版本锚点为 tag `v0.2.0`（v0.1.0 仅含前 3 个实验，论文全部 7 实验自 v0.2.0 起）。
 
 ## 1. Overview
 
@@ -194,6 +194,6 @@ python -m pytest                          # 全量测试（125 项）
 - 零漂移门禁：`.github/workflows/repro.yml`，对 5 个产物 JSON 逐字节校验。
 - 在线侧内存纪律：服务进程不加载 torch（峰值 RSS ≈ 129 MB，
   单线程 P50 0.7 ms / P95 0.85 ms / P99 0.95 ms，QPS ≈ 1378，micro 档实测）。
-- 代码版本锚点：tag **`v0.1.0`**。
+- 代码版本锚点：tag **`v0.2.0`**。
 - 更完整的机理叙事与被修正的错误见 `docs/bias_report.md`；研究贡献一页纸摘要见
   `docs/research_highlight.md`。

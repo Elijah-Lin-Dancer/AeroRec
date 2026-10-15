@@ -5,6 +5,24 @@
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-15
+
+论文预印本版本锚点：**本 tag 包含论文全部 7 个偏差实验的可复现代码**
+（v0.1.0 仅含 propagation / injection / boundary 三实验，论文中
+Table 5–8 对应的 4 个实验在其后加入）。
+
+### Added
+- 扩展实验（改进计划 #4/#5/#6）：`src/bias/pi_estimation.py`、
+  `src/bias/userbias.py` → `data/bias/propensity_estimation.json`、
+  `data/bias/userbias.json`；
+- 历史补测落盘：`estimand_check.json`、`boundary_sweep.json`；
+- 论文预印本 PDF（`docs/paper/AeroRec-preprint.pdf`，4 图 8 表）
+  及生成图 `figures/`（数据直读产物 JSON）。
+
+### Changed
+- 零漂移门禁扩至 7 个产物 JSON；
+- `docs/tech-report.md`、`docs/research_highlight.md` 代码锚点同步 v0.2.0。
+
 ## [0.1.0] - 2026-10-15
 
 首个版本锚点（tag `v0.1.0`）。自里程碑 W11 以来的主要变更：
