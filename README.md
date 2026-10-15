@@ -13,7 +13,7 @@
 
 > **快速体验**：[项目主页](https://elijah-lin-dancer.github.io/AeroRec/) · [交互 Demo（Streamlit Cloud）](https://aerorec-tourism.streamlit.app)
 >
-> **研究主线**（偏差传播诊断 + 去偏有效边界）：[tech report](docs/bias_report.md) · [可视化报告（HTML）](data/bias/report.html) · [research one-pager (EN)](docs/research_highlight.md)
+> **研究主线**（偏差传播诊断 + 去偏有效边界）：[tech report](docs/bias_report.md) · [论文读者技术文档](docs/tech-report.md) · [可视化报告（HTML）](data/bias/report.html) · [research one-pager (EN)](docs/research_highlight.md)
 
 ---
 
@@ -489,6 +489,7 @@ tests/test_bias_*.py       偏差诊断 / 去偏估计 / 边界 / 报告 测试�
 tests/test_criteo*.py      Criteo 加载器单测（构造样本 + 真实 parquet 兼容性）
 tests/test_real_data.py    UCI Adult 加载器测试
 docs/bias_report.md          偏差传播诊断与去偏验证 tech report
+docs/tech-report.md          面向论文读者的技术文档（实验配置 + 原始数据）
 data/bias/                   偏差实验产物（propagation/injection/boundary.json + report.html）
 data/real_validation/        真实数据验证结果（Criteo 100 万 / 20 万行 + Adult）
 artifacts/micro/           离线预训练的在线权重（numpy，约 29KB）
