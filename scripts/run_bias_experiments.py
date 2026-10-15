@@ -7,6 +7,8 @@
 产出：
     data/bias/propagation.json     传播矩阵（多 τ）
     data/bias/injection.json       混排二次注入扫描（多 w_base）
+    data/bias/estimand_check.json  估计目标对照（naive→T_exp / SNIPS→T_pop）
+    data/bias/boundary_sweep.json  去偏收益 τ×N 网格
     stdout                         人类可读表格
 
 设计说明
@@ -25,7 +27,8 @@ import time
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import numpy as np
-from src.bias.boundary import boundary_by_range
+from src.bias.boundary import boundary_by_range, boundary_sweep
+from src.bias.estimand import estimand_check
 from src.bias.propagation import mixing_second_injection, propagation_matrix
 
 
@@ -121,6 +124,46 @@ def main():
     with open(p3, "w", encoding="utf-8") as f:
         json.dump(bnd, f, ensure_ascii=False, indent=2)
 
+    # ---- 估计目标对照（报告 §4 历史口径补测：60 物品、400 请求）----
+    print()
+    truth60 = _synth_true_ctr(60, seed=0)
+    ec = estimand_check(truth60, taus=taus, n_requests=400, slots=args.slots,
+                        seed=args.seed, n_seeds=args.n_seeds)
+    print("=" * 100)
+    print("估计目标对照：naive → T_exp（曝光加权总体）vs SNIPS → T_pop（全体总体），"
+          f"60 物品、400 请求 × {args.slots} 坑位，{args.n_seeds} 种子")
+    print("-" * 100)
+    print(f"{'τ':>5} | {'T_pop':>7} {'T_exp':>7} | {'naive':>7} {'snips':>7} | "
+          f"{'naive→T_exp':>11} {'SNIPS→T_pop':>11} | {'ESS/N':>7}")
+    print("-" * 100)
+    for r in ec["rows"]:
+        print(f"{r['tau']:>5.1f} | {r['T_pop']:>7.4f} {r['T_exp']:>7.4f} | "
+              f"{r['naive']:>7.4f} {r['snips']:>7.4f} | "
+              f"{r['naive_err_vs_texp']:>11.4f} {r['snips_err_vs_tpop']:>11.4f} | "
+              f"{r['ess_ratio']:>7.4f}")
+    print("=" * 100)
+    p4 = os.path.join("data", "bias", "estimand_check.json")
+    with open(p4, "w", encoding="utf-8") as f:
+        json.dump(ec, f, ensure_ascii=False, indent=2)
+
+    # ---- τ-sweep 网格（报告 §6 历史口径补测：60 物品、40 种子）----
+    print()
+    sw = boundary_sweep(truth60.ravel(), taus=taus, n_records_list=[1000, 2000, 5000, 10000],
+                        n_seeds=40, seed=args.seed)
+    print("=" * 100)
+    print("去偏收益 τ-sweep（60 物品、40 种子平均）：**τ 越大去偏赚得越多**（估计目标分离的收益）")
+    print("-" * 100)
+    print(f"{'τ':>5} {'N':>7} | {'naive_err':>10} {'snips_err':>10} {'gain':>9} {'±std':>8} {'ESS/N':>7}")
+    print("-" * 100)
+    for r in sw["grid"]:
+        print(f"{r['tau']:>5.1f} {r['n_records']:>7d} | {r['naive_err']:>10.4f} "
+              f"{r['snips_err']:>10.4f} {r['gain']:>+9.4f} {r['gain_std']:>8.4f} "
+              f"{r['ess_ratio']:>7.4f}")
+    print("=" * 100)
+    p5 = os.path.join("data", "bias", "boundary_sweep.json")
+    with open(p5, "w", encoding="utf-8") as f:
+        json.dump(sw, f, ensure_ascii=False, indent=2)
+
     # ---- 结论摘要（自动生成，避免手工写错）----
     first, last = mat["rows"][0], mat["rows"][-1]
     print()
@@ -137,7 +180,7 @@ def main():
           f"{inj['rows'][0]['L3_rel_err']:.3f} 降到 {inj['rows'][-1]['L3_rel_err']:.3f}、"
           f"spearman 由 {inj['rows'][0]['L3_spearman']:+.3f} 升到 {inj['rows'][-1]['L3_spearman']:+.3f}"
           f"（w_base=1 时混排级等于真值，误差严格为 0，可作为实现自检）。")
-    print(f"\n结果已写入：{p1}、{p2} 与 {p3}    耗时 {time.time() - t0:.1f}s")
+    print(f"\n结果已写入：{p1}、{p2}、{p3}、{p4} 与 {p5}    耗时 {time.time() - t0:.1f}s")
 
 
 if __name__ == "__main__":

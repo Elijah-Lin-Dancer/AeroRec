@@ -1,0 +1,249 @@
+{
+  "taus": [
+    0.0,
+    0.5,
+    1.0,
+    2.0,
+    3.0
+  ],
+  "rows": [
+    {
+      "tau": 0.0,
+      "T_pop": 0.2525,
+      "T_pop_std": 0.0,
+      "T_exp": 0.2525,
+      "T_exp_std": 0.0,
+      "naive": 0.251,
+      "naive_std": 0.0098,
+      "snips": 0.251,
+      "snips_std": 0.0098,
+      "naive_err_vs_texp": 0.0078,
+      "naive_err_vs_texp_std": 0.006,
+      "snips_err_vs_tpop": 0.0078,
+      "snips_err_vs_tpop_std": 0.006,
+      "ess": 2000.0,
+      "ess_std": 0.0,
+      "ess_ratio": 1.0,
+      "ess_ratio_std": 0.0,
+      "n_records": 2000
+    },
+    {
+      "tau": 0.5,
+      "T_pop": 0.2525,
+      "T_pop_std": 0.0,
+      "T_exp": 0.2781,
+      "T_exp_std": 0.0,
+      "naive": 0.2748,
+      "naive_std": 0.012,
+      "snips": 0.2496,
+      "snips_std": 0.0118,
+      "naive_err_vs_texp": 0.0101,
+      "naive_err_vs_texp_std": 0.0074,
+      "snips_err_vs_tpop": 0.0098,
+      "snips_err_vs_tpop_std": 0.0072,
+      "ess": 1901.8642,
+      "ess_std": 3.1105,
+      "ess_ratio": 0.9509,
+      "ess_ratio_std": 0.0015,
+      "n_records": 2000
+    },
+    {
+      "tau": 1.0,
+      "T_pop": 0.2525,
+      "T_pop_std": 0.0,
+      "T_exp": 0.3045,
+      "T_exp_std": 0.0,
+      "naive": 0.3072,
+      "naive_std": 0.0096,
+      "snips": 0.2547,
+      "snips_std": 0.0094,
+      "naive_err_vs_texp": 0.0079,
+      "naive_err_vs_texp_std": 0.0061,
+      "snips_err_vs_tpop": 0.0079,
+      "snips_err_vs_tpop_std": 0.0055,
+      "ess": 1633.9788,
+      "ess_std": 13.4578,
+      "ess_ratio": 0.817,
+      "ess_ratio_std": 0.0067,
+      "n_records": 2000
+    },
+    {
+      "tau": 2.0,
+      "T_pop": 0.2525,
+      "T_pop_std": 0.0,
+      "T_exp": 0.3567,
+      "T_exp_std": 0.0,
+      "naive": 0.3564,
+      "naive_std": 0.0113,
+      "snips": 0.2485,
+      "snips_std": 0.0137,
+      "naive_err_vs_texp": 0.0095,
+      "naive_err_vs_texp_std": 0.0061,
+      "snips_err_vs_tpop": 0.012,
+      "snips_err_vs_tpop_std": 0.0077,
+      "ess": 903.3566,
+      "ess_std": 50.821,
+      "ess_ratio": 0.4517,
+      "ess_ratio_std": 0.0254,
+      "n_records": 2000
+    },
+    {
+      "tau": 3.0,
+      "T_pop": 0.2525,
+      "T_pop_std": 0.0,
+      "T_exp": 0.4028,
+      "T_exp_std": 0.0,
+      "naive": 0.4025,
+      "naive_std": 0.0127,
+      "snips": 0.2477,
+      "snips_std": 0.0211,
+      "naive_err_vs_texp": 0.01,
+      "naive_err_vs_texp_std": 0.0078,
+      "snips_err_vs_tpop": 0.0169,
+      "snips_err_vs_tpop_std": 0.0135,
+      "ess": 399.7221,
+      "ess_std": 108.6738,
+      "ess_ratio": 0.1999,
+      "ess_ratio_std": 0.0543,
+      "n_records": 2000
+    }
+  ],
+  "n_requests": 400,
+  "slots": 5,
+  "n_seeds": 30,
+  "seed_base": 42,
+  "claim": "naive 池化 CTR 收敛到 T_exp=Σtruth·π（无偏于曝光加权总体）；SNIPS 收敛到 T_pop=mean(truth)。两者之差是 estimand 之差，非估计量误差。",
+  "rng_policy": "common_random_numbers: 每 (seed, tau) 以 default_rng(seed+s) 重置，跨 30 种子取均值±std",
+  "significance": {
+    "tau0": {
+      "naive_err_vs_texp": {
+        "n": 30,
+        "mean": 0.0078,
+        "ci95": [
+          0.0057,
+          0.0101
+        ],
+        "p": 0.0001,
+        "n_boot": 10000,
+        "method": "bootstrap_percentile",
+        "alternative": "two-sided"
+      },
+      "snips_err_vs_tpop": {
+        "n": 30,
+        "mean": 0.0078,
+        "ci95": [
+          0.0057,
+          0.0101
+        ],
+        "p": 0.0001,
+        "n_boot": 10000,
+        "method": "bootstrap_percentile",
+        "alternative": "two-sided"
+      }
+    },
+    "tau0.5": {
+      "naive_err_vs_texp": {
+        "n": 30,
+        "mean": 0.0101,
+        "ci95": [
+          0.0075,
+          0.0128
+        ],
+        "p": 0.0001,
+        "n_boot": 10000,
+        "method": "bootstrap_percentile",
+        "alternative": "two-sided"
+      },
+      "snips_err_vs_tpop": {
+        "n": 30,
+        "mean": 0.0098,
+        "ci95": [
+          0.0073,
+          0.0125
+        ],
+        "p": 0.0001,
+        "n_boot": 10000,
+        "method": "bootstrap_percentile",
+        "alternative": "two-sided"
+      }
+    },
+    "tau1": {
+      "naive_err_vs_texp": {
+        "n": 30,
+        "mean": 0.0079,
+        "ci95": [
+          0.0058,
+          0.0101
+        ],
+        "p": 0.0001,
+        "n_boot": 10000,
+        "method": "bootstrap_percentile",
+        "alternative": "two-sided"
+      },
+      "snips_err_vs_tpop": {
+        "n": 30,
+        "mean": 0.0079,
+        "ci95": [
+          0.0059,
+          0.0099
+        ],
+        "p": 0.0001,
+        "n_boot": 10000,
+        "method": "bootstrap_percentile",
+        "alternative": "two-sided"
+      }
+    },
+    "tau2": {
+      "naive_err_vs_texp": {
+        "n": 30,
+        "mean": 0.0095,
+        "ci95": [
+          0.0074,
+          0.0117
+        ],
+        "p": 0.0001,
+        "n_boot": 10000,
+        "method": "bootstrap_percentile",
+        "alternative": "two-sided"
+      },
+      "snips_err_vs_tpop": {
+        "n": 30,
+        "mean": 0.012,
+        "ci95": [
+          0.0093,
+          0.0148
+        ],
+        "p": 0.0001,
+        "n_boot": 10000,
+        "method": "bootstrap_percentile",
+        "alternative": "two-sided"
+      }
+    },
+    "tau3": {
+      "naive_err_vs_texp": {
+        "n": 30,
+        "mean": 0.01,
+        "ci95": [
+          0.0073,
+          0.0129
+        ],
+        "p": 0.0001,
+        "n_boot": 10000,
+        "method": "bootstrap_percentile",
+        "alternative": "two-sided"
+      },
+      "snips_err_vs_tpop": {
+        "n": 30,
+        "mean": 0.0169,
+        "ci95": [
+          0.0122,
+          0.022
+        ],
+        "p": 0.0001,
+        "n_boot": 10000,
+        "method": "bootstrap_percentile",
+        "alternative": "two-sided"
+      }
+    }
+  }
+}
