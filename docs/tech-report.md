@@ -124,6 +124,37 @@ IPS/SNIPS 做的是在两个估计目标之间转换，而不是修复坏估计�
 τ=3 → **+0.1395±0.0094**。τ 只拉大 `T_exp` 与 `T_pop` 的差距（estimand 之差），
 而 propensity 闭式已知，因此偏差强度本身不决定去偏成败——π 动态范围才决定。
 
+### 5.7 Propensity estimation error (improvement-plan #4)
+
+Config: 60 items, 400 requests × 5 slots, 30 seeds; π̂ estimated from the log
+only (frequency λ=0 / Laplace λ=1), never touching ground truth. At this scale
+(2,000 records) replacing the closed-form π with π̂ changes SNIPS error
+insignificantly (delta ≈ 0, p = 0.87) — the oracle conclusions are robust to
+propensity estimation error. The ESS/N warning is conservative under π̂
+(false-alarm rate 0.13 at τ=2, miss rate 0 — fail-safe direction). Caveat:
+estimation error shrinks as √N; raw estimates carry 1/π̂ explosion risk at
+smaller N or stronger skew, mitigated by λ>0 smoothing.
+
+### 5.8 User-side selection bias (improvement-plan #5/#6)
+
+Structure: 100 users × 60 items, `truth_ui = base_i × affinity_ui` (oracle);
+users self-select via `p_ui ∝ softmax(β·log-affinity)` (β = self-selection
+strength, analogous to τ), 2,000 sessions × 5 views, 30 seeds.
+
+| β | T_pop | T_exp_user | naive | SNIPS(true p) err | SNIPS(item-marginal) err | residual |
+|---|---|---|---|---|---|---|
+| 0.0 | 0.2811 | 0.2811 | 0.2814 | 0.0039 | 0.0039 | +0.0000 |
+| 1.0 | 0.2811 | 0.4066 | 0.4072 | 0.0040 | 0.0668 | +0.0628 |
+| 2.0 | 0.2811 | 0.5317 | 0.5314 | 0.0071 | 0.1342 | +0.1272 |
+| 4.0 | 0.2811 | 0.7021 | 0.7025 | 0.0373 | 0.2594 | +0.2220 |
+
+Findings (all p < 0.001): (1) self-selection drifts the naive estimand from
+0.281 to 0.702 — pooled CTR appears to grow 2.5× while truth is unchanged;
+(2) debiasing at item-marginal granularity (ignoring the user dimension)
+leaves a significant residual (+0.063 → +0.222), while correct user-item-level
+propensity debiasing keeps error at 0.004–0.037. **User-side bias must be
+modeled at the user-item granularity.**
+
 ## 6. Statistical treatment
 
 - **多种子**：传播/注入 30 种子、边界 250 种子、τ-sweep 40 种子；所有跨种子指标

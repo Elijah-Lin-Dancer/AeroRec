@@ -75,7 +75,9 @@ jobs:
             data/bias/injection.json \
             data/bias/boundary.json \
             data/bias/estimand_check.json \
-            data/bias/boundary_sweep.json
+            data/bias/boundary_sweep.json \
+            data/bias/propensity_estimation.json \
+            data/bias/userbias.json
           echo "✓ committed JSON matches recomputation byte-for-byte"
 
       - name: Upload experiment artifacts
@@ -89,6 +91,8 @@ jobs:
             data/bias/boundary.json
             data/bias/estimand_check.json
             data/bias/boundary_sweep.json
+            data/bias/propensity_estimation.json
+            data/bias/userbias.json
             data/bias/report.html
 
   # ---------------------------------------------------------------------

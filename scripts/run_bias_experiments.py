@@ -9,6 +9,8 @@
     data/bias/injection.json       混排二次注入扫描（多 w_base）
     data/bias/estimand_check.json  估计目标对照（naive→T_exp / SNIPS→T_pop）
     data/bias/boundary_sweep.json  去偏收益 τ×N 网格
+    data/bias/propensity_estimation.json  propensity 估计误差（π̂ vs 真 π）
+    data/bias/userbias.json        用户侧选择偏差（user-item 粒度）
     stdout                         人类可读表格
 
 设计说明
@@ -29,7 +31,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import numpy as np
 from src.bias.boundary import boundary_by_range, boundary_sweep
 from src.bias.estimand import estimand_check
+from src.bias.pi_estimation import propensity_estimation_experiment
 from src.bias.propagation import mixing_second_injection, propagation_matrix
+from src.bias.userbias import user_bias_experiment
 
 
 def _synth_true_ctr(n_items: int = 60, seed: int = 0):
@@ -164,6 +168,50 @@ def main():
     with open(p5, "w", encoding="utf-8") as f:
         json.dump(sw, f, ensure_ascii=False, indent=2)
 
+    # ---- propensity 估计误差（改进计划 #4：60 物品、400 请求历史口径）----
+    print()
+    pe = propensity_estimation_experiment(truth60, taus=taus, n_requests=400,
+                                          slots=args.slots, lambdas=(0.0, 1.0),
+                                          seed=args.seed, n_seeds=args.n_seeds)
+    print("=" * 100)
+    print(f"propensity 估计误差：用日志估计 π̂ 替代闭式真 π（λ 变体），"
+          f"{args.n_seeds} 种子均值±std")
+    print("-" * 100)
+    print(f"{'τ':>5} {'估计器':>9} | {'SNIPS(真π)误差':>13} {'SNIPS(π̂)误差':>13} "
+          f"{'增量':>9} | {'ESS/N(真)':>9} {'ESS/N(π̂)':>9} {'误报率':>7}")
+    print("-" * 100)
+    for r in pe["rows"]:
+        print(f"{r['tau']:>5.1f} {r['estimator']:>9} | {r['snips_true_err']:>13.4f} "
+              f"{r['snips_hat_err']:>13.4f} {r['delta_err']:>+9.4f} | "
+              f"{r['ess_ratio_true']:>9.4f} {r['ess_ratio_hat']:>9.4f} "
+              f"{max(r['warning_hat'] - r['warning_true'], 0):>7.2f}")
+    print("=" * 100)
+    p6 = os.path.join("data", "bias", "propensity_estimation.json")
+    with open(p6, "w", encoding="utf-8") as f:
+        json.dump(pe, f, ensure_ascii=False, indent=2)
+
+    # ---- 用户侧选择偏差（改进计划 #5/#6：user-item 粒度）----
+    print()
+    ub = user_bias_experiment(truth60, betas=(0.0, 1.0, 2.0, 4.0), n_users=100,
+                              n_sessions=2000, slots=args.slots,
+                              seed=args.seed, n_seeds=args.n_seeds)
+    print("=" * 100)
+    print(f"用户侧选择偏差：自选强度 β 扫描（100 用户 × 60 物品，2000 会话，"
+          f"{args.n_seeds} 种子均值±std）")
+    print("-" * 100)
+    print(f"{'β':>4} | {'T_pop':>7} {'T_exp_user':>10} {'naive':>7} | "
+          f"{'SNIPS(真p)误差':>13} {'SNIPS(物品边际)误差':>16} {'残余偏差':>9} | {'对Gini':>7}")
+    print("-" * 100)
+    for r in ub["rows"]:
+        print(f"{r['beta']:>4.1f} | {r['T_pop']:>7.4f} {r['T_exp_user']:>10.4f} "
+              f"{r['naive']:>7.4f} | {r['snips_true_err']:>13.4f} "
+              f"{r['snips_agg_err']:>16.4f} {r['agg_residual']:>+9.4f} | "
+              f"{r['exposure_gini']:>7.3f}")
+    print("=" * 100)
+    p7 = os.path.join("data", "bias", "userbias.json")
+    with open(p7, "w", encoding="utf-8") as f:
+        json.dump(ub, f, ensure_ascii=False, indent=2)
+
     # ---- 结论摘要（自动生成，避免手工写错）----
     first, last = mat["rows"][0], mat["rows"][-1]
     print()
@@ -180,7 +228,7 @@ def main():
           f"{inj['rows'][0]['L3_rel_err']:.3f} 降到 {inj['rows'][-1]['L3_rel_err']:.3f}、"
           f"spearman 由 {inj['rows'][0]['L3_spearman']:+.3f} 升到 {inj['rows'][-1]['L3_spearman']:+.3f}"
           f"（w_base=1 时混排级等于真值，误差严格为 0，可作为实现自检）。")
-    print(f"\n结果已写入：{p1}、{p2}、{p3}、{p4} 与 {p5}    耗时 {time.time() - t0:.1f}s")
+    print(f"\n结果已写入：{p1}–{p7}（7 个产物）    耗时 {time.time() - t0:.1f}s")
 
 
 if __name__ == "__main__":

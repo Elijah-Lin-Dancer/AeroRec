@@ -1,0 +1,196 @@
+{
+  "betas": [
+    0.0,
+    1.0,
+    2.0,
+    4.0
+  ],
+  "rows": [
+    {
+      "beta": 0.0,
+      "T_pop": 0.2811,
+      "T_pop_std": 0.0014,
+      "T_exp_user": 0.2811,
+      "T_exp_user_std": 0.0014,
+      "naive": 0.2814,
+      "naive_std": 0.005,
+      "snips_true_err": 0.0039,
+      "snips_true_err_std": 0.0027,
+      "snips_agg_err": 0.0039,
+      "snips_agg_err_std": 0.0027,
+      "agg_residual": 0.0,
+      "agg_residual_std": 0.0,
+      "exposure_gini": 0.4308,
+      "exposure_gini_std": 0.0038,
+      "n_records": 10000
+    },
+    {
+      "beta": 1.0,
+      "T_pop": 0.2811,
+      "T_pop_std": 0.0014,
+      "T_exp_user": 0.4066,
+      "T_exp_user_std": 0.0031,
+      "naive": 0.4072,
+      "naive_std": 0.0059,
+      "snips_true_err": 0.004,
+      "snips_true_err_std": 0.0033,
+      "snips_agg_err": 0.0668,
+      "snips_agg_err_std": 0.0048,
+      "agg_residual": 0.0628,
+      "agg_residual_std": 0.0054,
+      "exposure_gini": 0.5385,
+      "exposure_gini_std": 0.0036,
+      "n_records": 10000
+    },
+    {
+      "beta": 2.0,
+      "T_pop": 0.2811,
+      "T_pop_std": 0.0014,
+      "T_exp_user": 0.5317,
+      "T_exp_user_std": 0.005,
+      "naive": 0.5314,
+      "naive_std": 0.0067,
+      "snips_true_err": 0.0071,
+      "snips_true_err_std": 0.0047,
+      "snips_agg_err": 0.1342,
+      "snips_agg_err_std": 0.0075,
+      "agg_residual": 0.1272,
+      "agg_residual_std": 0.01,
+      "exposure_gini": 0.7038,
+      "exposure_gini_std": 0.0034,
+      "n_records": 10000
+    },
+    {
+      "beta": 4.0,
+      "T_pop": 0.2811,
+      "T_pop_std": 0.0014,
+      "T_exp_user": 0.7021,
+      "T_exp_user_std": 0.0073,
+      "naive": 0.7025,
+      "naive_std": 0.008,
+      "snips_true_err": 0.0373,
+      "snips_true_err_std": 0.0226,
+      "snips_agg_err": 0.2594,
+      "snips_agg_err_std": 0.0197,
+      "agg_residual": 0.222,
+      "agg_residual_std": 0.0245,
+      "exposure_gini": 0.8795,
+      "exposure_gini_std": 0.0028,
+      "n_records": 10000
+    }
+  ],
+  "n_users": 100,
+  "n_sessions": 2000,
+  "slots": 5,
+  "affinity_sigma": 0.5,
+  "n_seeds": 30,
+  "seed_base": 42,
+  "claim": "用户自选（softmax 亲和，β 为强度）产生 user-item 粒度的选择偏差：naive 收敛到自选加权总体（高估），物品边际 propensity 去偏有残余偏差，user-item 粒度的正确 propensity 去偏才能恢复 T_pop。",
+  "rng_policy": "common_random_numbers: 每 (seed, beta) 以 default_rng(seed+s) 重置，跨 30 种子取均值±std",
+  "significance": {
+    "beta0": {
+      "naive_minus_texp": {
+        "n": 30,
+        "mean": 0.0003,
+        "ci95": [
+          -0.0014,
+          0.002
+        ],
+        "p": 0.732,
+        "n_boot": 10000,
+        "method": "bootstrap_percentile",
+        "alternative": "two-sided"
+      },
+      "agg_residual_gt_zero": {
+        "n": 30,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "p": 1.0,
+        "n_boot": 10000,
+        "method": "bootstrap_percentile",
+        "alternative": "greater"
+      }
+    },
+    "beta1": {
+      "naive_minus_texp": {
+        "n": 30,
+        "mean": 0.0006,
+        "ci95": [
+          -0.0009,
+          0.0022
+        ],
+        "p": 0.421,
+        "n_boot": 10000,
+        "method": "bootstrap_percentile",
+        "alternative": "two-sided"
+      },
+      "agg_residual_gt_zero": {
+        "n": 30,
+        "mean": 0.0628,
+        "ci95": [
+          0.0607,
+          0.0646
+        ],
+        "p": 0.0001,
+        "n_boot": 10000,
+        "method": "bootstrap_percentile",
+        "alternative": "greater"
+      }
+    },
+    "beta2": {
+      "naive_minus_texp": {
+        "n": 30,
+        "mean": -0.0003,
+        "ci95": [
+          -0.0018,
+          0.0012
+        ],
+        "p": 0.7088,
+        "n_boot": 10000,
+        "method": "bootstrap_percentile",
+        "alternative": "two-sided"
+      },
+      "agg_residual_gt_zero": {
+        "n": 30,
+        "mean": 0.1272,
+        "ci95": [
+          0.1233,
+          0.1306
+        ],
+        "p": 0.0001,
+        "n_boot": 10000,
+        "method": "bootstrap_percentile",
+        "alternative": "greater"
+      }
+    },
+    "beta4": {
+      "naive_minus_texp": {
+        "n": 30,
+        "mean": 0.0004,
+        "ci95": [
+          -0.0014,
+          0.0021
+        ],
+        "p": 0.649,
+        "n_boot": 10000,
+        "method": "bootstrap_percentile",
+        "alternative": "two-sided"
+      },
+      "agg_residual_gt_zero": {
+        "n": 30,
+        "mean": 0.222,
+        "ci95": [
+          0.2132,
+          0.2306
+        ],
+        "p": 0.0001,
+        "n_boot": 10000,
+        "method": "bootstrap_percentile",
+        "alternative": "greater"
+      }
+    }
+  }
+}
