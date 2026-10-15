@@ -10,6 +10,18 @@
       "naive_err": 0.0024,
       "snips_err": 0.0024,
       "gain": 0.0,
+      "gain_sig": {
+        "n": 250,
+        "mean": 0.0,
+        "ci95": [
+          0.0,
+          0.0
+        ],
+        "p": 1.0,
+        "n_boot": 10000,
+        "method": "bootstrap_percentile",
+        "alternative": "two-sided"
+      },
       "n_seeds": 250
     },
     {
@@ -20,6 +32,18 @@
       "naive_err": 0.0024,
       "snips_err": 0.0026,
       "gain": -0.0001,
+      "gain_sig": {
+        "n": 250,
+        "mean": -0.0001,
+        "ci95": [
+          -0.0003,
+          -0.0
+        ],
+        "p": 0.0156,
+        "n_boot": 10000,
+        "method": "bootstrap_percentile",
+        "alternative": "two-sided"
+      },
       "n_seeds": 250
     },
     {
@@ -30,6 +54,18 @@
       "naive_err": 0.0024,
       "snips_err": 0.0041,
       "gain": -0.0017,
+      "gain_sig": {
+        "n": 250,
+        "mean": -0.0017,
+        "ci95": [
+          -0.0021,
+          -0.0013
+        ],
+        "p": 0.0001,
+        "n_boot": 10000,
+        "method": "bootstrap_percentile",
+        "alternative": "two-sided"
+      },
       "n_seeds": 250
     },
     {
@@ -40,6 +76,18 @@
       "naive_err": 0.0024,
       "snips_err": 0.0109,
       "gain": -0.0084,
+      "gain_sig": {
+        "n": 250,
+        "mean": -0.0084,
+        "ci95": [
+          -0.0095,
+          -0.0074
+        ],
+        "p": 0.0001,
+        "n_boot": 10000,
+        "method": "bootstrap_percentile",
+        "alternative": "two-sided"
+      },
       "n_seeds": 250
     },
     {
@@ -50,6 +98,18 @@
       "naive_err": 0.0024,
       "snips_err": 0.033,
       "gain": -0.0306,
+      "gain_sig": {
+        "n": 250,
+        "mean": -0.0306,
+        "ci95": [
+          -0.0338,
+          -0.0275
+        ],
+        "p": 0.0001,
+        "n_boot": 10000,
+        "method": "bootstrap_percentile",
+        "alternative": "two-sided"
+      },
       "n_seeds": 250
     },
     {
@@ -60,6 +120,18 @@
       "naive_err": 0.0024,
       "snips_err": 0.0651,
       "gain": -0.0627,
+      "gain_sig": {
+        "n": 250,
+        "mean": -0.0627,
+        "ci95": [
+          -0.0699,
+          -0.0558
+        ],
+        "p": 0.0001,
+        "n_boot": 10000,
+        "method": "bootstrap_percentile",
+        "alternative": "two-sided"
+      },
       "n_seeds": 250
     }
   ],

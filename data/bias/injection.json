@@ -82,5 +82,115 @@
   "slots": 5,
   "n_seeds": 30,
   "seed_base": 42,
-  "rng_policy": "single_simulation_analytic_sweep: 曝光只模拟一次（default_rng(seed)），L3=(1-w)*L2+w*truth 逐 w_base 解析重算；跨 30 个种子（default_rng(seed+s)）取均值±std"
+  "rng_policy": "single_simulation_analytic_sweep: 曝光只模拟一次（default_rng(seed)），L3=(1-w)*L2+w*truth 逐 w_base 解析重算；跨 30 个种子（default_rng(seed+s)）取均值±std",
+  "significance": {
+    "w0_spearman_vs_zero": {
+      "n": 30,
+      "mean": 0.0,
+      "ci95": [
+        0.0,
+        0.0
+      ],
+      "p": 1.0,
+      "n_boot": 10000,
+      "method": "bootstrap_percentile",
+      "alternative": "two-sided"
+    },
+    "w0.2_spearman_vs_zero": {
+      "n": 30,
+      "mean": 0.1929,
+      "ci95": [
+        0.1897,
+        0.1962
+      ],
+      "p": 0.0001,
+      "n_boot": 10000,
+      "method": "bootstrap_percentile",
+      "alternative": "two-sided"
+    },
+    "w0.4_spearman_vs_zero": {
+      "n": 30,
+      "mean": 0.4287,
+      "ci95": [
+        0.4218,
+        0.4355
+      ],
+      "p": 0.0001,
+      "n_boot": 10000,
+      "method": "bootstrap_percentile",
+      "alternative": "two-sided"
+    },
+    "w0.8_spearman_vs_zero": {
+      "n": 30,
+      "mean": 0.9147,
+      "ci95": [
+        0.9036,
+        0.9261
+      ],
+      "p": 0.0001,
+      "n_boot": 10000,
+      "method": "bootstrap_percentile",
+      "alternative": "two-sided"
+    },
+    "w1_spearman_vs_zero": {
+      "n": 30,
+      "mean": 0.9655,
+      "ci95": [
+        0.9547,
+        0.9767
+      ],
+      "p": 0.0001,
+      "n_boot": 10000,
+      "method": "bootstrap_percentile",
+      "alternative": "two-sided"
+    },
+    "w0_to_0.2_paired": {
+      "n": 30,
+      "mean": 0.1929,
+      "ci95": [
+        0.1897,
+        0.1962
+      ],
+      "p": 0.0001,
+      "n_boot": 10000,
+      "method": "bootstrap_percentile",
+      "alternative": "greater"
+    },
+    "w0.2_to_0.4_paired": {
+      "n": 30,
+      "mean": 0.2358,
+      "ci95": [
+        0.2319,
+        0.2396
+      ],
+      "p": 0.0001,
+      "n_boot": 10000,
+      "method": "bootstrap_percentile",
+      "alternative": "greater"
+    },
+    "w0.4_to_0.8_paired": {
+      "n": 30,
+      "mean": 0.486,
+      "ci95": [
+        0.4776,
+        0.4943
+      ],
+      "p": 0.0001,
+      "n_boot": 10000,
+      "method": "bootstrap_percentile",
+      "alternative": "greater"
+    },
+    "w0.8_to_1_paired": {
+      "n": 30,
+      "mean": 0.0508,
+      "ci95": [
+        0.0491,
+        0.0526
+      ],
+      "p": 0.0001,
+      "n_boot": 10000,
+      "method": "bootstrap_percentile",
+      "alternative": "greater"
+    }
+  }
 }

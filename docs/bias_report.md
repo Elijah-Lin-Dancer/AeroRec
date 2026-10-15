@@ -26,6 +26,7 @@ estimator itself.
 | Two distinct bias mechanisms | (A) **level** — α-smoothing pulls estimates toward the prior even at τ=0; (B) **ordering** — biased exposure makes cold items look best and inverts the ranking |
 | Debiasing has an **effective boundary** | Measured boundary **`ESS/N ≈ 0.358`**; below it, IPS/SNIPS/DR gains go negative (variance cost > correction benefit) |
 | `ESS/N` is the deployable warning signal | Computable with **no ground truth**; exposed as `ess_warning_from_log` |
+| All multi-seed claims are **statistically validated** | numpy-only bootstrap (B=10000, fixed seed): τ=3 inversion p<0.001; paired τ0→τ3 drop p<0.001; boundary-row loss p<0.001 while the loss-free row is correctly non-significant |
 | Mixing re-injection is **signed** | Injecting duplicated popularity info hurts (default `w_base=0`); injecting independent info helps |
 
 **Reproduce:** `python scripts/run_bias_experiments.py && python scripts/build_bias_report.py`
@@ -315,6 +316,19 @@ python3.11 -m pytest tests/ -q                # 全量测试
 ---
 
 ## 9. 结论与局限
+
+### 统计显著性（bootstrap，纯 numpy）
+
+S3 起所有多种子指标附**假设检验**，与均值±std 一起写入产物（`significance` 字段 / boundary 行内 `gain_sig`）。研究路径只依赖 numpy，故不引入 scipy——用 **bootstrap 百分位置信区间 + 重抽样 p 值**（B=10000，固定 bootstrap 种子，逐字节可复现）：
+
+| 论断 | 检验 | 结果 |
+|---|---|---|
+| τ=3 排序反转真实存在 | 传播 `L2_spearman` vs 0（30 种子） | mean **−0.5054**，95% CI [−0.5123, −0.4988]，p=0.0001 |
+| 排序质量随 τ 显著下降 | τ=0 vs τ=3 同种子配对差 | diff **−1.3719**，CI [−1.3790, −1.3652]，p(单侧 less)=0.0001 |
+| 混排注入增益显著为正 | 注入 w=1.0 `injection_spearman` vs 0 | mean **+0.9655**，CI [0.9547, 0.9767]，p=0.0001；相邻档配对增量全部 p=0.0001 |
+| ESS 边界档亏损超出噪声 | boundary gain（250 种子） | 边界档 mean **−0.0017**，CI [−0.0021, −0.0013]，p=0.0001；**无损档 gain≡0，p=1.0 不显著**（对照正确） |
+
+> 诚实注记：bootstrap p 值的最小可达值为 1/(B+1)=0.0001，应读作「p < 0.001」；显著性针对的是**本项目合成环境**，结论迁移性见下节局限。
 
 ### 可引用的结论
 

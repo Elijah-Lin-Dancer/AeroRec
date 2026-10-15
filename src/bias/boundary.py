@@ -39,6 +39,7 @@ import numpy as np
 
 from src.bias.estimators import effective_sample_size, naive_estimate, snips_estimate
 from src.bias.policy import popularity_propensity
+from src.bias.significance import bootstrap_mean_test
 
 
 def _simulate_log(truth, pi, rng, n_records: int):
@@ -143,6 +144,7 @@ def boundary_by_range(t_pop: float = 0.25, n_records: int = 20000,
             "naive_err": round(float(np.mean(nv_err)), 4),
             "snips_err": round(float(np.mean(sn_err)), 4),
             "gain": round(float(np.mean(gains)), 4),
+            "gain_sig": bootstrap_mean_test(gains),
             "n_seeds": n_seeds,
         })
     # 找"去偏开始实质性亏本"的 ESS/N 阈值。

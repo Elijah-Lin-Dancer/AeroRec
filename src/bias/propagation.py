@@ -49,6 +49,7 @@ import numpy as np
 
 from src.bias.metrics import exposure_gini, exposure_kl, smoothed_ctr
 from src.bias.policy import popularity_propensity, sample_exposure
+from src.bias.significance import bootstrap_mean_test, paired_diff_test
 
 
 # ----------------------------------------------------------------------
@@ -255,13 +256,29 @@ def propagation_matrix(true_ctr, n_items: int, taus, n_requests=500, slots=5,
         return out
 
     n = max(1, int(n_seeds))
-    rows = _aggregate_rows([_rows_for_seed(s) for s in range(n)], "tau")
+    per_seed = [_rows_for_seed(s) for s in range(n)]
+    rows = _aggregate_rows(per_seed, "tau")
     rng_policy = "common_random_numbers: 每个 tau 均以 default_rng(seed) 重置，" \
                  "tau 间差异只来自曝光策略而非抽样序列"
     if n > 1:
         rng_policy += (f"；跨 {n} 个种子（default_rng(seed+s), s=0..{n - 1}）"
                        "取均值±std（口径同 boundary.py）")
-    return {
+    # 显著性（n_seeds>1 才有 per-seed 样本）：逐 τ 的机制 A/B 指标 vs 0，
+    # 以及首末 τ 的排序质量同种子配对差（H1: 下降）。
+    sig: dict = {}
+    if n > 1:
+        for i, tau in enumerate(taus):
+            sp = [r[i]["L2_spearman"] for r in per_seed]
+            rel = [r[i]["L2_rel_err"] for r in per_seed]
+            sig[f"tau{tau:g}"] = {
+                "L2_spearman_vs_zero": bootstrap_mean_test(sp),
+                "L2_rel_err_vs_zero": bootstrap_mean_test(rel, alternative="greater"),
+            }
+        sig["tau_first_vs_last_spearman_paired"] = paired_diff_test(
+            [r[-1]["L2_spearman"] for r in per_seed],
+            [r[0]["L2_spearman"] for r in per_seed],
+            alternative="less")
+    out = {
         "taus": [float(x) for x in taus],
         "rows": rows,
         "stage_order": ["L0_truth", "L1_recall", "L2_rank", "L3_mix"],
@@ -274,6 +291,9 @@ def propagation_matrix(true_ctr, n_items: int, taus, n_requests=500, slots=5,
         "seed_base": int(seed),
         "rng_policy": rng_policy,
     }
+    if sig:
+        out["significance"] = sig
+    return out
 
 
 def mixing_second_injection(true_ctr, n_items: int, tau: float, w_bases,
@@ -323,12 +343,25 @@ def mixing_second_injection(true_ctr, n_items: int, tau: float, w_bases,
             })
         return out
 
-    rows = _aggregate_rows([_rows_for_seed(s) for s in range(n)], "w_base")
+    per_seed = [_rows_for_seed(s) for s in range(n)]
+    rows = _aggregate_rows(per_seed, "w_base")
     rng_policy = ("single_simulation_analytic_sweep: 曝光只模拟一次"
                   "（default_rng(seed)），L3=(1-w)*L2+w*truth 逐 w_base 解析重算")
     if n > 1:
         rng_policy += f"；跨 {n} 个种子（default_rng(seed+s)）取均值±std"
-    return {
+    # 显著性（n_seeds>1 才有 per-seed 样本）：各档注入增益 vs 0，
+    # 相邻 w_base 档的同种子配对增量（H1: >0，注入单调改善）。
+    sig: dict = {}
+    if n > 1:
+        for i, wb in enumerate(w_bases):
+            sig[f"w{wb:g}_spearman_vs_zero"] = bootstrap_mean_test(
+                [r[i]["injection_spearman"] for r in per_seed])
+        for i in range(len(w_bases) - 1):
+            sig[f"w{w_bases[i]:g}_to_{w_bases[i + 1]:g}_paired"] = paired_diff_test(
+                [r[i + 1]["injection_spearman"] for r in per_seed],
+                [r[i]["injection_spearman"] for r in per_seed],
+                alternative="greater")
+    out = {
         "tau": float(tau),
         "rows": rows,
         "metric": "rel_err + spearman",
@@ -338,3 +371,6 @@ def mixing_second_injection(true_ctr, n_items: int, tau: float, w_bases,
         "seed_base": int(seed),
         "rng_policy": rng_policy,
     }
+    if sig:
+        out["significance"] = sig
+    return out
