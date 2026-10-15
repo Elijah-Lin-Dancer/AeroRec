@@ -24,11 +24,9 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import numpy as np  # noqa: E402
-
-from src.bias.propagation import (mixing_second_injection,  # noqa: E402
-                                  propagation_matrix)
-from src.bias.boundary import boundary_by_range, ess_warning_from_log  # noqa: E402
+import numpy as np
+from src.bias.boundary import boundary_by_range
+from src.bias.propagation import mixing_second_injection, propagation_matrix
 
 
 def _synth_true_ctr(n_items: int = 60, seed: int = 0):
@@ -44,11 +42,13 @@ def _synth_true_ctr(n_items: int = 60, seed: int = 0):
 
 def main():
     ap = argparse.ArgumentParser(description="偏差传播与二次注入实验")
-    ap.add_argument("--items", type=int, default=60)
-    ap.add_argument("--requests", type=int, default=600)
+    ap.add_argument("--items", type=int, default=500)
+    ap.add_argument("--requests", type=int, default=5000)
     ap.add_argument("--slots", type=int, default=5)
     ap.add_argument("--alpha", type=float, default=5.0)
     ap.add_argument("--seed", type=int, default=42)
+    ap.add_argument("--n-seeds", dest="n_seeds", type=int, default=30,
+                    help="传播/注入实验的种子数（跨种子均值±std；boundary 恒用 max(20, requests//20)）")
     args = ap.parse_args()
 
     t0 = time.time()
@@ -58,10 +58,12 @@ def main():
     taus = [0.0, 0.5, 1.0, 2.0, 3.0]
     mat = propagation_matrix(true_ctr, n_items=args.items, taus=taus,
                              n_requests=args.requests, slots=args.slots,
-                             alpha=args.alpha, w_base=0.0, seed=args.seed)
+                             alpha=args.alpha, w_base=0.0, seed=args.seed,
+                             n_seeds=args.n_seeds)
 
     print("=" * 100)
-    print(f"链路偏差传播矩阵（{args.items} 物品，{args.requests} 请求 × {args.slots} 坑位，α={args.alpha}）")
+    print(f"链路偏差传播矩阵（{args.items} 物品，{args.requests} 请求 × {args.slots} 坑位，"
+          f"α={args.alpha}，{args.n_seeds} 种子均值±std）")
     print("水平误差 = 逐物品相对误差 rel_err；排序误差 = 与真值的秩相关 spearman")
     print("-" * 100)
     hdr = (f"{'τ(曝光偏差)':>11} | {'L1_rel':>7} {'L2_rel':>7} {'L3_rel':>7} {'排序级增量':>9} | "
@@ -72,16 +74,17 @@ def main():
         print(f"{r['tau']:>11.1f} | {r['L1_rel_err']:>7.3f} {r['L2_rel_err']:>7.3f} "
               f"{r['L3_rel_err']:>7.3f} {r['L2_incremental_rel']:>9.3f} | "
               f"{r['L1_spearman']:>7.3f} {r['L2_spearman']:>7.3f} {r['L3_spearman']:>7.3f} | "
-              f"{r['impr_min']:>8d} {r['exposure_kl']:>7.4f} {r['exposure_gini']:>6.3f}")
+              f"{r['impr_min']:>8.1f} {r['exposure_kl']:>7.4f} {r['exposure_gini']:>6.3f}")
     print("=" * 100)
 
     w_bases = [0.0, 0.2, 0.4, 0.8, 1.0]
     inj = mixing_second_injection(true_ctr, n_items=args.items, tau=2.0,
                                   w_bases=w_bases, n_requests=args.requests,
-                                  slots=args.slots, alpha=args.alpha, seed=args.seed)
+                                  slots=args.slots, alpha=args.alpha,
+                                  seed=args.seed, n_seeds=args.n_seeds)
     print()
     print("=" * 100)
-    print(f"混排二次注入扫描（固定 τ=2.0）—— w_base 是基础分（热度）权重")
+    print(f"混排二次注入扫描（固定 τ=2.0，{args.n_seeds} 种子均值±std）—— w_base 是基础分（热度）权重")
     print("-" * 100)
     print(f"{'w_base':>8} | {'排序级rel':>9} {'混排级rel':>9} {'注入增量':>9} | "
           f"{'排序级sp':>9} {'混排级sp':>9} {'注入增量':>9}")

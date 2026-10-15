@@ -1,5 +1,5 @@
 {
-  "t_pop": 0.25254441079662027,
+  "t_pop": 0.24592825608681626,
   "n_records": 20000,
   "rows": [
     {
@@ -7,63 +7,63 @@
       "pi_max": 1.0,
       "pi_ratio": 1.0,
       "ess_ratio": 1.0,
-      "naive_err": 0.0021,
-      "snips_err": 0.0021,
+      "naive_err": 0.0024,
+      "snips_err": 0.0024,
       "gain": 0.0,
-      "n_seeds": 30
+      "n_seeds": 250
     },
     {
       "pi_min": 0.5,
       "pi_max": 1.5,
       "pi_ratio": 3.0,
-      "ess_ratio": 0.9051,
-      "naive_err": 0.0021,
-      "snips_err": 0.0024,
-      "gain": -0.0002,
-      "n_seeds": 30
+      "ess_ratio": 0.9052,
+      "naive_err": 0.0024,
+      "snips_err": 0.0026,
+      "gain": -0.0001,
+      "n_seeds": 250
     },
     {
       "pi_min": 0.05,
       "pi_max": 2.0,
       "pi_ratio": 40.0,
-      "ess_ratio": 0.3576,
-      "naive_err": 0.0021,
-      "snips_err": 0.0035,
-      "gain": -0.0014,
-      "n_seeds": 30
+      "ess_ratio": 0.3579,
+      "naive_err": 0.0024,
+      "snips_err": 0.0041,
+      "gain": -0.0017,
+      "n_seeds": 250
     },
     {
       "pi_min": 0.002,
       "pi_max": 2.0,
       "pi_ratio": 1000.0,
-      "ess_ratio": 0.0477,
-      "naive_err": 0.0021,
-      "snips_err": 0.0073,
-      "gain": -0.0052,
-      "n_seeds": 30
+      "ess_ratio": 0.0482,
+      "naive_err": 0.0024,
+      "snips_err": 0.0109,
+      "gain": -0.0084,
+      "n_seeds": 250
     },
     {
       "pi_min": 0.0001,
       "pi_max": 2.0,
       "pi_ratio": 20000.0,
       "ess_ratio": 0.0064,
-      "naive_err": 0.0021,
-      "snips_err": 0.0309,
-      "gain": -0.0288,
-      "n_seeds": 30
+      "naive_err": 0.0024,
+      "snips_err": 0.033,
+      "gain": -0.0306,
+      "n_seeds": 250
     },
     {
       "pi_min": 1e-06,
       "pi_max": 2.0,
       "pi_ratio": 2000000.0,
-      "ess_ratio": 0.0032,
-      "naive_err": 0.0021,
-      "snips_err": 0.0616,
-      "gain": -0.0595,
-      "n_seeds": 30
+      "ess_ratio": 0.0031,
+      "naive_err": 0.0024,
+      "snips_err": 0.0651,
+      "gain": -0.0627,
+      "n_seeds": 250
     }
   ],
   "tolerance_used": 0.001,
-  "cross_ess_ratio": 0.3576,
+  "cross_ess_ratio": 0.3579,
   "conclusion": "ESS/N 降至约 0.358 以下时，去偏收益转负且超出噪声水平（阈值容差 0.0010）——此时 IPS 的方差代价超过纠偏收益。"
 }

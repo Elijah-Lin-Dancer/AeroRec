@@ -202,3 +202,52 @@ def test_propagation_matrix_reproducible():
     a = propagation_matrix(t, **kw)
     b = propagation_matrix(t, **kw)
     assert a["rows"] == b["rows"]
+
+
+# ----------------------------------------------------------------------
+# 多种子（n_seeds）—— 误差棒（S2）
+# ----------------------------------------------------------------------
+def test_multi_seed_single_matches_default():
+    """n_seeds=1 的输出与省略 n_seeds 完全一致（向后兼容锁定）。"""
+    t = _true_ctr()
+    kw = dict(n_items=60, taus=[0.0, 2.0], n_requests=200, slots=5, seed=42)
+    base = propagation_matrix(t, **kw)
+    one = propagation_matrix(t, n_seeds=1, **kw)
+    assert one["rows"] == base["rows"]
+    assert one["n_seeds"] == 1
+
+    inj_kw = dict(n_items=60, tau=2.0, w_bases=[0.0, 1.0], n_requests=200,
+                  slots=5, seed=42)
+    assert (mixing_second_injection(t, n_seeds=1, **inj_kw)["rows"]
+            == mixing_second_injection(t, **inj_kw)["rows"])
+
+
+def test_multi_seed_adds_std_fields():
+    """n_seeds>1：逐字段附 *_std 误差棒，且与 boundary.py 口径一致。"""
+    t = _true_ctr()
+    m = propagation_matrix(t, n_items=60, taus=[0.0, 2.0], n_requests=200,
+                           slots=5, seed=42, n_seeds=3)
+    assert m["n_seeds"] == 3
+    assert "种子" in m["rng_policy"]
+    for row in m["rows"]:
+        numeric = [k for k in row if not k.endswith("_std") and k != "tau"]
+        for k in numeric:
+            assert k + "_std" in row, f"缺少 {k}_std"
+            assert row[k + "_std"] >= 0.0
+        assert row["tau"] == row.get("tau")  # key 字段不被聚合
+    # 跨种子均值下核心趋势仍应成立：L2_spearman 随 τ 单调下降
+    sp = [r["L2_spearman"] for r in m["rows"]]
+    assert all(b < a for a, b in zip(sp, sp[1:])), sp
+
+
+def test_multi_seed_injection_endpoint_exact():
+    """注入 w=1.0 端点跨种子确定性：L3≡truth ⇒ 均值严格 1.0/0.0、std=0。"""
+    t = _true_ctr()
+    inj = mixing_second_injection(t, n_items=60, tau=2.0,
+                                  w_bases=[0.0, 0.5, 1.0], n_requests=200,
+                                  slots=5, seed=42, n_seeds=3)
+    assert inj["n_seeds"] == 3
+    last = inj["rows"][-1]
+    assert last["L3_spearman"] == pytest.approx(1.0, abs=1e-9)
+    assert last["L3_rel_err"] == pytest.approx(0.0, abs=1e-6)
+    assert last["L3_spearman_std"] == pytest.approx(0.0, abs=1e-9)

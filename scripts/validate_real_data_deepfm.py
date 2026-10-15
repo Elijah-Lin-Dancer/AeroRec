@@ -27,10 +27,10 @@ import time
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import numpy as np  # noqa: E402
-import scipy.sparse as sp  # noqa: E402
-import torch  # noqa: E402
-import sklearn  # noqa: E402
+import numpy as np
+import scipy.sparse as sp
+import sklearn
+import torch
 
 # 线程数必须显式限制：本沙箱容器 CPU 配额只有 4 核，而 torch 默认按物理核数（32）开线程，
 # 严重超订会让每条小算子陷入上下文切换、单步耗时飙到秒级（实测 tiny 模型可达 4s/step）。
@@ -40,10 +40,8 @@ torch.set_num_threads(_THREADS)
 from sklearn.linear_model import LogisticRegression  # noqa: E402
 from sklearn.metrics import roc_auc_score  # noqa: E402
 from sklearn.preprocessing import OneHotEncoder  # noqa: E402
-
 from src.config import SEED  # noqa: E402
-from src.rank.trainer import (DEEFM_BATCH_SIZE, DeepFMRanker,  # noqa: E402
-                              plan_epochs)
+from src.rank.trainer import DEEFM_BATCH_SIZE, DeepFMRanker, plan_epochs  # noqa: E402
 
 
 def lr_baseline(dtr, str_, ytr, dva, sva, yva):
@@ -73,10 +71,10 @@ def main():
 
     t0 = time.time()
     if args.dataset == "criteo":
-        from src.data.criteo import load_criteo  # noqa: E402
+        from src.data.criteo import load_criteo
         data = load_criteo(args.criteo_path, n_rows=args.criteo_rows)
     else:
-        from src.data.adult import load_adult  # noqa: E402
+        from src.data.adult import load_adult
         data = load_adult()
     meta = data["meta"]
     print(f"[validate] 数据集={meta['dataset']}  训练={meta['n_train']}  验证={meta['n_val']}  "

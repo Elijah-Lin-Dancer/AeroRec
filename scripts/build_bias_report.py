@@ -14,7 +14,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from src.bias.report import build_report  # noqa: E402
+from src.bias.report import build_report
 
 
 def main():

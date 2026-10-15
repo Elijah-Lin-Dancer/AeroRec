@@ -177,11 +177,34 @@ def run_stage_estimates(true_ctr, n_items: int, tau: float, n_requests: int,
     }
 
 
+def _aggregate_rows(per_seed_rows: list[list[dict]], key_field: str) -> list[dict]:
+    """跨种子聚合逐行指标：数值字段取均值，n_seeds>1 时附 `*_std`。
+
+    口径与 `boundary.py` 的多种子聚合一致：`np.mean` / `np.std`（ddof=0）、
+    round 4。种子序列为 `default_rng(seed + s)`（s = 0..n_seeds-1）。
+    n_seeds=1 时不添加 std 字段，行结构与单种子完全一致（向后兼容）。
+    """
+    n = len(per_seed_rows)
+    first = per_seed_rows[0]
+    out: list[dict] = []
+    for i in range(len(first)):
+        row: dict = {key_field: first[i][key_field]}
+        for f in first[i]:
+            if f == key_field:
+                continue
+            vals = [pr[i][f] for pr in per_seed_rows]
+            row[f] = round(float(np.mean(vals)), 4)
+            if n > 1:
+                row[f + "_std"] = round(float(np.std(vals)), 4)
+        out.append(row)
+    return out
+
+
 # ----------------------------------------------------------------------
 # 传播矩阵：核心产出
 # ----------------------------------------------------------------------
 def propagation_matrix(true_ctr, n_items: int, taus, n_requests=500, slots=5,
-                       alpha=5.0, w_base=0.0, seed=42) -> dict:
+                       alpha=5.0, w_base=0.0, seed=42, n_seeds: int = 1) -> dict:
     """在多个偏差强度 τ 上算「链路各级偏差传播」矩阵。
 
     主指标为**逐物品相对误差 rel_err**（水平，机制 A）与
@@ -189,39 +212,55 @@ def propagation_matrix(true_ctr, n_items: int, taus, n_requests=500, slots=5,
     这正是"偏差在链路上累积"的定量证据。
 
     n_items 参数保留以兼容调用方语义（全局物品数 = 候选数）。
+
+    多种子（n_seeds > 1）：种子 s ∈ [0, n_seeds)，每个种子内部仍按 CRN
+    （每 τ 以 default_rng(seed+s) 重置）跑完整条 τ 扫描；指标跨种子取
+    均值并附 `*_std` 误差棒（口径同 boundary.py：np.mean/np.std, round 4）。
+    n_seeds=1 时输出与单种子完全一致（不添加 std 字段，向后兼容）。
     """
-    rows = []
-    for tau in taus:
-        # CRN（共同随机数）：每个 τ 都从同一初始状态重置 RNG——随机流相同、
-        # 仅曝光策略 π 不同，τ 间差异只来自参数本身而非不同的抽样序列；
-        # 且与扫描顺序无关、新增 τ 不影响既有 τ 的结果（demo 与报告逐点一致）。
-        rng = np.random.default_rng(seed)
-        r = run_stage_estimates(true_ctr, n_items, tau=tau, n_requests=n_requests,
-                                slots=slots, alpha=alpha, w_base=w_base, rng=rng)
-        t = r["true_ctr"]
-        e1 = stage_error(r["L1_recall"], t)
-        e2 = stage_error(r["L2_rank"], t)
-        e3 = stage_error(r["L3_mix"], t)
-        rows.append({
-            "tau": float(tau),
-            # 水平（机制 A）
-            "L1_rel_err": round(e1["rel_err"], 4),
-            "L2_rel_err": round(e2["rel_err"], 4),
-            "L3_rel_err": round(e3["rel_err"], 4),
-            "L2_incremental_rel": round(e2["rel_err"] - e1["rel_err"], 4),
-            "L3_incremental_rel": round(e3["rel_err"] - e2["rel_err"], 4),
-            "L2_signed": round(e2["signed"], 4),
-            # 排序（机制 B）
-            "L1_spearman": round(e1["spearman"], 4),
-            "L2_spearman": round(e2["spearman"], 4),
-            "L3_spearman": round(e3["spearman"], 4),
-            "L2_rank_mae": round(e2["rank_mae"], 4),
-            # 曝光自省
-            "impr_min": int(r["impressions"].min()),
-            "impr_max": int(r["impressions"].max()),
-            "exposure_kl": round(exposure_kl(r["exposure_freq"]), 4),
-            "exposure_gini": round(exposure_gini(r["exposure_freq"]), 4),
-        })
+
+    def _rows_for_seed(s: int) -> list[dict]:
+        out: list[dict] = []
+        for tau in taus:
+            # CRN（共同随机数）：每个 τ 都从同一初始状态重置 RNG——随机流相同、
+            # 仅曝光策略 π 不同，τ 间差异只来自参数本身而非不同的抽样序列；
+            # 且与扫描顺序无关、新增 τ 不影响既有 τ 的结果（demo 与报告逐点一致）。
+            rng = np.random.default_rng(seed + s)
+            r = run_stage_estimates(true_ctr, n_items, tau=tau, n_requests=n_requests,
+                                    slots=slots, alpha=alpha, w_base=w_base, rng=rng)
+            t = r["true_ctr"]
+            e1 = stage_error(r["L1_recall"], t)
+            e2 = stage_error(r["L2_rank"], t)
+            e3 = stage_error(r["L3_mix"], t)
+            out.append({
+                "tau": float(tau),
+                # 水平（机制 A）
+                "L1_rel_err": round(e1["rel_err"], 4),
+                "L2_rel_err": round(e2["rel_err"], 4),
+                "L3_rel_err": round(e3["rel_err"], 4),
+                "L2_incremental_rel": round(e2["rel_err"] - e1["rel_err"], 4),
+                "L3_incremental_rel": round(e3["rel_err"] - e2["rel_err"], 4),
+                "L2_signed": round(e2["signed"], 4),
+                # 排序（机制 B）
+                "L1_spearman": round(e1["spearman"], 4),
+                "L2_spearman": round(e2["spearman"], 4),
+                "L3_spearman": round(e3["spearman"], 4),
+                "L2_rank_mae": round(e2["rank_mae"], 4),
+                # 曝光自省
+                "impr_min": int(r["impressions"].min()),
+                "impr_max": int(r["impressions"].max()),
+                "exposure_kl": round(exposure_kl(r["exposure_freq"]), 4),
+                "exposure_gini": round(exposure_gini(r["exposure_freq"]), 4),
+            })
+        return out
+
+    n = max(1, int(n_seeds))
+    rows = _aggregate_rows([_rows_for_seed(s) for s in range(n)], "tau")
+    rng_policy = "common_random_numbers: 每个 tau 均以 default_rng(seed) 重置，" \
+                 "tau 间差异只来自曝光策略而非抽样序列"
+    if n > 1:
+        rng_policy += (f"；跨 {n} 个种子（default_rng(seed+s), s=0..{n - 1}）"
+                       "取均值±std（口径同 boundary.py）")
     return {
         "taus": [float(x) for x in taus],
         "rows": rows,
@@ -231,13 +270,15 @@ def propagation_matrix(true_ctr, n_items: int, taus, n_requests=500, slots=5,
         "alpha": float(alpha),
         "n_requests": int(n_requests),
         "slots": int(slots),
-        "rng_policy": "common_random_numbers: 每个 tau 均以 default_rng(seed) 重置，"
-                      "tau 间差异只来自曝光策略而非抽样序列",
+        "n_seeds": n,
+        "seed_base": int(seed),
+        "rng_policy": rng_policy,
     }
 
 
 def mixing_second_injection(true_ctr, n_items: int, tau: float, w_bases,
-                            n_requests=500, slots=5, alpha=5.0, seed=42) -> dict:
+                            n_requests=500, slots=5, alpha=5.0, seed=42,
+                            n_seeds: int = 1) -> dict:
     """固定曝光偏差 τ，扫描混排基础分 w_base —— 量化**二次注入**。
 
     实现（与早期版本的关键差别）
@@ -250,34 +291,50 @@ def mixing_second_injection(true_ctr, n_items: int, tau: float, w_bases,
 
     预期：w_base 越大，L3 越靠近真值，spearman 随之上升、rel_err 随之下降
     （具体数值见 `data/bias/injection.json`，文档不得另行手写）。
-    """
-    # 曝光与 L2 对整场扫描只算一次；w_base 仅进入 L3 的解析凸组合
-    rng = np.random.default_rng(seed)
-    r = run_stage_estimates(true_ctr, n_items, tau=tau, n_requests=n_requests,
-                            slots=slots, alpha=alpha, w_base=0.0, rng=rng)
-    t = r["true_ctr"]
-    l2 = np.asarray(r["L2_rank"], dtype=np.float64)
-    e2 = stage_error(l2, t)
 
-    rows = []
-    for wb in w_bases:
-        l3 = (1.0 - float(wb)) * l2 + float(wb) * t
-        e3 = stage_error(l3, t)
-        rows.append({
-            "w_base": float(wb),
-            "L2_rel_err": round(e2["rel_err"], 4),
-            "L3_rel_err": round(e3["rel_err"], 4),
-            "injection_rel": round(e3["rel_err"] - e2["rel_err"], 4),
-            "L2_spearman": round(e2["spearman"], 4),
-            "L3_spearman": round(e3["spearman"], 4),
-            "injection_spearman": round(e3["spearman"] - e2["spearman"], 4),
-        })
+    多种子（n_seeds > 1）：每个种子独立「单次模拟 + 解析扫描」
+    （default_rng(seed+s)），指标跨种子取均值并附 `*_std`；w=1.0 端点
+    跨种子确定性（L3≡truth），均值仍严格为 1.0、std=0。
+    n_seeds=1 时输出与单种子完全一致（向后兼容）。
+    """
+    n = max(1, int(n_seeds))
+
+    def _rows_for_seed(s: int) -> list[dict]:
+        # 曝光与 L2 对整场扫描只算一次；w_base 仅进入 L3 的解析凸组合
+        rng = np.random.default_rng(seed + s)
+        r = run_stage_estimates(true_ctr, n_items, tau=tau, n_requests=n_requests,
+                                slots=slots, alpha=alpha, w_base=0.0, rng=rng)
+        t = r["true_ctr"]
+        l2 = np.asarray(r["L2_rank"], dtype=np.float64)
+        e2 = stage_error(l2, t)
+
+        out: list[dict] = []
+        for wb in w_bases:
+            l3 = (1.0 - float(wb)) * l2 + float(wb) * t
+            e3 = stage_error(l3, t)
+            out.append({
+                "w_base": float(wb),
+                "L2_rel_err": round(e2["rel_err"], 4),
+                "L3_rel_err": round(e3["rel_err"], 4),
+                "injection_rel": round(e3["rel_err"] - e2["rel_err"], 4),
+                "L2_spearman": round(e2["spearman"], 4),
+                "L3_spearman": round(e3["spearman"], 4),
+                "injection_spearman": round(e3["spearman"] - e2["spearman"], 4),
+            })
+        return out
+
+    rows = _aggregate_rows([_rows_for_seed(s) for s in range(n)], "w_base")
+    rng_policy = ("single_simulation_analytic_sweep: 曝光只模拟一次"
+                  "（default_rng(seed)），L3=(1-w)*L2+w*truth 逐 w_base 解析重算")
+    if n > 1:
+        rng_policy += f"；跨 {n} 个种子（default_rng(seed+s)）取均值±std"
     return {
         "tau": float(tau),
         "rows": rows,
         "metric": "rel_err + spearman",
         "n_requests": int(n_requests),
         "slots": int(slots),
-        "rng_policy": "single_simulation_analytic_sweep: 曝光只模拟一次"
-                      "（default_rng(seed)），L3=(1-w)*L2+w*truth 逐 w_base 解析重算",
+        "n_seeds": n,
+        "seed_base": int(seed),
+        "rng_policy": rng_policy,
     }

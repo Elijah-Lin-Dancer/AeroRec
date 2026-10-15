@@ -83,31 +83,31 @@
       <b>与真值的秩相关 spearman</b>（排序，机制 B）。
     </p>
     <div class="kpis">
-      <div class="kpi"><b class="up">+0.861</b>
+      <div class="kpi"><b class="up">+0.867</b>
         <span>τ=0 排序相关（好）</span></div>
-      <div class="kpi"><b class="down">-0.376</b>
+      <div class="kpi"><b class="down">-0.505</b>
         <span>τ=3 排序相关（已反转）</span></div>
-      <div class="kpi"><b>0.079 → 0.590</b>
+      <div class="kpi"><b>0.079 → 0.692</b>
         <span>曝光 Gini</span></div>
-      <div class="kpi"><b>33 → 1</b>
+      <div class="kpi"><b>30.0667 → 0.0</b>
         <span>冷门物品最少曝光次数</span></div>
     </div>
 
-<table><thead><tr><th>τ（曝光偏差）</th><th>排序级 rel_err</th><th>排序级 spearman</th><th>混排级 rel_err</th><th>排序级增量</th><th>曝光 KL</th><th>曝光 Gini</th><th>最少曝光</th></tr></thead><tbody><tr><td class='num'>0.0</td><td class='num'>0.372</td><td class='num up'>+0.861</td><td class='num'>0.372</td><td class='num'>-0.065</td><td class='num'>0.0098</td><td class='num'>0.079</td><td class='num'>33</td></tr><tr><td class='num'>0.5</td><td class='num'>0.448</td><td class='num up'>+0.804</td><td class='num'>0.448</td><td class='num'>+0.240</td><td class='num'>0.0289</td><td class='num'>0.138</td><td class='num'>29</td></tr><tr><td class='num'>1.0</td><td class='num'>0.564</td><td class='num up'>+0.656</td><td class='num'>0.564</td><td class='num'>+0.564</td><td class='num'>0.0951</td><td class='num'>0.245</td><td class='num'>12</td></tr><tr><td class='num'>2.0</td><td class='num'>0.888</td><td class='num '>+0.172</td><td class='num'>0.888</td><td class='num'>+0.532</td><td class='num'>0.3135</td><td class='num'>0.437</td><td class='num'>3</td></tr><tr><td class='num'>3.0</td><td class='num'>1.425</td><td class='num down'>-0.376</td><td class='num'>1.425</td><td class='num'>+0.798</td><td class='num'>0.6099</td><td class='num'>0.590</td><td class='num'>1</td></tr></tbody></table>
+<table><thead><tr><th>τ（曝光偏差）</th><th>排序级 rel_err</th><th>排序级 spearman</th><th>混排级 rel_err</th><th>排序级增量</th><th>曝光 KL</th><th>曝光 Gini</th><th>最少曝光</th></tr></thead><tbody><tr><td class='num'>0.0</td><td class='num'>0.411</td><td class='num up'>+0.867</td><td class='num'>0.411</td><td class='num'>-0.110</td><td class='num'>0.0100</td><td class='num'>0.079</td><td class='num'>30.0667</td></tr><tr><td class='num'>0.5</td><td class='num'>0.505</td><td class='num up'>+0.800</td><td class='num'>0.505</td><td class='num'>+0.263</td><td class='num'>0.0410</td><td class='num'>0.161</td><td class='num'>15.3333</td></tr><tr><td class='num'>1.0</td><td class='num'>0.671</td><td class='num up'>+0.632</td><td class='num'>0.671</td><td class='num'>+0.671</td><td class='num'>0.1315</td><td class='num'>0.285</td><td class='num'>5.4</td></tr><tr><td class='num'>2.0</td><td class='num'>1.246</td><td class='num '>+0.035</td><td class='num'>1.246</td><td class='num'>+0.854</td><td class='num'>0.4710</td><td class='num'>0.516</td><td class='num'>0.1</td></tr><tr><td class='num'>3.0</td><td class='num'>2.013</td><td class='num down'>-0.505</td><td class='num'>2.013</td><td class='num'>+1.343</td><td class='num'>0.9716</td><td class='num'>0.692</td><td class='num'>0.0</td></tr></tbody></table>
 <div class="svg-wrap">
 <svg viewBox="0 0 760 300" width="100%" style="max-width:760px">
 <text x="62" y="18" font-size="13" fill="#1a1d23" font-weight="600">排序质量随偏差反转，曝光集中度同步上升</text>
 <line x1="62" y1="254.0" x2="550" y2="254.0" stroke="#e5e7eb" stroke-width="1"/>
-<text x="54" y="258.0" font-size="11" fill="#5f6672" text-anchor="end">-0.47</text>
+<text x="54" y="258.0" font-size="11" fill="#5f6672" text-anchor="end">-0.62</text>
 <line x1="62" y1="199.0" x2="550" y2="199.0" stroke="#e5e7eb" stroke-width="1"/>
-<text x="54" y="203.0" font-size="11" fill="#5f6672" text-anchor="end">-0.10</text>
+<text x="54" y="203.0" font-size="11" fill="#5f6672" text-anchor="end">-0.20</text>
 <line x1="62" y1="144.0" x2="550" y2="144.0" stroke="#e5e7eb" stroke-width="1"/>
-<text x="54" y="148.0" font-size="11" fill="#5f6672" text-anchor="end">0.27</text>
+<text x="54" y="148.0" font-size="11" fill="#5f6672" text-anchor="end">0.21</text>
 <line x1="62" y1="89.0" x2="550" y2="89.0" stroke="#e5e7eb" stroke-width="1"/>
-<text x="54" y="93.0" font-size="11" fill="#5f6672" text-anchor="end">0.64</text>
+<text x="54" y="93.0" font-size="11" fill="#5f6672" text-anchor="end">0.62</text>
 <line x1="62" y1="34.0" x2="550" y2="34.0" stroke="#e5e7eb" stroke-width="1"/>
-<text x="54" y="38.0" font-size="11" fill="#5f6672" text-anchor="end">1.01</text>
-<line x1="62" y1="183.6" x2="550" y2="183.6" stroke="#5f6672" stroke-width="1.4" stroke-dasharray="4,3"/>
+<text x="54" y="38.0" font-size="11" fill="#5f6672" text-anchor="end">1.03</text>
+<line x1="62" y1="171.8" x2="550" y2="171.8" stroke="#5f6672" stroke-width="1.4" stroke-dasharray="4,3"/>
 <text x="62.0" y="272" font-size="11" fill="#5f6672" text-anchor="middle">τ=0.0</text>
 <text x="184.0" y="272" font-size="11" fill="#5f6672" text-anchor="middle">τ=0.5</text>
 <text x="306.0" y="272" font-size="11" fill="#5f6672" text-anchor="middle">τ=1.0</text>
@@ -115,20 +115,20 @@
 <text x="550.0" y="272" font-size="11" fill="#5f6672" text-anchor="middle">τ=3.0</text>
 <text x="306" y="294" font-size="11" fill="#5f6672" text-anchor="middle">曝光偏差强度 τ</text>
 <text x="14" y="144" font-size="11" fill="#5f6672" transform="rotate(-90 14 144)" text-anchor="middle">指标值</text>
-<polyline points="62.0,56.0 184.0,64.5 306.0,86.5 428.0,158.2 550.0,239.3" fill="none" stroke="#2563eb" stroke-width="2.4"/>
+<polyline points="62.0,56.0 184.0,64.9 306.0,87.4 428.0,167.2 550.0,239.3" fill="none" stroke="#2563eb" stroke-width="2.4"/>
 <circle cx="62.0" cy="56.0" r="3.2" fill="#2563eb"/>
-<circle cx="184.0" cy="64.5" r="3.2" fill="#2563eb"/>
-<circle cx="306.0" cy="86.5" r="3.2" fill="#2563eb"/>
-<circle cx="428.0" cy="158.2" r="3.2" fill="#2563eb"/>
+<circle cx="184.0" cy="64.9" r="3.2" fill="#2563eb"/>
+<circle cx="306.0" cy="87.4" r="3.2" fill="#2563eb"/>
+<circle cx="428.0" cy="167.2" r="3.2" fill="#2563eb"/>
 <circle cx="550.0" cy="239.3" r="3.2" fill="#2563eb"/>
 <rect x="562" y="38" width="11" height="11" rx="2" fill="#2563eb"/>
 <text x="578" y="47" font-size="11.5" fill="#1a1d23">排序级 spearman</text>
-<polyline points="62.0,172.0 184.0,163.3 306.0,147.3 428.0,118.8 550.0,96.2" fill="none" stroke="#f59e0b" stroke-width="2.4"/>
-<circle cx="62.0" cy="172.0" r="3.2" fill="#f59e0b"/>
-<circle cx="184.0" cy="163.3" r="3.2" fill="#f59e0b"/>
-<circle cx="306.0" cy="147.3" r="3.2" fill="#f59e0b"/>
-<circle cx="428.0" cy="118.8" r="3.2" fill="#f59e0b"/>
-<circle cx="550.0" cy="96.2" r="3.2" fill="#f59e0b"/>
+<polyline points="62.0,161.2 184.0,150.3 306.0,133.7 428.0,102.9 550.0,79.3" fill="none" stroke="#f59e0b" stroke-width="2.4"/>
+<circle cx="62.0" cy="161.2" r="3.2" fill="#f59e0b"/>
+<circle cx="184.0" cy="150.3" r="3.2" fill="#f59e0b"/>
+<circle cx="306.0" cy="133.7" r="3.2" fill="#f59e0b"/>
+<circle cx="428.0" cy="102.9" r="3.2" fill="#f59e0b"/>
+<circle cx="550.0" cy="79.3" r="3.2" fill="#f59e0b"/>
 <rect x="562" y="58" width="11" height="11" rx="2" fill="#f59e0b"/>
 <text x="578" y="67" font-size="11.5" fill="#1a1d23">曝光 Gini</text>
 </svg>
@@ -154,15 +154,15 @@
 <svg viewBox="0 0 760 300" width="100%" style="max-width:760px">
 <text x="62" y="18" font-size="13" fill="#1a1d23" font-weight="600">w_base → 1 时混排级等于真值（误差严格为 0，实现自检）</text>
 <line x1="62" y1="254.0" x2="550" y2="254.0" stroke="#e5e7eb" stroke-width="1"/>
-<text x="54" y="258.0" font-size="11" fill="#5f6672" text-anchor="end">-0.08</text>
+<text x="54" y="258.0" font-size="11" fill="#5f6672" text-anchor="end">-0.10</text>
 <line x1="62" y1="199.0" x2="550" y2="199.0" stroke="#e5e7eb" stroke-width="1"/>
-<text x="54" y="203.0" font-size="11" fill="#5f6672" text-anchor="end">0.22</text>
+<text x="54" y="203.0" font-size="11" fill="#5f6672" text-anchor="end">0.27</text>
 <line x1="62" y1="144.0" x2="550" y2="144.0" stroke="#e5e7eb" stroke-width="1"/>
-<text x="54" y="148.0" font-size="11" fill="#5f6672" text-anchor="end">0.52</text>
+<text x="54" y="148.0" font-size="11" fill="#5f6672" text-anchor="end">0.65</text>
 <line x1="62" y1="89.0" x2="550" y2="89.0" stroke="#e5e7eb" stroke-width="1"/>
-<text x="54" y="93.0" font-size="11" fill="#5f6672" text-anchor="end">0.82</text>
+<text x="54" y="93.0" font-size="11" fill="#5f6672" text-anchor="end">1.02</text>
 <line x1="62" y1="34.0" x2="550" y2="34.0" stroke="#e5e7eb" stroke-width="1"/>
-<text x="54" y="38.0" font-size="11" fill="#5f6672" text-anchor="end">1.12</text>
+<text x="54" y="38.0" font-size="11" fill="#5f6672" text-anchor="end">1.40</text>
 <line x1="62" y1="239.3" x2="550" y2="239.3" stroke="#5f6672" stroke-width="1.4" stroke-dasharray="4,3"/>
 <text x="62.0" y="272" font-size="11" fill="#5f6672" text-anchor="middle">0.0</text>
 <text x="184.0" y="272" font-size="11" fill="#5f6672" text-anchor="middle">0.2</text>
@@ -171,25 +171,25 @@
 <text x="550.0" y="272" font-size="11" fill="#5f6672" text-anchor="middle">1.0</text>
 <text x="306" y="294" font-size="11" fill="#5f6672" text-anchor="middle">w_base（基础分/热度权重）</text>
 <text x="14" y="144" font-size="11" fill="#5f6672" transform="rotate(-90 14 144)" text-anchor="middle">指标值</text>
-<polyline points="62.0,76.5 184.0,109.1 306.0,141.6 428.0,206.8 550.0,239.3" fill="none" stroke="#dc2626" stroke-width="2.4"/>
-<circle cx="62.0" cy="76.5" r="3.2" fill="#dc2626"/>
-<circle cx="184.0" cy="109.1" r="3.2" fill="#dc2626"/>
-<circle cx="306.0" cy="141.6" r="3.2" fill="#dc2626"/>
-<circle cx="428.0" cy="206.8" r="3.2" fill="#dc2626"/>
+<polyline points="62.0,56.0 184.0,92.7 306.0,129.3 428.0,202.7 550.0,239.3" fill="none" stroke="#dc2626" stroke-width="2.4"/>
+<circle cx="62.0" cy="56.0" r="3.2" fill="#dc2626"/>
+<circle cx="184.0" cy="92.7" r="3.2" fill="#dc2626"/>
+<circle cx="306.0" cy="129.3" r="3.2" fill="#dc2626"/>
+<circle cx="428.0" cy="202.7" r="3.2" fill="#dc2626"/>
 <circle cx="550.0" cy="239.3" r="3.2" fill="#dc2626"/>
 <rect x="562" y="38" width="11" height="11" rx="2" fill="#dc2626"/>
 <text x="578" y="47" font-size="11.5" fill="#1a1d23">混排级 rel_err</text>
-<polyline points="62.0,207.9 184.0,172.1 306.0,135.2 428.0,60.4 550.0,56.0" fill="none" stroke="#2563eb" stroke-width="2.4"/>
-<circle cx="62.0" cy="207.9" r="3.2" fill="#2563eb"/>
-<circle cx="184.0" cy="172.1" r="3.2" fill="#2563eb"/>
-<circle cx="306.0" cy="135.2" r="3.2" fill="#2563eb"/>
-<circle cx="428.0" cy="60.4" r="3.2" fill="#2563eb"/>
-<circle cx="550.0" cy="56.0" r="3.2" fill="#2563eb"/>
+<polyline points="62.0,234.3 184.0,205.9 306.0,171.2 428.0,99.6 550.0,92.2" fill="none" stroke="#2563eb" stroke-width="2.4"/>
+<circle cx="62.0" cy="234.3" r="3.2" fill="#2563eb"/>
+<circle cx="184.0" cy="205.9" r="3.2" fill="#2563eb"/>
+<circle cx="306.0" cy="171.2" r="3.2" fill="#2563eb"/>
+<circle cx="428.0" cy="99.6" r="3.2" fill="#2563eb"/>
+<circle cx="550.0" cy="92.2" r="3.2" fill="#2563eb"/>
 <rect x="562" y="58" width="11" height="11" rx="2" fill="#2563eb"/>
 <text x="578" y="67" font-size="11.5" fill="#1a1d23">混排级 spearman</text>
 </svg>
 </div>
-<table><thead><tr><th>w_base</th><th>排序级 rel_err</th><th>混排级 rel_err</th><th>注入增量(rel)</th><th>排序级 spearman</th><th>混排级 spearman</th><th>注入增量(sp)</th></tr></thead><tbody><tr><td class='num'>0.0</td><td class='num'>0.888</td><td class='num'>0.888</td><td class='num'>+0.000</td><td class='num'>+0.172</td><td class='num'>+0.172</td><td class='num'>+0.000</td></tr><tr><td class='num'>0.2</td><td class='num'>0.888</td><td class='num'>0.711</td><td class='num'>-0.178</td><td class='num'>+0.172</td><td class='num'>+0.366</td><td class='num'>+0.195</td></tr><tr><td class='num'>0.4</td><td class='num'>0.888</td><td class='num'>0.533</td><td class='num'>-0.355</td><td class='num'>+0.172</td><td class='num'>+0.568</td><td class='num'>+0.396</td></tr><tr><td class='num'>0.8</td><td class='num'>0.888</td><td class='num'>0.178</td><td class='num'>-0.711</td><td class='num'>+0.172</td><td class='num'>+0.976</td><td class='num'>+0.804</td></tr><tr><td class='num'>1.0</td><td class='num'>0.888</td><td class='num'>0.000</td><td class='num'>-0.888</td><td class='num'>+0.172</td><td class='num'>+1.000</td><td class='num'>+0.829</td></tr></tbody></table>
+<table><thead><tr><th>w_base</th><th>排序级 rel_err</th><th>混排级 rel_err</th><th>注入增量(rel)</th><th>排序级 spearman</th><th>混排级 spearman</th><th>注入增量(sp)</th></tr></thead><tbody><tr><td class='num'>0.0</td><td class='num'>1.246</td><td class='num'>1.246</td><td class='num'>+0.000</td><td class='num'>+0.035</td><td class='num'>+0.035</td><td class='num'>+0.000</td></tr><tr><td class='num'>0.2</td><td class='num'>1.246</td><td class='num'>0.997</td><td class='num'>-0.249</td><td class='num'>+0.035</td><td class='num'>+0.227</td><td class='num'>+0.193</td></tr><tr><td class='num'>0.4</td><td class='num'>1.246</td><td class='num'>0.747</td><td class='num'>-0.498</td><td class='num'>+0.035</td><td class='num'>+0.463</td><td class='num'>+0.429</td></tr><tr><td class='num'>0.8</td><td class='num'>1.246</td><td class='num'>0.249</td><td class='num'>-0.997</td><td class='num'>+0.035</td><td class='num'>+0.949</td><td class='num'>+0.915</td></tr><tr><td class='num'>1.0</td><td class='num'>1.246</td><td class='num'>0.000</td><td class='num'>-1.246</td><td class='num'>+0.035</td><td class='num'>+1.000</td><td class='num'>+0.966</td></tr></tbody></table>
 
     <div class="note">
       <b>实现自检</b>：<code>w_base=1.0</code> 时混排级<b>等于真值</b>，
@@ -228,26 +228,26 @@
 <rect x="86.7" y="50.2" width="62.9" height="1.0" rx="3" fill="#16a34a" opacity="0.9"/>
 <text x="118.2" y="244" font-size="11" fill="#5f6672" text-anchor="middle">1.000</text>
 <text x="118.2" y="44.2" font-size="10.5" fill=#5f6672 text-anchor="middle">+0.000</text>
-<rect x="199.0" y="50.2" width="62.9" height="0.5" rx="3" fill="#dc2626" opacity="0.9"/>
+<rect x="199.0" y="50.2" width="62.9" height="0.3" rx="3" fill="#dc2626" opacity="0.9"/>
 <text x="230.5" y="244" font-size="11" fill="#5f6672" text-anchor="middle">0.905</text>
-<text x="230.5" y="64.7" font-size="10.5" fill=#5f6672 text-anchor="middle">-0.000</text>
-<rect x="311.4" y="50.2" width="62.9" height="3.8" rx="3" fill="#dc2626" opacity="0.9"/>
+<text x="230.5" y="64.4" font-size="10.5" fill=#5f6672 text-anchor="middle">-0.000</text>
+<rect x="311.4" y="50.2" width="62.9" height="4.4" rx="3" fill="#dc2626" opacity="0.9"/>
 <text x="342.8" y="244" font-size="11" fill="#5f6672" text-anchor="middle">0.358</text>
-<text x="342.8" y="68.0" font-size="10.5" fill=#5f6672 text-anchor="middle">-0.001</text>
-<rect x="423.7" y="50.2" width="62.9" height="14.1" rx="3" fill="#dc2626" opacity="0.9"/>
+<text x="342.8" y="68.5" font-size="10.5" fill=#5f6672 text-anchor="middle">-0.002</text>
+<rect x="423.7" y="50.2" width="62.9" height="21.7" rx="3" fill="#dc2626" opacity="0.9"/>
 <text x="455.2" y="244" font-size="11" fill="#5f6672" text-anchor="middle">0.048</text>
-<text x="455.2" y="78.3" font-size="10.5" fill=#5f6672 text-anchor="middle">-0.005</text>
-<rect x="536.0" y="50.2" width="62.9" height="78.3" rx="3" fill="#dc2626" opacity="0.9"/>
+<text x="455.2" y="85.8" font-size="10.5" fill=#5f6672 text-anchor="middle">-0.008</text>
+<rect x="536.0" y="50.2" width="62.9" height="78.9" rx="3" fill="#dc2626" opacity="0.9"/>
 <text x="567.5" y="244" font-size="11" fill="#5f6672" text-anchor="middle">0.006</text>
-<text x="567.5" y="142.4" font-size="10.5" fill=#5f6672 text-anchor="middle">-0.029</text>
+<text x="567.5" y="143.1" font-size="10.5" fill=#5f6672 text-anchor="middle">-0.031</text>
 <rect x="648.4" y="50.2" width="62.9" height="161.7" rx="3" fill="#dc2626" opacity="0.9"/>
 <text x="679.8" y="244" font-size="11" fill="#5f6672" text-anchor="middle">0.003</text>
-<text x="679.8" y="225.8" font-size="10.5" fill=#5f6672 text-anchor="middle">-0.059</text>
+<text x="679.8" y="225.8" font-size="10.5" fill=#5f6672 text-anchor="middle">-0.063</text>
 <text x="399" y="272" font-size="11" fill="#5f6672" text-anchor="middle">ESS/N（有效样本量占比）</text>
 <text x="14" y="131" font-size="11" fill="#5f6672" transform="rotate(-90 14 131)" text-anchor="middle">去偏收益 gain</text>
 </svg>
 </div>
-<table><thead><tr><th>π 取值下界</th><th>π 上界</th><th>极值比</th><th>ESS/N</th><th>naive_err</th><th>snips_err</th><th>gain（>0 表示去偏划算）</th></tr></thead><tbody><tr><td class='num'>1e+00</td><td class='num'>1.0</td><td class='num'>1</td><td class='num'>1.0000</td><td class='num'>0.0021</td><td class='num'>0.0021</td><td class='num up'>+0.0000</td></tr><tr><td class='num'>5e-01</td><td class='num'>1.5</td><td class='num'>3</td><td class='num'>0.9051</td><td class='num'>0.0021</td><td class='num'>0.0024</td><td class='num up'>-0.0002</td></tr><tr><td class='num'>5e-02</td><td class='num'>2.0</td><td class='num'>40</td><td class='num'>0.3576</td><td class='num'>0.0021</td><td class='num'>0.0035</td><td class='num down'>-0.0014</td></tr><tr><td class='num'>2e-03</td><td class='num'>2.0</td><td class='num'>1000</td><td class='num'>0.0477</td><td class='num'>0.0021</td><td class='num'>0.0073</td><td class='num down'>-0.0052</td></tr><tr><td class='num'>1e-04</td><td class='num'>2.0</td><td class='num'>20000</td><td class='num'>0.0064</td><td class='num'>0.0021</td><td class='num'>0.0309</td><td class='num down'>-0.0288</td></tr><tr><td class='num'>1e-06</td><td class='num'>2.0</td><td class='num'>2000000</td><td class='num'>0.0032</td><td class='num'>0.0021</td><td class='num'>0.0616</td><td class='num down'>-0.0595</td></tr></tbody></table>
+<table><thead><tr><th>π 取值下界</th><th>π 上界</th><th>极值比</th><th>ESS/N</th><th>naive_err</th><th>snips_err</th><th>gain（>0 表示去偏划算）</th></tr></thead><tbody><tr><td class='num'>1e+00</td><td class='num'>1.0</td><td class='num'>1</td><td class='num'>1.0000</td><td class='num'>0.0024</td><td class='num'>0.0024</td><td class='num up'>+0.0000</td></tr><tr><td class='num'>5e-01</td><td class='num'>1.5</td><td class='num'>3</td><td class='num'>0.9052</td><td class='num'>0.0024</td><td class='num'>0.0026</td><td class='num up'>-0.0001</td></tr><tr><td class='num'>5e-02</td><td class='num'>2.0</td><td class='num'>40</td><td class='num'>0.3579</td><td class='num'>0.0024</td><td class='num'>0.0041</td><td class='num down'>-0.0017</td></tr><tr><td class='num'>2e-03</td><td class='num'>2.0</td><td class='num'>1000</td><td class='num'>0.0482</td><td class='num'>0.0024</td><td class='num'>0.0109</td><td class='num down'>-0.0084</td></tr><tr><td class='num'>1e-04</td><td class='num'>2.0</td><td class='num'>20000</td><td class='num'>0.0064</td><td class='num'>0.0024</td><td class='num'>0.0330</td><td class='num down'>-0.0306</td></tr><tr><td class='num'>1e-06</td><td class='num'>2.0</td><td class='num'>2000000</td><td class='num'>0.0031</td><td class='num'>0.0024</td><td class='num'>0.0651</td><td class='num down'>-0.0627</td></tr></tbody></table>
 
     <div class="note">
       <b>边界结论</b>：ESS/N 降至约 0.358 以下时，去偏收益转负且超出噪声水平（阈值容差 0.0010）——此时 IPS 的方差代价超过纠偏收益。

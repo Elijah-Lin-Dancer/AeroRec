@@ -83,11 +83,11 @@ def main():
     # 只导入**当前档位**所需的引擎模块：micro / lite 走纯 numpy，
     # 绝不能因为导入 full 引擎（src.serve.engine）而把 torch 拖进内存。
     if args.mode == "micro":
-        from src.serve.engine_micro import MicroRecommendationEngine as factory  # noqa: E402
+        from src.serve.engine_micro import MicroRecommendationEngine as factory
     elif args.mode == "lite":
-        from src.serve.engine_lite import LiteRecommendationEngine as factory  # noqa: E402
+        from src.serve.engine_lite import LiteRecommendationEngine as factory
     else:
-        from src.serve.engine import RecommendationEngine as factory  # noqa: E402
+        from src.serve.engine import RecommendationEngine as factory
 
     t0 = time.perf_counter()
     engine = factory()
