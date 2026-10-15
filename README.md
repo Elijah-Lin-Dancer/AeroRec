@@ -1,5 +1,7 @@
 # AeroRec · 出行智能推荐中台
 
+> 🌐 [English](README.en.md) | 简体中文
+
 > 面向出行消费场景（机票 / 酒店 / 商城 / 营销 / 直播）的开源智能推荐中台。
 > 工程化复现工业级推荐链路：**召回 → CTR 动态排序 → 降级兜底 → 服务化 → 可解释 → 真实 CTR 评估**。
 > 工程型 · 交叉学科（AI + 出行/交通）
@@ -17,28 +19,7 @@
 
 ---
 
-## English TL;DR
-
-**AeroRec** is an engineering-grade **travel recommendation platform** (flights / hotels / shopping / deals / live)
-that reproduces an industrial pipeline end-to-end on a **reproducible synthetic dataset**:
-4-way recall → DeepFM CTR ranking → 5-step mixing → graceful degradation → FastAPI / Streamlit serving →
-interpretable panels + true-CTR evaluation.
-
-- **Live demo (bilingual EN / 中文, toggle in the sidebar)**: <https://aerorec-tourism.streamlit.app>
-- **Research thread — bias-propagation diagnosis + debiasing effective boundary**: under biased exposure,
-  the ranking-level Spearman correlation **inverts from +0.86 (τ=0) to −0.38 (τ=3)**; debiasing (IPS/SNIPS/DR)
-  only pays off while the **effective sample size `ESS/N ≳ 0.358`**. See the
-  [tech report](docs/bias_report.md) · [visual report (HTML)](data/bias/report.html).
-- **Real-data transferability**: the *same* DeepFM implementation reaches **AUC 0.7733** (1 M rows) /
-  **0.7583** (200 k) on the Criteo benchmark — evidence that the implementation transfers to real data,
-  *not* that Criteo weights rank travel items (different feature schema).
-- **Online serving discipline**: pure-**numpy** forward pass, **no `torch` at serve time**;
-  engine process peak ≈ **129 MB**, single-thread **P50 ≈ 0.7 ms / P99 ≈ 1 ms**.
-
-> ⚠️ Everything is synthetic data; the online demo's numbers are for interaction only.
-> Citable conclusions use the offline **full tier** (100 k × 100 k × 5 M).
-
-## 效果预览 / Preview
+## 效果预览
 
 <p align="center">
   <img src="docs/assets/demo_en.png" width="49%">
@@ -86,20 +67,23 @@ interpretable panels + true-CTR evaluation.
 
 ```mermaid
 flowchart TB
-    GEN["合成数据生成器<br/>10万用户 × 10万物品 × 500万曝光<br/>（含隐式非线性交叉）"]
-
-    REC["召回层：热门 · ItemCF · Two-Tower · 规则"]
+    GEN["合成数据生成器<br/>10万用户 x 10万物品 x 500万曝光<br/>含隐式非线性交叉"]
+    REC["召回层<br/>热门 / ItemCF / Two-Tower / 规则"]
     FUS["四路召回融合"]
-    RANK["排序层：DeepFM(CTR) + LR(CVR) 多目标打分"]
-    MIX["5步混排：归一化→加权→分层→打散→去重"]
-    DEG["降级兜底：异常→历史平均CTR"]
-    SVC["服务层：FastAPI / Streamlit 面板"]
-    OUT["Top-K 推荐（可解释）"]
+    RANK["排序层<br/>DeepFM CTR + LR CVR 多目标打分"]
+    MIX["5步混排<br/>归一化 / 加权 / 分层 / 打散 / 去重"]
+    DEG["降级兜底<br/>异常时切历史平均CTR"]
+    SVC["服务层<br/>FastAPI / Streamlit 面板"]
+    OUT["Top-K 推荐 可解释"]
 
-    GEN --> REC --> FUS --> RANK --> MIX --> OUT
-    DEG -.->|服务异常| RANK
-    SVC -->|请求| REC
-    MIX -->|响应| SVC
+    GEN --> REC
+    REC --> FUS
+    FUS --> RANK
+    RANK --> MIX
+    MIX --> OUT
+    DEG -. 服务异常 .-> RANK
+    SVC -- 请求 --> REC
+    MIX -- 响应 --> SVC
 ```
 
 ## 快速开始
