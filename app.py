@@ -54,9 +54,15 @@ import streamlit as st
 # 而免费实例内存下限为 690MB（详见本文件顶部「工程取舍」说明）。
 # `st.dataframe` / `st.bar_chart` 均可直接吃 dict 与 list[dict]，无需 pandas。
 # 仅当需要 pandas 专有能力时，才在函数内部惰性导入。
-
-from src.serve.i18n import (LANGS, LANG_LABELS, DEFAULT_LANG, make_t, method_label,
-                            localize_category, localize_item_name)
+from src.serve.i18n import (
+    DEFAULT_LANG,
+    LANG_LABELS,
+    LANGS,
+    localize_category,
+    localize_item_name,
+    make_t,
+    method_label,
+)
 
 MODE = os.environ.get("AEROREC_MODE", "micro").lower()
 
@@ -201,8 +207,8 @@ def _bias_full_sweep(n_items: int = 60, n_requests: int = 600, slots: int = 5,
     返回每 τ 的 L1/L2/L3 spearman、rel_err、曝光 Gini、最少曝光，
     以及当前 τ 的平滑 CTR 向量与曝光频率（供散点 / 柱状图用）。
     """
-    from src.bias.propagation import run_stage_estimates, stage_error
     from src.bias.metrics import exposure_gini
+    from src.bias.propagation import run_stage_estimates, stage_error
 
     def _synth_true_ctr(n=60, s=0):
         r = np.random.default_rng(s)
@@ -213,9 +219,9 @@ def _bias_full_sweep(n_items: int = 60, n_requests: int = 600, slots: int = 5,
     taus = [round(float(x), 1) for x in np.arange(0.0, 3.0001, 0.1)]
     rows = []
     for tau in taus:
-        # 每 τ 独立确定性 rng（与 `propagation_matrix` 同算式），保证 demo 与
-        # 报告 propagation.json 逐点完全一致，且与扫描顺序无关。
-        rng = np.random.default_rng(seed * 1000 + int(round(float(tau) * 100)))
+        # CRN（与 `propagation_matrix` 同策略）：每 τ 都以 default_rng(seed) 重置，
+        # 保证 demo 与报告 propagation.json 逐点一致，且与扫描顺序无关。
+        rng = np.random.default_rng(seed)
         r = run_stage_estimates(tctr[None, :], n_items, float(tau), n_requests,
                                 slots, alpha, 0.0, rng)
         e1 = stage_error(r["L1_recall"], r["true_ctr"])

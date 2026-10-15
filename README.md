@@ -26,7 +26,7 @@ interpretable panels + true-CTR evaluation.
 
 - **Live demo (bilingual EN / 中文, toggle in the sidebar)**: <https://aerorec-tourism.streamlit.app>
 - **Research thread — bias-propagation diagnosis + debiasing effective boundary**: under biased exposure,
-  the ranking-level Spearman correlation **inverts from +0.85 (τ=0) to −0.50 (τ=3)**; debiasing (IPS/SNIPS/DR)
+  the ranking-level Spearman correlation **inverts from +0.86 (τ=0) to −0.38 (τ=3)**; debiasing (IPS/SNIPS/DR)
   only pays off while the **effective sample size `ESS/N ≳ 0.358`**. See the
   [tech report](docs/bias_report.md) · [visual report (HTML)](data/bias/report.html).
 - **Real-data transferability**: the *same* DeepFM implementation reaches **AUC 0.7733** (1 M rows) /
@@ -388,13 +388,13 @@ DeepFM 多目标排序相对热门基线提升 **+28.5%**，达到理论上界�
 
 | 曝光偏斜 τ | 排序级 spearman（越接近 1 越好） | 曝光最少 / 最多 | KL | Gini |
 |---|---|---|---|---|
-| 0.0 | +0.8466 | 32 / 62 | 0.0103 | 0.0812 |
-| 0.5 | +0.8072 | 21 / 75 | 0.0315 | 0.1411 |
-| 1.0 | +0.6229 | 20 / 104 | 0.0944 | 0.2464 |
-| 2.0 | −0.0516 | 0 / 212 | 0.3658 | 0.4690 |
-| 3.0 | **−0.4955** | **0 / 287** | 0.6845 | 0.6211 |
+| 0.0 | +0.8612 | 33 / 65 | 0.0098 | 0.0789 |
+| 0.5 | +0.8036 | 29 / 72 | 0.0289 | 0.1375 |
+| 1.0 | +0.6556 | 12 / 109 | 0.0951 | 0.2449 |
+| 2.0 | +0.1715 | 3 / 186 | 0.3135 | 0.4373 |
+| 3.0 | **−0.3757** | **1 / 277** | 0.6099 | 0.5898 |
 
-**spearman 从 +0.8466 一路跌到 −0.4955，在 τ≈2.0 处符号反转**，排行榜被搞反了。
+**spearman 从 +0.8612 一路跌到 −0.3757，τ=2.0 时已接近随机（+0.1715），τ=3.0 处符号反转**，排行榜被搞反了。
 只看「平均 CTR 偏高多少」会得出「偏差可控」的结论，却完全看不见排序级的破坏。
 
 **结论二：IPS 纠正的是「估计目标」，不是「坏估计」。**
@@ -554,7 +554,7 @@ LICENSE                    MIT 许可
 - [x] **W10：偏差传播诊断 + 去偏验证**
   - M1 曝光策略与闭式 propensity（50 万 × 3 坑位下 π 求和 = 1.0，经验频率偏差 0.00033 < 1 SE）
   - M2 偏差度量（平滑 CTR 0.5220 vs 真实 0.4476）
-  - M3 链路偏差传播矩阵（**排序反转 +0.8466 → −0.4955**）+ 二次注入自检
+  - M3 链路偏差传播矩阵（**排序反转 +0.8612 → −0.3757**）+ 二次注入自检
   - M4 去偏估计量 IPS / SNIPS / DR（含 π 两种约定的检测与告警）
   - M5 去偏有效边界（**`ESS/N ≈ 0.358`**，含 60 种子平均与噪声判据）
   - M6 自包含 HTML 可视化报告 + 本文档

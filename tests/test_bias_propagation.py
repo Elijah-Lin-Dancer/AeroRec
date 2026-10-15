@@ -4,12 +4,18 @@
 固定 seed 只能保证可复现，不能保证跨环境数值逐位一致。
 方向性断言足以支撑研究结论，且不会因环境差异误报失败。
 
+RNG 策略（与 `src/bias/propagation.py` 一致）：
+  - 传播矩阵：CRN（共同随机数）——每个 τ 以 default_rng(seed) 重置，
+    τ 间差异只来自曝光策略而非抽样序列；
+  - 二次注入：单次模拟 + 解析扫描——曝光只模拟一次，L3 逐 w_base 解析重算，
+    注入曲线不含抽样噪声，可做逐点严格单调断言。
+
 核心断言：
   A. 曝光偏差越强（τ↑），曝光集中度（Gini/KL）单调上升；
   B. 排序质量（spearman）随 τ↑ 单调下降，并在 τ 大时**跌破 0（排序反转）**；
   C. 冷门物品的曝光次数随 τ↑ 减少，被 α 平滑拽向先验 1.0 → 系统性高估；
   D. 混排二次注入有效：w_base=1 时混排级误差严格为 0（实现自检），
-     且 spearman 随 w_base 单调上升。
+     且 spearman 随 w_base **逐点严格**单调上升、rel_err 逐点严格下降。
 """
 from __future__ import annotations
 
@@ -78,13 +84,19 @@ def test_ranking_quality_degrades_and_inverts():
     assert sp[-1] < 0.0, f"τ=3 时排序应被反转，实际 {sp[-1]}"
 
 
-def test_sparse_items_get_zero_impressions_under_strong_bias():
-    """强偏差下会出现曝光次数为 0 的冷门物品——这是排序反转的机制来源。"""
+def test_sparse_items_starved_under_strong_bias():
+    """强偏差下冷门物品的曝光被饿到趋近 0——这是排序反转的机制来源。
+
+    断言「趋近 0」而非「恰好为 0」：是否抽到 0 次曝光取决于具体随机流的
+    实现，机制层面的不变量是「冷门物品几乎无曝光」。
+    """
     t = _true_ctr()
     m = propagation_matrix(t, n_items=60, taus=[0.0, 3.0], n_requests=500,
                            slots=5, seed=42)
     assert m["rows"][0]["impr_min"] > m["rows"][-1]["impr_min"]
-    assert m["rows"][-1]["impr_min"] == 0
+    # τ=3：最冷门物品几乎无曝光（个位数）；τ=0 均匀曝光下没有物品被饿死
+    assert m["rows"][-1]["impr_min"] <= 2, m["rows"][-1]["impr_min"]
+    assert m["rows"][0]["impr_min"] >= 20, m["rows"][0]["impr_min"]
 
 
 # ----------------------------------------------------------------------
@@ -125,28 +137,62 @@ def test_mixing_injection_sanity_at_w_base_one():
 
 
 def test_mixing_injection_monotone_in_w_base():
-    """w_base 越大，混排级排序质量**整体**越好（趋势断言，容忍局部噪声回撤）。
+    """w_base 越大，混排级排序质量**逐点严格**单调上升。
 
-    机制：L3 = (1-w)·L2 + w·truth，w 越大越接近真值，spearman 应整体趋好。
-    但 `mixing_second_injection` 每次 w_base 用独立 RNG 重抽曝光，相邻 w_base 间
-    L2 自身带不同噪声，故逐点严格单调并不成立（属抽样噪声，非机制失效）。
-    因此断言**整体趋势**而非逐点严格单调：
+    机制：曝光与点击只依赖 τ，与 w_base 无关；L3 = (1−w)·L2 + w·truth 是
+    解析凸组合。`mixing_second_injection` 只模拟一次曝光、逐 w_base 解析
+    重算 L3，故注入曲线不含抽样噪声（L2 列各档完全一致）。
 
+    （历史注记：早期实现每个 w_base 用独立 RNG 重抽曝光，采样噪声曾制造
+    w=0.4 处的伪回撤与 w=1.0 处的伪回落，彼时本测试只能退化为趋势断言；
+    RNG 统一为「单次模拟 + 解析扫描」后伪影不复存在，断言随之收紧。）
+
+    断言：
       - 端点确定性：w_base=1 ⇒ L3 恰为 truth，spearman 严格 = 1.0；
-      - 无注入时（w=0）强偏差下排序接近随机，应显著低于满分；
-      - 整体上行：spearman(w=1) − spearman(w=0) 远超噪声幅度（> 0.5）。
+      - spearman 逐点严格上升、rel_err 逐点严格下降（解析性质，非趋势）；
+      - 无注入时（w=0）强偏差下排序显著低于满分。
     """
     t = _true_ctr()
     inj = mixing_second_injection(t, n_items=60, tau=2.0,
                                   w_bases=[0.0, 0.2, 0.4, 0.8, 1.0],
                                   n_requests=500, slots=5, seed=42)
     sp = [r["L3_spearman"] for r in inj["rows"]]
+    rel = [r["L3_rel_err"] for r in inj["rows"]]
     # 端点确定性：w_base=1 ⇒ L3 完全等于真值，秩相关必为 1.0（不依赖 RNG）
     assert sp[-1] == pytest.approx(1.0, abs=1e-9), sp
+    # 逐点严格单调（解析性质：凸组合向真值收缩，rank 误差单调减少）
+    assert all(b > a for a, b in zip(sp, sp[1:])), sp
+    assert all(b < a for a, b in zip(rel, rel[1:])), rel
     # 无注入（w=0）时强偏差下排序接近随机，应显著低于满分
     assert sp[0] < 0.2, f"无注入时强偏差下排序应接近随机，实际 {sp[0]}"
-    # 整体趋势：从「无注入」到「全注入」spearman 大幅上升（容忍局部小幅回撤）
-    assert sp[-1] - sp[0] > 0.5, f"二次注入应整体提升排序质量，spearman 趋势 {sp}"
+
+
+def test_injection_l2_shared_across_w_base():
+    """L2 与 w_base 无关：所有 w_base 档共享同一份排序级估计。
+
+    锁定「单次模拟 + 解析扫描」的实现语义——若有人改回每 w_base 独立
+    重抽曝光，L2 列将出现多个不同值，本测试立即失败。
+    """
+    t = _true_ctr()
+    inj = mixing_second_injection(t, n_items=60, tau=2.0,
+                                  w_bases=[0.0, 0.2, 0.4, 0.8, 1.0],
+                                  n_requests=400, slots=5, seed=42)
+    assert len({r["L2_rel_err"] for r in inj["rows"]}) == 1
+    assert len({r["L2_spearman"] for r in inj["rows"]}) == 1
+
+
+def test_propagation_matrix_order_independent():
+    """CRN：τ 的扫描顺序不影响各 τ 的结果（每个 τ 独立重置 RNG）。"""
+    t = _true_ctr()
+    taus = [0.0, 1.0, 2.0]
+    fwd = propagation_matrix(t, n_items=60, taus=taus,
+                             n_requests=300, slots=5, seed=42)
+    rev = propagation_matrix(t, n_items=60, taus=taus[::-1],
+                             n_requests=300, slots=5, seed=42)
+    by_tau_f = {r["tau"]: r for r in fwd["rows"]}
+    by_tau_r = {r["tau"]: r for r in rev["rows"]}
+    for tau in taus:
+        assert by_tau_f[tau] == by_tau_r[tau]
 
 
 def test_propagation_matrix_reproducible():

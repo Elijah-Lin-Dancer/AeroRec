@@ -20,12 +20,14 @@
   机制 A（稀疏收缩，水平偏差 / level）
       α 相对曝光量不可忽略时，估计被整体拽向 1。
       **即使曝光完全均匀（τ=0）也照样存在**——它是"样本量不够"的偏差，
-      与曝光策略无关。表现：估计均值 0.372 vs 真值 0.260（实测）。
+      与曝光策略无关。表现：冷门物品的平滑 CTR 被系统性高估
+      （实测见 `data/bias/propagation.json` 的 `L2_signed` 列）。
 
   机制 B（曝光偏斜，排序偏差 / ordering）
       τ 越大，impr_i 的分布越悬殊。曝光少的物品被拽向 1.0，
       而它们的真实 CTR 往往很低 → **最冷门的反而被估成最好**，排序被反转。
-      表现：Rank 相关随 τ 由 +0.83 跌到 −0.47（实测，见下方矩阵）。
+      表现：与真值的秩相关随 τ 下降，强偏差下跌破 0（实测见
+      `data/bias/propagation.json` 的 `L2_spearman` 列）。
 
 **关键认识**：偏差的大头不是"整体偏高"，而是**排序被判反**。
 因此度量必须同时报告「水平」与「排序」两类，只看均值会得出错误结论
@@ -190,8 +192,10 @@ def propagation_matrix(true_ctr, n_items: int, taus, n_requests=500, slots=5,
     """
     rows = []
     for tau in taus:
-        # 每 τ 独立确定性 rng（与扫描顺序无关），保证 demo 与报告可逐点复现一致
-        rng = np.random.default_rng(seed * 1000 + int(round(float(tau) * 100)))
+        # CRN（共同随机数）：每个 τ 都从同一初始状态重置 RNG——随机流相同、
+        # 仅曝光策略 π 不同，τ 间差异只来自参数本身而非不同的抽样序列；
+        # 且与扫描顺序无关、新增 τ 不影响既有 τ 的结果（demo 与报告逐点一致）。
+        rng = np.random.default_rng(seed)
         r = run_stage_estimates(true_ctr, n_items, tau=tau, n_requests=n_requests,
                                 slots=slots, alpha=alpha, w_base=w_base, rng=rng)
         t = r["true_ctr"]
@@ -227,6 +231,8 @@ def propagation_matrix(true_ctr, n_items: int, taus, n_requests=500, slots=5,
         "alpha": float(alpha),
         "n_requests": int(n_requests),
         "slots": int(slots),
+        "rng_policy": "common_random_numbers: 每个 tau 均以 default_rng(seed) 重置，"
+                      "tau 间差异只来自曝光策略而非抽样序列",
     }
 
 
@@ -234,19 +240,29 @@ def mixing_second_injection(true_ctr, n_items: int, tau: float, w_bases,
                             n_requests=500, slots=5, alpha=5.0, seed=42) -> dict:
     """固定曝光偏差 τ，扫描混排基础分 w_base —— 量化**二次注入**。
 
-    预期：w_base 越大（基础分=热度权重越高），排序相关性越高（因为基础分是真实 CTR），
-    但相对误差先降后升——注入把估计从"有偏日志"拉向"真值"，却也引入了新的偏离。
-    实测：τ=2 时 w_base 由 0→0.8，spearman 由 −0.03 升到 +0.97。
+    实现（与早期版本的关键差别）
+    --------------------------
+    曝光与点击只依赖 τ，与 w_base 无关；而 L3 = (1−w)·L2 + w·truth 是解析式。
+    因此曝光/点击**只模拟一次**（rng = default_rng(seed)），再对每个 w_base
+    解析重算 L3——注入曲线不含抽样噪声，w_base 间严格可比。
+    早期版本每个 w_base 独立重抽曝光（不同随机流），把采样噪声混进了
+    注入增量，曾产生 w=0.4 处的伪回撤；该缺陷已由本实现根除。
+
+    预期：w_base 越大，L3 越靠近真值，spearman 随之上升、rel_err 随之下降
+    （具体数值见 `data/bias/injection.json`，文档不得另行手写）。
     """
+    # 曝光与 L2 对整场扫描只算一次；w_base 仅进入 L3 的解析凸组合
+    rng = np.random.default_rng(seed)
+    r = run_stage_estimates(true_ctr, n_items, tau=tau, n_requests=n_requests,
+                            slots=slots, alpha=alpha, w_base=0.0, rng=rng)
+    t = r["true_ctr"]
+    l2 = np.asarray(r["L2_rank"], dtype=np.float64)
+    e2 = stage_error(l2, t)
+
     rows = []
     for wb in w_bases:
-        # 每 w_base 独立确定性 rng（与扫描顺序无关）
-        rng = np.random.default_rng(seed * 1000 + int(round(float(wb) * 100)))
-        r = run_stage_estimates(true_ctr, n_items, tau=tau, n_requests=n_requests,
-                                slots=slots, alpha=alpha, w_base=wb, rng=rng)
-        t = r["true_ctr"]
-        e2 = stage_error(r["L2_rank"], t)
-        e3 = stage_error(r["L3_mix"], t)
+        l3 = (1.0 - float(wb)) * l2 + float(wb) * t
+        e3 = stage_error(l3, t)
         rows.append({
             "w_base": float(wb),
             "L2_rel_err": round(e2["rel_err"], 4),
@@ -262,4 +278,6 @@ def mixing_second_injection(true_ctr, n_items: int, tau: float, w_bases,
         "metric": "rel_err + spearman",
         "n_requests": int(n_requests),
         "slots": int(slots),
+        "rng_policy": "single_simulation_analytic_sweep: 曝光只模拟一次"
+                      "（default_rng(seed)），L3=(1-w)*L2+w*truth 逐 w_base 解析重算",
     }

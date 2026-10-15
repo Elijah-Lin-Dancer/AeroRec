@@ -3,51 +3,52 @@
   "rows": [
     {
       "w_base": 0.0,
-      "L2_rel_err": 0.9332,
-      "L3_rel_err": 0.9332,
+      "L2_rel_err": 0.8882,
+      "L3_rel_err": 0.8882,
       "injection_rel": 0.0,
-      "L2_spearman": 0.0898,
-      "L3_spearman": 0.0898,
+      "L2_spearman": 0.1715,
+      "L3_spearman": 0.1715,
       "injection_spearman": 0.0
     },
     {
       "w_base": 0.2,
-      "L2_rel_err": 0.937,
-      "L3_rel_err": 0.7496,
-      "injection_rel": -0.1874,
-      "L2_spearman": 0.14,
-      "L3_spearman": 0.3405,
-      "injection_spearman": 0.2006
+      "L2_rel_err": 0.8882,
+      "L3_rel_err": 0.7106,
+      "injection_rel": -0.1776,
+      "L2_spearman": 0.1715,
+      "L3_spearman": 0.3665,
+      "injection_spearman": 0.1949
     },
     {
       "w_base": 0.4,
-      "L2_rel_err": 1.1054,
-      "L3_rel_err": 0.6632,
-      "injection_rel": -0.4422,
-      "L2_spearman": -0.0659,
-      "L3_spearman": 0.3565,
-      "injection_spearman": 0.4225
+      "L2_rel_err": 0.8882,
+      "L3_rel_err": 0.5329,
+      "injection_rel": -0.3553,
+      "L2_spearman": 0.1715,
+      "L3_spearman": 0.5679,
+      "injection_spearman": 0.3963
     },
     {
       "w_base": 0.8,
-      "L2_rel_err": 0.9371,
-      "L3_rel_err": 0.1874,
-      "injection_rel": -0.7497,
-      "L2_spearman": 0.1225,
-      "L3_spearman": 0.9478,
-      "injection_spearman": 0.8252
+      "L2_rel_err": 0.8882,
+      "L3_rel_err": 0.1776,
+      "injection_rel": -0.7106,
+      "L2_spearman": 0.1715,
+      "L3_spearman": 0.9758,
+      "injection_spearman": 0.8042
     },
     {
       "w_base": 1.0,
-      "L2_rel_err": 0.8677,
+      "L2_rel_err": 0.8882,
       "L3_rel_err": 0.0,
-      "injection_rel": -0.8677,
-      "L2_spearman": 0.2582,
+      "injection_rel": -0.8882,
+      "L2_spearman": 0.1715,
       "L3_spearman": 1.0,
-      "injection_spearman": 0.7418
+      "injection_spearman": 0.8285
     }
   ],
   "metric": "rel_err + spearman",
   "n_requests": 600,
-  "slots": 5
+  "slots": 5,
+  "rng_policy": "single_simulation_analytic_sweep: 曝光只模拟一次（default_rng(seed)），L3=(1-w)*L2+w*truth 逐 w_base 解析重算"
 }
