@@ -37,7 +37,7 @@ import numpy as np
 import sklearn
 import torch
 
-# 线程数必须显式限制：本沙箱容器 CPU 配额只有 4 核，而 torch 默认按物理核数（32）开线程，
+# 线程数必须显式限制：部分托管环境 CPU 配额只有 4 核，而 torch 默认按物理核数（32）开线程，
 # 严重超订会让每条小算子陷入上下文切换、单步耗时飙到秒级（实测 tiny 模型可达 4s/step）。
 # AEROREC_THREADS 可控，默认取 4。
 _THREADS = int(os.environ.get("AEROREC_THREADS", "4"))

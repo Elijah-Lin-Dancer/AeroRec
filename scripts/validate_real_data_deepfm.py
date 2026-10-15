@@ -1,9 +1,9 @@
 """路径 B 验证脚本：用真实公开数据集验证同一个 DeepFM 能学到真实信号。
 
 支持两种真实基准（与 DeepFM 完全同构，模型零改动）：
-  - adult  （默认）UCI Adult / Census Income，已在本沙箱跑通（验证 AUC 0.9183）
+  - adult  （默认）UCI Adult / Census Income，已跑通（验证 AUC 0.9183）
   - criteo Criteo Display Advertising Challenge，CTR 标准基准；需本机提供 train.txt
-    （本沙箱网络不可达，详见 README「路径 B / Criteo 接入」）
+    （自动化构建环境不可达，详见 README「路径 B / Criteo 接入」）
 
 运行：
     python scripts/validate_real_data_deepfm.py                      # 默认 adult
@@ -32,7 +32,7 @@ import scipy.sparse as sp
 import sklearn
 import torch
 
-# 线程数必须显式限制：本沙箱容器 CPU 配额只有 4 核，而 torch 默认按物理核数（32）开线程，
+# 线程数必须显式限制：部分托管环境 CPU 配额只有 4 核，而 torch 默认按物理核数（32）开线程，
 # 严重超订会让每条小算子陷入上下文切换、单步耗时飙到秒级（实测 tiny 模型可达 4s/step）。
 # AEROREC_THREADS 可控，默认取 4。
 _THREADS = int(os.environ.get("AEROREC_THREADS", "4"))

@@ -2,7 +2,7 @@
 
 背景
 ----
-路径 B 原计划用 Criteo Display Advertising Challenge 验证 DeepFM 迁移性；但构建沙箱网络
+路径 B 原计划用 Criteo Display Advertising Challenge 验证 DeepFM 迁移性；但自动化构建环境
 无法访问 Criteo（官方 S3 / go.criteo.net / HuggingFace 全部被阻断）。
 UCI Adult 是一个真实、公开、可引用的二元分类数据集，结构与 CTR 任务**同构**：
 
@@ -142,7 +142,7 @@ def load_adult(cache_dir: str | Path = "data/adult",
         "sparse_cols": SPARSE_COLS,
         "sparse_cards": sparse_cards,
         "preprocessing": "dense: 标准化(Z-score, 训练集统计量); sparse: 缺失->0 的连续整数编码",
-        "note": "Criteo 在构建沙箱网络被阻断；UCI Adult 作为同构真实 (dense,sparse)->二元 基准。",
+        "note": "Criteo 官方源在自动化构建环境不可达；UCI Adult 作为同构真实 (dense,sparse)->二元 基准。",
     }
     return {
         "dense_train": dtr, "sparse_train": str_, "y_train": ytr,

@@ -1,6 +1,6 @@
 """Criteo 加载器单测：不依赖网络、不依赖真实文件，验证解析逻辑正确。
 
-说明：本沙箱网络无法访问 Criteo（官方 S3 / go.criteo.net / HuggingFace 全部不可达），
+说明：构建环境无法访问 Criteo（官方 S3 / go.criteo.net / HuggingFace 全部不可达），
 故无法在此跑出真实 Criteo AUC；但加载器的「格式解析 + 缺失处理 + 词表/OOV 编码」
 逻辑可用构造的极小样本完全验证。真实数字需在本机放置 train.txt 后运行
 `scripts/validate_real_data_deepfm.py --dataset criteo`。

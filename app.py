@@ -321,7 +321,7 @@ st.sidebar.caption(t("sidebar.mode", mode=mode))
 # 研究主线的入口。
 # 这里只放链接、不嵌内容：`data/bias/report.html` 是带独立版式的完整文档，
 # 用 st.components.v1.html 嵌进本页会出现「iframe 高度写死 → 只能在小框里滚」
-# 与「两套视觉语言打架」两个问题，且流式沙箱下叠 iframe 有额外风险。
+# 与「两套视觉语言打架」两个问题，且 Streamlit 流式渲染的 iframe 沙箱机制下再叠嵌 iframe 有额外风险。
 # 报告本质是「读」的成果，GitHub 上的渲染体验更好，故以链接形式给出。
 st.sidebar.divider()
 st.sidebar.markdown(

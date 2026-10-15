@@ -23,7 +23,7 @@ Criteo 是 CTR / DeepFM 论文的**标准真实基准**，任务与本项目 Dee
   - dense : 缺失 -> 0，``log1p`` 压缩长尾，Z-score（仅用训练集统计量）
   - sparse: 按字段建词表，低频 / OOV -> 0，连续整数编码；每字段词表上限 ``max_card``
 
-数据获取（本沙箱网络已实测：Criteo 官方 ailab / S3 criteo-labs / go.criteo.net 全部 404，
+数据获取（已实测：Criteo 官方 ailab / S3 criteo-labs / go.criteo.net 全部 404，
 HuggingFace CDN 连接超时，故无法自动下载；请在本机获取后上传）：
 
   - HuggingFace ``eldieguinpo/criteo-1M`` -> ``criteo_1M.parquet``（约 45MB / 100 万行，推荐）
@@ -50,7 +50,7 @@ COLUMNS = [NAME_LABEL] + DENSE_NAMES + SPARSE_NAMES
 CRITEO_NOTE = (
     "已用真实 criteo-1M（100 万行 parquet）跑通：DeepFM 验证 AUC 0.7733 / LR 基线 0.7717 / "
     "常数基线 0.5000（详见 data/real_validation/result.json）。"
-    "注意：构建沙箱无法直接下载数据（官方 S3 / go.criteo.net / HuggingFace CDN 均不可达），"
+    "注意：自动化构建环境无法直接下载数据（官方 S3 / go.criteo.net / HuggingFace CDN 均不可达），"
     "需先在本机取得文件再放入 data/criteo/（该目录已 gitignore），"
     "然后运行 `python scripts/validate_real_data_deepfm.py --dataset criteo --criteo-path <file>`。"
 )

@@ -5,6 +5,34 @@
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-10-15
+
+首个版本锚点（tag `v0.1.0`）。自里程碑 W11 以来的主要变更：
+
+### Added
+- **偏差研究扩展实验**（改进计划 #4/#5/#6）：propensity 估计误差
+  （`data/bias/propensity_estimation.json`——日志估计 π̂ 替代闭式真 π，
+  本规模下 SNIPS 误差变化不显著、ESS 预警 fail-safe）与用户侧选择偏差
+  （`data/bias/userbias.json`——user-item 粒度自选模型，量化「粒度决定
+  去偏成败」：物品边际去偏残余 +0.06~+0.22，正确粒度 0.004–0.037）；
+- **bootstrap 显著性检验**：`src/bias/significance.py`（numpy-only，B=10000
+  固定种子），多种子指标全量落盘 `*_std` 与 `significance` 字段；
+- **历史补测落盘**：`estimand_check.json`（§4 历史口径）与
+  `boundary_sweep.json`（τ×N 网格），[待补测] 清单清零；
+- **扩规模新基线**：items 500 / requests 5000（方案 A 重跑），文档全量对齐；
+- **文档**：`docs/tech-report.md`（面向论文读者的技术文档）、
+  `docs/bias_report.md` §8 扩展实验章节。
+
+### Changed
+- 传播/注入 RNG 统一为 CRN + 单次模拟解析扫描（消除伪顶点/伪回撤伪影）；
+- 零漂移门禁扩至 7 个产物 JSON（repro.yml）；
+- README 移除工程台账（Roadmap）聚焦展示，研究主线入口补
+  `tech-report.md`。
+
+### Fixed
+- `validate_real_data*.py` 显式限制 torch 线程数（受限 CPU 配额下防超订）；
+- 文档数字与产物全面对齐（历史多处文档↔产物偏离已修正）。
+
 ### 新增
 - **测试纳入 CI**：`repro.yml` 新增 `tests` job——安装完整依赖（numpy 锁定 2.3.5）跑
   `pytest` 全量测试 + `pytest-cov` 覆盖率报告；真实数据（Criteo / Adult）在文件缺失时自动 skip。
