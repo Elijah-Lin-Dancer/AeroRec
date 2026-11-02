@@ -1,10 +1,6 @@
-# AeroRec · 出行智能推荐中台
+# AeroRec · Travel Recommendation Platform
 
-> 🌐 [English](README.en.md) | 简体中文
-
-> 面向出行消费场景（机票 / 酒店 / 商城 / 营销 / 直播）的开源智能推荐中台。
-> 工程化复现工业级推荐链路：**召回 → CTR 动态排序 → 降级兜底 → 服务化 → 可解释 → 真实 CTR 评估**。
-> 工程型 · 交叉学科（AI + 出行/交通）
+> 🌐 [简体中文](README.zh.md) | English
 
 [![Python](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -14,19 +10,25 @@
 [![Reproducibility](https://github.com/Elijah-Lin-Dancer/AeroRec/actions/workflows/repro.yml/badge.svg)](https://github.com/Elijah-Lin-Dancer/AeroRec/actions/workflows/repro.yml)
 [![Preprint DOI](https://img.shields.io/badge/DOI-10.20944%2Fpreprints202610.2582.v1-c7215f)](https://doi.org/10.20944/preprints202610.2582.v1)
 
-> **快速体验**：[项目主页](https://elijah-lin-dancer.github.io/AeroRec/) · [交互 Demo（Streamlit Cloud）](https://aerorec-tourism.streamlit.app)
->
-> **研究主线**（偏差传播诊断 + 去偏有效边界）：[tech report](docs/bias_report.md) · [论文读者技术文档](docs/tech-report.md) · [可视化报告（HTML）](data/bias/report.html) · [research one-pager (EN)](docs/research_highlight.md) · [论文预印本（发布版 PDF）](docs/paper/AeroRec-preprints.org-v1.pdf)
+**AeroRec** is an engineering-grade **travel recommendation platform** (flights / hotels / shopping / deals / live)
+that reproduces an industrial pipeline end-to-end on a **reproducible synthetic dataset**, plus a fully
+instrumented **bias-measurement research thread** built on an oracle setting: the latent true CTR is known
+analytically and the exposure propensity is closed-form, so bias can be *measured exactly* — not just estimated.
+
+- **Live demo (bilingual EN / 中文, toggle in the sidebar)**: <https://aerorec-tourism.streamlit.app>
+- **Project homepage**: <https://elijah-lin-dancer.github.io/AeroRec/>
+- **Research thread**: [tech report](docs/bias_report.md) · [paper-reader doc](docs/tech-report.md) ·
+  [visual report (HTML)](data/bias/report.html) · [one-pager (EN)](docs/research_highlight.md)
 
 ---
 
-## 📖 论文预印本（Preprints.org，已发布）
+## 📖 Published Preprint (Preprints.org)
 
 > ***Bias Propagation and Effective Boundaries of Debiasing in Recommender Systems: An Oracle-Based Diagnosis Study*** — Yulin Zhao, Preprints.org **2026, 202610.2582** (V1, posted 2026-10-27).
 >
-> **DOI**：[10.20944/preprints202610.2582.v1](https://doi.org/10.20944/preprints202610.2582.v1) · [稿件页](https://www.preprints.org/manuscript/202610.2582/v1) · [发布版 PDF](docs/paper/AeroRec-preprints.org-v1.pdf) · [作者排版版 PDF](docs/paper/AeroRec-preprint.pdf)
+> **DOI**: [10.20944/preprints202610.2582.v1](https://doi.org/10.20944/preprints202610.2582.v1) · [Manuscript page](https://www.preprints.org/manuscript/202610.2582/v1) · [Published PDF](docs/paper/AeroRec-preprints.org-v1.pdf) · [Author-typeset PDF](docs/paper/AeroRec-preprint.pdf)
 
-**引用格式**（How to cite）：
+**How to cite**:
 
 ```text
 Zhao, Y. Bias Propagation and Effective Boundaries of Debiasing in Recommender
@@ -53,517 +55,100 @@ https://doi.org/10.20944/preprints202610.2582.v1
 
 ---
 
-## 效果预览
+## Highlights
 
-<p align="center">
-  <img src="docs/assets/demo_en.png" width="49%">
-  <img src="docs/assets/bias_en.png" width="49%">
-  <img src="docs/assets/model_en.png" width="49%">
-  <img src="docs/assets/bias_zh.png" width="49%">
-</p>
+- **Industrial pipeline, end to end**: 4-way recall (popularity / ItemCF / Two-Tower / rules) → DeepFM CTR
+  ranking + LR CVR → 5-step mixing → graceful degradation → FastAPI / Streamlit serving → interpretable Top-K.
+- **Real-data transferability**: the *same* DeepFM implementation reaches **AUC 0.7733** (Criteo, 1 M rows) /
+  **0.9183** (UCI Adult) — evidence the implementation learns real signal, *not* that Criteo weights rank
+  travel items (different feature schema).
+- **Online serving discipline**: pure-**numpy** forward pass, **no `torch` at serve time**; engine peak
+  ≈ **129 MB**, single-thread **P50 ≈ 0.7 ms / P99 ≈ 0.95 ms**, QPS ≈ 1378 (micro tier, measured).
+- **Reproducibility as a gate**: CI re-runs all experiments on every push and checks the 7 result JSONs
+  **byte-for-byte** against the committed artifacts.
 
-> Demo 全站支持**中英文一键切换**（侧边栏顶部 🌐 Language / 语言，默认 English）。
-
----
-
-
-## 背景与动机
-
-出行类 App（机票、酒店、辅营）的核心增长杠杆之一是**个性化推荐中台**：在首页、会员中心、行程页等位置，
-把"对的商品"在"对的坑位"推给"对的用户"。工业实践中，这与多品类混排、CTR 动态排序、服务降级、A/B 实验密不可分。
-
-本项目受工业实习中的推荐中台工程实践启发，用一个**可复现的合成数据集**演示完整工程链路，
-便于评审者一键运行、审阅与复现。**本项目不使用、也不声称使用任何真实业务数据。**
-
-## 核心功能
-
-- [x] 多场景推荐：航线 / 酒店 / 商城 / 营销 / 直播 五大类目混排
-- [x] 热门兜底召回 + 物品协同过滤（ItemCF）召回基线
-- [x] Two-Tower 向量召回（PyTorch 双塔 + 负采样）
-- [x] 规则召回：里程兑换 / 里程票零库存 / 常驻地热门航线 / 多段行程优先返程
-- [x] 四路召回融合（位置分加权 + 降级兜底）
-- [x] 轻量特征库：集中产出召回 / 排序 / 冷启动共用特征（dense + sparse）
-- [x] CTR 动态排序：归一化 → CTR 加权 → 分层排序 → 同品类打散 → 分页去重
-- [x] DeepFM 排序模型（PyTorch，FM + DNN）
-- [x] 降级兜底：CTR 服务超时 → 历史平均 CTR 兜底
-- [x] 离线评估：LR vs DeepFM 的 AUC 对比 + 推荐列表真实 CTR 对比
-- [x] 服务化 API（FastAPI：推荐 / 排序流程 / A/B）
-- [x] 可解释面板（Streamlit **六页、中英双语可切换**：推荐演示 / 偏差诊断 / 排序流程 / 真实 CTR 对比 / 模拟 A/B / 模型与验证）
-- [x] **在线推理性能基准**（micro 档实测：冷启动 init ≈ 0.08s、单线程 P50 ≈ 0.7ms / P99 ≈ 1ms、峰值 RSS ≈ 129MB、服务期不加载 torch，见 `scripts/bench_inference.py`）
-- [x] 模拟 A/B 报告（多目标 CTR+CVR，点击率 / 转化率双提升）
-- [x] **真实 CTR 口径评估 + Oracle 上界**（修正热门基线的平滑稀疏偏差，结论可引用）
-- [x] **偏差传播诊断 + 去偏验证**（链路偏差传播矩阵 / IPS·SNIPS·DR 去偏 / 有效边界 `ESS/N≈0.358`，见 [tech report](docs/bias_report.md)）
-- [x] **真实数据迁移性验证**：Criteo 真实 CTR 基准（100 万行，AUC **0.7733**）+ UCI Adult（**0.9183**）
-- [x] 三档数据规模：`full`（10 万用户 × 10 万物品）、`lite`（2 万 × 2 万，2GB 内存在线）、`micro`（1 万 × 1 万，免费实例下限 690MB 内在线运行、离线训练 + numpy 推理）
-- [x] 在线 Demo：GitHub Pages 项目主页 + Streamlit Community Cloud 交互面板
-
-## 系统架构
+## Architecture
 
 ```mermaid
 flowchart TB
-    GEN["合成数据生成器<br/>10万用户 x 10万物品 x 500万曝光<br/>含隐式非线性交叉"]
-    REC["召回层<br/>热门 / ItemCF / Two-Tower / 规则"]
-    FUS["四路召回融合"]
-    RANK["排序层<br/>DeepFM CTR + LR CVR 多目标打分"]
-    MIX["5步混排<br/>归一化 / 加权 / 分层 / 打散 / 去重"]
-    DEG["降级兜底<br/>异常时切历史平均CTR"]
-    SVC["服务层<br/>FastAPI / Streamlit 面板"]
-    OUT["Top-K 推荐 可解释"]
+    GEN["Synthetic data generator<br/>100k users x 100k items x 5M impressions<br/>implicit non-linear interactions"]
+    REC["Recall<br/>popularity / ItemCF / Two-Tower / rules"]
+    FUS["4-way recall fusion"]
+    RANK["Ranking<br/>DeepFM CTR + LR CVR multi-objective"]
+    MIX["5-step mixing<br/>normalize / weight / tier / shuffle / dedup"]
+    DEG["Graceful degradation<br/>fall back to historical mean CTR"]
+    SVC["Serving<br/>FastAPI / Streamlit panel"]
+    OUT["Top-K recommendations, interpretable"]
 
     GEN --> REC
     REC --> FUS
     FUS --> RANK
     RANK --> MIX
     MIX --> OUT
-    DEG -. 服务异常 .-> RANK
-    SVC -- 请求 --> REC
-    MIX -- 响应 --> SVC
+    DEG -. service error .-> RANK
+    SVC -- request --> REC
+    MIX -- response --> SVC
 ```
 
-## 快速开始
+## Research: bias diagnosis and the debiasing boundary
+
+Under biased exposure (π ∝ popularity^τ), the ranking-level Spearman correlation against the true CTR
+**inverts** (500 items × 5,000 requests, 30-seed mean ± std):
+
+| τ (exposure skew) | 0.0 | 0.5 | 1.0 | 2.0 | 3.0 |
+|---|---|---|---|---|---|
+| Ranking-level Spearman (L2) | **+0.87** | +0.80 | +0.63 | +0.03 | **−0.51** |
+| Min impressions (coldest item) | 30.1 | 15.3 | 5.4 | 0.1 | **0.0** |
+
+Key findings (all statistically validated, numpy-only bootstrap):
+
+- **The main harm is ranking inversion, not inflation** — sign flips between τ ≈ 2 and 3 (p < 0.001).
+- **Debiasing has an effective boundary set by propensity range, not bias strength**: below
+  **`ESS/N ≈ 0.358`**, IPS/SNIPS gains turn negative (stable across an 8× scale-up). `ESS/N` needs no
+  ground truth → deployable warning signal.
+- **Mixing re-injection is signed**: duplicated popularity hurts (default `w_base = 0`); independent info helps.
+- **Robust to propensity estimation error**: log-estimated π̂ replaces closed-form π with insignificant
+  SNIPS change (p = 0.87); the ESS warning stays fail-safe (false alarms only, zero misses).
+- **User-side bias must be modeled at user-item granularity**: self-selection drifts the pooled-CTR
+  estimand from 0.281 to 0.702 (2.5× apparent inflation); item-marginal debiasing leaves a significant
+  residual (+0.06 → +0.22, p < 0.001), while correct user-item-level debiasing keeps error at 0.004–0.037.
+
+Details: [docs/bias_report.md](docs/bias_report.md) (§8 extensions) · [docs/tech-report.md](docs/tech-report.md).
+
+## Quick start
 
 ```bash
-pip install -r requirements_full.txt   # 完整依赖（含 torch / sklearn，本地开发与离线复现用）
-python -m src.pipeline_demo        # 数据 + 四路召回 + 融合 + 样例推荐
-python -m src.eval.evaluate        # LR vs DeepFM AUC + 真实 CTR 对比 + Oracle 上界
-python -m src.build_online_artifacts micro  # 离线生成在线权重（首次需先跑一次）
-streamlit run app.py                    # 交互式 Demo，默认 micro 档（峰值约 297MB）
-AEROREC_MODE=lite  streamlit run app.py # 轻量档（~0.93GB）
-AEROREC_MODE=full  streamlit run app.py # 完整档（需 ~1.5GB 内存）
-uvicorn src.serve.app:app --port 8000    # FastAPI 服务（推荐 / 排序流程 / A/B）
-python -m pytest tests/ -q              # 冒烟测试（107 项）
-python3.11 scripts/run_bias_experiments.py   # 偏差传播 + 去偏实验（产出 data/bias/*.json）
-python3.11 scripts/build_bias_report.py      # 生成自包含 HTML 可视化报告
-python3.11 scripts/validate_real_data_deepfm.py --dataset adult   # 真实数据迁移性验证（UCI Adult）
-# 真实 Criteo 验证需本机下载数据放入 data/criteo/（见「真实数据验证」一节）
+pip install -r requirements_full.txt   # full deps (torch / sklearn) for local dev & reproduction
+python -m src.pipeline_demo            # data + 4-way recall + fusion + sample recommendations
+python -m src.eval.evaluate            # LR vs DeepFM AUC + true-CTR comparison + oracle bound
+python scripts/run_bias_experiments.py # bias research → 7 result JSONs (drift-gated)
+python -m pytest                       # 133 tests
 ```
 
-> **`requirements.txt` 为什么只有 numpy + streamlit**：Streamlit Community Cloud
-> 只读取根目录的 `requirements.txt`。若把它写成完整依赖，Cloud 会安装 torch，
-> 而 torch + sklearn + numpy + streamlit 的**框架基线已达 673MB**，超过免费实例
-> **690MB 的内存下限**，留给数据的只剩 16.7MB，必然 OOM。
-> 故根目录的 `requirements.txt` 是**部署专用**，完整依赖见 `requirements_full.txt`。
+> ⚠️ Everything is synthetic; the online demo's numbers are for interaction only. Citable conclusions use
+> the offline **full tier** (100 k × 100 k × 5 M). Real-data validation (Criteo / Adult) is a transferability
+> check, not a travel-domain result.
 
-### 在线 Demo
+## Documentation
 
-- **项目主页（GitHub Pages）**：https://elijah-lin-dancer.github.io/AeroRec/
-- **交互面板（Streamlit Community Cloud）**：https://aerorec-tourism.streamlit.app
-
-### 部署决策：为什么没有用 HuggingFace Spaces
-
-本项目最终只保留了两个线上入口：**GitHub Pages 静态主页** + **Streamlit Community Cloud 交互 Demo**，
-没有实际创建 HuggingFace Space。原因：
-
-- **Streamlit Cloud 已满足全部交互演示需求**：双语（EN / 中文）交互面板、免费实例 **690MB 内存下限**
-  （通过「训练 / 推理解耦」解决，见下「在线 Demo 的一个工程取舍」）、可分享的稳定 URL，均已具备；
-- **再建一个 HF Space 是重复投入**：它与 Streamlit Cloud 提供的是同一类「交互式 Python Demo」入口，
-  不会带来差异化价值，只会多一个部署与维护面；
-- **静态主页已由 GitHub Pages 承担**：`docs/index.html`（项目主页）已覆盖「落地页」需求，无需 Space 补位。
-
-> 故 HF Spaces 仅停留在早期规划（曾为其准备 `README_spaces.md` 与 `requirements_spaces.txt`），实际未创建。
-
-## 数据与复现
-
-### 为什么用合成数据，而不是公开数据集？
-
-这是本项目最关键的一个设计决定，理由分三层，每一层都直接决定结论能否成立：
-
-**1. 只有合成数据才有 ground-truth，才可能给出「可引用」的评估口径。**
-本项目最硬的证据是 **Oracle 上界**（"模型收益已逼近候选空间极限"）与**不依赖平滑估计的真实 CTR 口径**，
-而这两者都要求我们知道每个「用户 × 物品」的**潜在真实点击率**。真实数据集只提供观测到的点击（0/1），
-拿不到真实 CTR 本身，于是既无法构造 Oracle 上界，也无法在原理上把「模型确实更好」与「基线被位置偏差削弱」
-分离开。本项目把真实 CTR 定义为一个**已知的生成函数**（`src/config.py`，含"商务×早班机""价格敏感×低价"
-等隐式交叉项），模型只能拿到原始特征、必须自行学出交叉，因此这套评估在受控条件下是严格成立的。
-
-**2. 出行场景不存在可用的公开数据集。**
-真实的机票 / 酒店 / 辅营数据同时受**用户隐私（PII）**与**商业机密**双重约束，不对外公开。
-公开推荐数据集（如 MovieLens）属于电影评分域，直接搬用会丢掉「里程兑换、多段行程、商务×早班机」
-这条出行特有的业务线，而那正是本项目相对通用推荐 demo 的差异点。
-
-**3. 固定种子 = 一键复现，这是可复现性的基本要求。**
-任何人 `git clone` 后执行 `python -m src.eval.evaluate`，都能得到与本文档**逐字节一致**的数字。
-跨环境一致性已验证（见下「离线评估结果」一节）。一旦改用真实数据并涉及抓取与清洗，复现链条就会断裂。
-
-> **代价**：合成数据无法覆盖真实分布的噪声、长尾、概念漂移与采样偏差。
-> 因此本文档的指标衡量的是**方法在受控条件下的有效性**，而非**线上可迁移性**。
-> 完整的局限清单见文末「诚实边界与局限性」。
-
-### 数据许可
-
-| 数据 | 是否入库 | 许可 / 使用条款 |
-| --- | --- | --- |
-| 合成数据（`data/processed*`，由 `synthetic_generator*.py` 生成） | 否（`.gitignore`，可一键重生成） | 本项目自产，随仓库按 **MIT** 许可分发 |
-| UCI Adult / Census Income（`data/adult/`） | 否（由加载器按需下载） | [UCI Machine Learning Repository](https://archive.ics.uci.edu/dataset/2/adult)；引用 Kohavi & Becker (1996)。仅用于学术用途 |
-| Criteo Display Advertising Challenge（`data/criteo/`） | 否（需自行获取） | 抽样版来源为 HuggingFace `eldieguinpo/criteo-1M`（Criteo DAC 均匀抽样 100 万行），许可 **CC-BY-NC-SA 4.0**（研究 / 教学用途，禁商用） |
-| 真实数据验证结果（`data/real_validation/*.json`） | 是 | 仅含聚合指标与运行环境元信息，不含任何原始数据行，随仓库 MIT 分发 |
-
-要点：**原始真实数据一律不入库**（见 `.gitignore`），仓库只提交验证结果的 JSON 作为证据；
-上表与 `data/real_validation/result*.json` 内的 `license` 字段保持一致。
-
-### 复现性 CI：每次提交自动复算 + 零漂移门禁
-
-`.github/workflows/repro.yml` 在每次 push / PR 时于**干净机器**上自动执行三件事：
-
-1. **只装 numpy** 重跑 `scripts/run_bias_experiments.py`（偏差传播 / 二次注入 / 去偏边界），
-   随后用 `git diff --exit-code` 校验提交进仓库的 `data/bias/*.json` 与重算结果**逐字节一致**。
-   任何「改了代码却忘记重跑产物」的提交都会让 CI 变红，这正是把「零漂移」固化成硬门禁的原因。
-2. **断言研究路径零重依赖**：若偏差实验偷偷用上 `torch / sklearn / pandas`，CI 直接失败，
-   在流水线层面守住「研究路径只需 numpy」的设计承诺。
-3. 安装**锁定版本**的在线依赖（`requirements.txt`）跑 micro 档推理基准，
-   并断言 **`torch_loaded = false`**，把「在线侧不加载 torch」的内存纪律也交给 CI 守护。
-
-徽章状态见仓库顶部；本地一键复算见「快速开始」。
-
-### 数据长什么样
-
-数据由 `src/data/synthetic_generator.py` 生成（固定随机种子，可一键复现）：
-
-- **物品**：5 类目共 100,000 个（每类目 2 万），各带质量分 `quality`、现金价、里程价、出发/到达城市、航班时段、库存。
-- **用户**：100,000 个，对各品类有亲和度 `aff_*`，附里程余额、常驻城市、价格敏感度、商务标签。
-- **未来行程**：约 14.8 万条，支撑"多段行程按日期优先返程"等出行业务规则。
-- **曝光日志**：500 万条，每条按"潜在真实 CTR"抽样点击、点击后按 CVR 抽样转化。
-
-因已知潜在真实 CTR，离线评估（AUC、真实 CTR）具备可比性。
-
-### 两档规模
-
-| 档位 | 配置 | 规模 | 峰值内存 | 用途 |
-|---|---|---|---|---|
-| `full` | `src/config.py` | 10 万用户 × 10 万物品 × 500 万曝光 | ~1.5GB | 本地完整复现、**论文级可引用结果** |
-| `lite` | `src/config_lite.py` | 2 万用户 × 2 万物品 × 100 万曝光 | ~0.93GB | 2GB 内存在线实例（在线训练） |
-| `micro` | `src/config_micro.py` | 1 万用户 × 1 万物品 × 50 万曝光 | **~0.30GB** | 免费在线实例（内存下限 690MB，离线训练 + numpy 推理） |
-
-三档**共用同一套算法代码**（`Mixer` / `DegradeRanker` / `simulate_ab` / `compare_rankers` 全部复用），
-差异仅为数据规模与特征库实现（`lite`/`micro` 走纯 numpy 路径，规避 pandas/pyarrow 的额外内存开销）。
-`lite` / `micro` 档的数值**仅供 Demo 演示**，可引用结论以 `full` 档为准。
-
-切换方式：环境变量 `AEROREC_MODE=micro|lite|full`（默认 `micro`）。
-
-### 在线 Demo 的一个工程取舍：把训练与推理解耦
-
-先说清目标平台的**真实限额**（Streamlit Community Cloud 官方文档，2024-02 起未变）：
-
-| 资源 | 官方限额 |
+| Doc | What it is |
 |---|---|
-| CPU | **0.078 核**（下限）～ **2 核**（上限） |
-| 内存 | **690 MB**（下限）～ **2.7 GB**（上限） |
-| 存储 | 无下限 ～ 50 GB |
-| GPU | **无** |
-| 休眠 | 无流量 **12 小时**后休眠（访问即唤醒） |
+| [README.zh.md](README.zh.md) | 简体中文完整版 (Chinese full version) |
+| [docs/tech-report.md](docs/tech-report.md) | Paper-reader technical doc (config + raw numbers + limitations) |
+| [docs/bias_report.md](docs/bias_report.md) | Bias research full narrative (mechanisms, corrected errors) |
+| [docs/research_highlight.md](docs/research_highlight.md) | One-page EN research summary |
+| [data/bias/report.html](data/bias/report.html) | Self-contained visual report |
+| [CHANGELOG.md](CHANGELOG.md) | Version history ([0.1.0] = 2026-10-15) |
 
-> 注意这是**区间**不是固定值：限额按**应用（per-app）独立分配**，不是你账户下所有应用共享一个总池。
-> 每个部署的应用都在自己的隔离环境里，单独享有 690MB–2.7GB 的上限；一个应用吃满内存**不会**挤占另一个应用。
-> 所谓「共享」只指两层：① 平台底层物理资源是所有用户共用；② 每个人拿到的**上限相同**。
-> 区间（如 RAM 690MB–2.7GB）是**单个应用**随平台负载被动态调度的结果：空闲时接近上限、繁忙时接近下限，这是平台级负载，不是你的应用互相争抢。
-> 因此本项目的设计基准取**下限 690MB**（最坏情况），而非取 1GB 之类的「常见说法」。
+## Honest limitations
 
-在这个约束下，量了两种运行方式的**框架基线**（同进程加载，未含数据）：
+- Synthetic data: method validity **under controlled conditions**, not online transferability. The oracle
+  setting is the enabling assumption and a limitation at once.
+- Real multi-user structures and real self-selection datasets (Coat / Open Bandit) remain future work.
+- No new algorithm is proposed: all estimators and metrics are standard; the contribution is the
+  measurement methodology and the deployable decision rule.
 
-| 进程内同时加载 | 框架基线 RSS | 690MB 下留给数据的空间 |
-|---|---|---|
-| torch + sklearn + numpy + streamlit（**解耦前**） | **673 MB** | **16.7 MB** → 必然 OOM |
-| numpy + streamlit（**解耦后**） | **73 MB** | 617 MB |
+## License
 
-清楚的是，只要 `import torch` 就固定吃掉约 500–650MB（随 wheel 类型与版本浮动：
-CUDA 版明显大于 CPU 版），与数据规模无关。** 673MB 的框架基线在 690MB 的下限上
-只剩 16.7MB，**连数据都装不下，继续缩数据是徒劳的**。
-
-因此把**训练与推理解耦**：
-
-1. **离线（本机）** 用 torch 训练 DeepFM(CTR) 与 LR(CVR)；
-2. 权重**导出为 numpy 数组**（`python -m src.build_online_artifacts micro`，产物仅 29KB）；
-3. **在线侧只加载权重**，用纯 numpy 复现前向计算（`src/rank/numpy_deepfm.py`、`src/rank/numpy_lr.py`），
-   不依赖 torch / sklearn / pandas。
-
-**端到端实测**（真实 streamlit 进程 + 浏览器驱动，非估算）：
-
-| 阶段 | 进程 RSS |
-|---|---|
-| ① 仅启动 streamlit，无人访问 | 79.4 MB |
-| ② 页面加载完（引擎与数据已就位） | 187.0 MB |
-| ③ 跑完最重操作（真实 CTR 对比，200 用户 / Top-20） | **297.2 MB** ← 真实峰值 |
-
-| | 解耦前（在线训练） | 解耦后（加载 numpy 权重） |
-|---|---|---|
-| 框架基线 | 673 MB | **73 MB** |
-| 实测峰值 | 超出 690MB 下限 | **297 MB** |
-| 相对 690MB 下限的余量 | 0.98×（**必然 OOM**） | **2.3×** |
-| 启动耗时 | 数十秒（需在线训练） | **~1 s** |
-
-**数学等价性已逐样本校验**：PyTorch 与 numpy 前向的最大偏差为 **1.19e-07**；
-且重构后 `compute_true_ctr` 与重构前实现**逐位一致**（最大偏差 0.00e+00）。
-即：在线演示的**仍是同一个已训练模型**，只是换了一种运行时执行。
-
-> 这类「先量清楚约束在哪、再决定动哪一层」的判断，本身就是本项目想展示的工程能力。
-
-**算力侧同样有余量**：最重的操作是「模拟 A/B」（2000 用户），本机实测 **1.87s**。
-即便按最坏的 0.078 核折算（约 12.8× 减速）也在 **24s** 量级，不会触发超时；
-单次推荐 **1 ms**、冷启动 **0.53s**，交互体感不受影响。
-
-#### 在线推理基准（`scripts/bench_inference.py`，可复现）
-
-对**在线推理路径**（加载 numpy 权重 → 召回 → DeepFM/LR 前向 → 混排 → 组装结果，**不含训练**）
-做标准化计时。命令 `python scripts/bench_inference.py --mode micro`，结果写入 `data/bench.json`：
-
-| 指标 | 值 | 说明 |
-|---|---|---|
-| 冷启动 · 模块导入 | 0.21 s | 子进程纯导入在线引擎模块 |
-| 冷启动 · 引擎构造 | 0.08 s | 即时数据生成 + numpy 权重加载 |
-| 延迟 · P50 | **0.70 ms** | 单进程单线程串行，600 次取样（剔除 warm-up） |
-| 延迟 · P95 / P99 | 0.85 ms / **0.95 ms** | 同上 |
-| 吞吐 · 单线程 QPS | **~1378** | = 1 / 平均延迟，仅作数量级参考 |
-| 峰值内存 · RSS | **~129 MB** | 引擎进程（**未加载 torch**，脚本内置断言校验） |
-
-> 环境：AMD EPYC 9K65 / Python 3.11 / numpy 2.3.5。性能对机器敏感，引用时请连同环境一并给出。
-> 注意：本地基准机快于 Streamlit 免费实例（CPU 下限 0.078 核），故线上延迟会更高，但数量级一致。
-
-```
-python scripts/bench_inference.py --mode micro   # 跑在线推理基准，产出 data/bench.json
-python -m src.build_online_artifacts micro        # 离线生成/刷新在线权重（需 torch，约 2 分钟）
-```
-
-## 方法
-
-1. **召回（已完成）**：热门兜底 + ItemCF + Two-Tower 向量召回 + 出行规则召回，四路融合产出候选集。
-2. **排序（已完成）**：复刻工业 5 步流程：分数归一化 → CTR 加权 → 分层排序 → 同品类打散 → 分页去重；CTR 模型为 DeepFM（PyTorch）。
-3. **降级（已完成）**：CTR 服务超时 → 降级为历史平均 CTR 兜底，保证核心链路不挂。
-
-## 离线评估结果（受控合成实验）
-
-### ① CTR 模型 AUC（测试集 6 万样本）
-
-| 模型 | AUC |
-|---|---|
-| Logistic Regression | 0.7421 |
-| **DeepFM** | **0.8019**（+6.0pp） |
-
-DeepFM 的 FM/DNN 能自动学出数据中的隐式非线性交叉（价格敏感×低价、商务×早班机、里程契合），
-因此显著优于线性 LR。**模型只能拿到原始特征，交叉需自行学习**，此设计明确标注为受控实验设置。
-
-### ② 可引用结论：真实 CTR 口径 + Oracle 上界
-
-> **为什么不用「模拟 A/B 的 +18.9%」作为主结论？**
-> 热门基线按「历史日志的**贝叶斯平滑 CTR**（α=5）」排序，而日志是**随机曝光**生成的：
-> 曝光次数少的物品偶然被点击一次，平滑 CTR 就被严重高估（α=5 压不住这种噪声）。
-> 完整档实测：热门榜 top200 **平滑 CTR = 0.6231** vs **真实 CTR = 0.2528**（**偏差 +0.37**），
-> 平滑榜 top10 与真实 CTR top10 仅重合 **2/10**。这层稀疏性偏差会让热门基线在模拟中「表现变差」，
-> 从而**高估**实验组增益。因此本项目同时给出下面这套**不依赖任何平滑估计**的口径。
-
-**真实 CTR 口径**（直接用已知的潜在真实 CTR 计算各方法 Top-K 列表的平均点击率，100 用户、Top-10）：
-
-| 方法 | 平均真实 CTR | 相对热门 | 占 Oracle 上界 |
-|---|---|---|---|
-| 随机（下界参照） | 0.1652 | -66.4% | 23.1% |
-| 热门（工业常用基线） | 0.4922 | — | 68.8% |
-| **DeepFM + 多目标混排** | **0.6323** | **+28.5%** | **88.4%** |
-| Oracle 上界（候选池最优） | 0.7153 | +45.3% | 100% |
-
-**Oracle 上界怎么构造的**：池 = 热门候选 ∪ 规则候选 ∪ 3000 个随机物品，
-在池内按**该用户的真实 CTR** 降序取 Top-K。池**必须包含其他方法的结局**，
-否则 Oracle 不构成真正的上界，注意不能用「全局平均真实 CTR 排序」代替，
-那会退化成热门榜的变体、失去上界意义。
-
-DeepFM 多目标排序相对热门基线提升 **+28.5%**，达到理论上界的 **88.4%**，
-即模型的收益已经接近候选空间所能提供的极限。该数字**可引用**，因为它不依赖任何有偏估计。
-
-> **关于数值可复现性（重要）**：本节所有数字都由
-> `python -m src.eval.evaluate` 直接产出，且已在两套完全不同的依赖环境下
-> （numpy 2.3.5 / torch 2.10 与 numpy 2.4.6 / torch 2.14）**逐字节复现**。
-> 关键约束：`DeepFM` 的权重初始化（xavier / normal）必须发生在
-> `torch.manual_seed(SEED)` **之后**（见 `src/rank/trainer.py`），否则网络初值会取自
-> 进程全局 RNG 的残余状态，同一份代码在不同环境下 AUC 会漂移约 0.004。
-
-> **混排基础分权重（`w_base`）的取舍**：混排阶段叠加「基础分权重 `w_base`」实测会**拉低**效果。
-> 候选池已由热门召回 + 规则召回构成，热度信息已经体现在候选集里；
-> 若再在混排阶段叠加一次基础分，等于把热门偏差二次注入排序结果。
-> 实测（真实 CTR 口径）：`w_base=0.4` → +6.3%，`w_base=0.2` → +17.2%，**`w_base=0.0` → +20.1%**。
-> 故本项目默认 `w_base=0.0`，仅以 CTR（多目标得分）驱动混排，但**保留**第 4 步同品类打散与第 5 步去重。
-
-### ③ 参考：模拟在线 A/B（口径受限，仅供形式对照）
-
-| 指标 | 对照组（热门） | 实验组（DeepFM+混排） | 提升 |
-|---|---|---|---|
-| 点击率 CTR | 0.519 | 0.618 | +18.9%（p<0.001） |
-| 转化率（转化/曝光） | 0.191 | 0.227 | +18.8%（p<0.001） |
-
-> ⚠️ 上表为**模拟**口径，其热门基线受上述平滑稀疏偏差削弱，**增益被高估**，
-> 故仅保留以展示工业 A/B 的形式（曝光 / 点击 / 显著性检验）。
-> **对外引用请使用 ② 的真实 CTR 口径。**
-
-### ④ 研究主线：偏差传播诊断与去偏有效边界
-
-> 完整版见 **[docs/bias_report.md](docs/bias_report.md)**（tech report 级）；
-> 可视化版见 **[data/bias/report.html](data/bias/report.html)**（自包含单文件，21 KB，含内联 SVG，
-> 零外链零脚本，可离线打开；GitHub 上点开后可用 [htmlpreview](https://htmlpreview.github.io/) 或在本地直接打开）。
-
-本项目的**独有资源**是可控 ground-truth（`compute_true_ctr` 是解析已知的生成函数）。
-真实数据集只能*估计*偏差，这里可以*精确测量*，且曝光策略自造、propensity 是**闭式已知**的。
-这使「去偏估计能否还原真值」可以被严格检验。
-
-**结论一：偏差的主要危害是排序反转，不是水平偏移。**
-
-链路偏差传播矩阵（500 物品、5000 请求 × 5 坑位、α=5，30 个种子均值±std）：
-
-| 曝光偏斜 τ | 排序级 spearman（越接近 1 越好） | 曝光最少 / 最多 | KL | Gini |
-|---|---|---|---|---|
-| 0.0 | +0.8665 | 30.1 / 72.5 | 0.0100 | 0.0794 |
-| 0.5 | +0.7999 | 15.3 / 102.8 | 0.0410 | 0.1608 |
-| 1.0 | +0.6316 | 5.4 / 187.3 | 0.1315 | 0.2850 |
-| 2.0 | +0.0345 | 0.1 / 499.4 | 0.4710 | 0.5156 |
-| 3.0 | **−0.5054** | **0.0 / 1093.7** | 0.9716 | 0.6921 |
-
-**spearman 从 +0.8665 一路跌到 −0.5054，τ=2.0 时已接近随机（+0.0345），τ=3.0 处符号反转**，排行榜被搞反了。
-只看「平均 CTR 偏高多少」会得出「偏差可控」的结论，却完全看不见排序级的破坏。
-上述论断均通过显著性检验（纯 numpy bootstrap，B=10000，固定种子可复现）：
-τ=3 反转 p<0.001、τ=0→3 配对下降 p<0.001、boundary 亏损档 p<0.001 而无损档正确地不显著；
-逐种子均值±std 与检验结果一并写入 `data/bias/*.json`（`significance` 字段）。
-
-**结论二：IPS 纠正的是「估计目标」，不是「坏估计」。**
-
-naive 池化 CTR 对 `T_exp = Σ truth·π`（曝光分布下的平均真实 CTR）**几乎完全无偏**（误差 ≤ 0.008）。
-看似存在的偏差来自 `T_exp ≠ T_pop = mean(truth)`，即 estimand 改变了，而非 estimator 出错。
-**只有当需要跨策略比较或离线评估新策略时，去偏才是必要的。**
-
-**结论三：去偏的有效边界由 propensity 动态范围决定，而非偏差强度。**
-
-实测**边界 `ESS/N ≈ 0.358`**：低于该值时 IPS/SNIPS 的方差代价超过纠偏收益，收益转负。
-
-| π 范围 | `π_max/π_min` | **ESS/N** | naive err | SNIPS err | gain |
-|---|---|---|---|---|---|
-| [1, 1] | 1 | 1.0000 | 0.0024 | 0.0024 | +0.0000 |
-| [0.5, 1.5] | 3 | 0.9052 | 0.0024 | 0.0026 | −0.0001 |
-| [0.05, 2.0] | 40 | **0.3579** | 0.0024 | 0.0041 | −0.0017 ← 边界 |
-| [1e-4, 2.0] | 20 000 | 0.0064 | 0.0024 | 0.0330 | −0.0306 |
-| [1e-6, 2.0] | 2 000 000 | 0.0031 | 0.0024 | 0.0651 | −0.0627 |
-
-注意 `naive err` **恒为 0.0024**，边界说的不是「naive 何时开始不准」，
-而是「花方差代价去纠正那 0.0024，何时开始不划算」。
-
-`ESS/N` 是本项目给出的**唯一可落地的判据**：它只需 propensity 与样本量，
-**不需要 ground-truth**，而「偏差有多大」在真实系统里恰恰不可测。
-落地接口 `ess_warning_from_log(log, threshold=0.358)`。
-
-**结论四：偏差的二次注入有符号。** 混排基础分 `w_base` 若注入的是**已在候选集中的热度**，有害（项目默认取 0.0）；
-若注入**独立于现有信号的信息**，有益。这统一解释了 `w_base` 的符号为何随注入内容而变。
-
-> **用户侧偏差的粒度结论（#5/#6）**：用户自选让池化 CTR 虚高 2.5 倍（0.281→0.702），
-> 物品粒度去偏残留 +0.06~+0.22 的显著偏差——**用户侧偏差必须在 user-item 粒度建模**；
-> 且 oracle 结论对 propensity 估计误差稳健（π̂ 替代真 π 后 SNIPS 误差变化不显著）。
-
-> **两个反直觉的结论**：
-> ① 去偏收益随 τ **单调上升**（N=5000 下 gain τ=1→3：+0.047→+0.140±0.009，40 种子，`boundary_sweep.json`），
-> 因为 τ 只拉大 `T_exp` 与 `T_pop` 的差距，而 propensity 是闭式已知的。真正的边界是 π 动态范围，不是 τ。
-> ② ESS 由**最小的 π** 主导：`π=[0.99, 其余均分]` 的 ESS 高达 499，而 `π=[1e-8, 其余均分]` 的 ESS = 1。
-
-> **局限**：0.358 是在本项目合成数据的规模与先验下测出的，**不可直接迁移到其他系统**（可迁移的是方法）。
-> 且本实验的 propensity 为闭式已知，真实系统需估计 propensity，会引入本实验不存在的误差，**实际边界会更严苛**。
-
-## 目录结构
-
-```
-src/
-  config.py              全局配置（full 档）
-  config_lite.py         轻量档配置（继承 full，仅覆盖规模）
-  config_micro.py        极轻档配置（继承 lite，仅覆盖规模）
-  config_scale.py        档位解析（micro / lite，按 AEROREC_MODE 选择）
-  build_online_artifacts.py  离线训练 + 导出 numpy 权重（需 torch）
-  data/synthetic_generator.py      合成数据生成器（pandas 路径，full 档）
-  data/synthetic_generator_lite.py 纯 numpy 生成器（lite 档，低内存）
-  feature/store.py             轻量特征库（full 档）
-  feature/lite_store.py        特征库 numpy 实现（lite / micro 档）
-  data/generator_common.py     pandas-free 的生成基础量与真实 CTR 公式
-  recall/baselines.py          热门 + ItemCF 召回
-  recall/two_tower.py         Two-Tower 向量召回
-  recall/rule.py              出行规则召回（里程 / 多段行程）
-  recall/fusion.py            多路召回融合
-  rank/deepfm.py              DeepFM 排序模型（PyTorch，离线训练）
-  rank/trainer.py             CTR 训练器（PyTorch）
-  rank/numpy_deepfm.py        DeepFM 的纯 numpy 前向（与 PyTorch 数值等价，在线用）
-  rank/numpy_lr.py            LR + OneHot 的纯 numpy 实现（在线用，免 sklearn）
-  rank/mixer.py               5 步混排
-  rank/degrade.py             降级兜底
-  eval/metrics.py             离线指标
-  eval/evaluate.py            LR vs DeepFM AUC + 真实 CTR 对比 + Oracle 上界
-  eval/ab.py                  模拟 A/B + compare_rankers（真实 CTR 口径）+ 偏差表
-  serve/engine.py             推荐引擎（full 档）
-  serve/engine_lite.py        推荐引擎（lite 档，在线训练）
-  serve/engine_micro.py       推荐引擎（micro 档，加载 numpy 权重，无 torch/sklearn）
-  serve/app.py                FastAPI 服务
-  serve/i18n.py              双语 UI 文本目录（EN / 中文，i18n 闭包）
-  app.py                      Streamlit 交互 Demo（根目录，默认 micro，可切 lite/full，中英双语可切换）
-  bias/policy.py              曝光策略与闭式 propensity（均匀 / 热度^τ / 位置 1/rank^η）
-  bias/injectors.py           偏差注入器（build_biased_log 为去偏实验唯一数据入口）
-  bias/metrics.py             偏差度量：曝光分布（KL/Gini）+ 统计偏差 + 排序偏差
-  bias/propagation.py         链路偏差传播矩阵 + 混排二次注入
-  bias/estimators.py          去偏估计量 IPS/SNIPS/DR + 交叉拟合 + ESS + π 约定检测
-  bias/boundary.py            去偏有效边界扫描 + ess_warning_from_log 落地接口
-  bias/report.py              自包含 HTML 报告生成（内联 SVG，零依赖）
-  data/criteo.py              Criteo 真实 CTR 加载器（parquet / DAC 文本双格式）
-  data/adult.py               UCI Adult 真实数据加载器（快速自检）
-scripts/validate_real_data_deepfm.py  真实数据迁移性验证（Criteo / Adult）
-tests/test_data.py         数据 / 特征 / 召回 冒烟测试
-tests/test_rank.py         排序层 / 混排 / 降级 冒烟测试
-tests/test_ab.py           模拟 A/B 冒烟测试
-tests/test_mixer.py        混排 5 步流程单测
-tests/test_online_engine.py 在线引擎（micro 档 numpy 前向）单测
-tests/test_api.py          FastAPI 服务接口单测（桩引擎，含 400 / 503 错误码）
-tests/test_bias_*.py       偏差诊断 / 去偏估计 / 边界 / 报告 测试（6 文件 64 用例）
-tests/test_criteo*.py      Criteo 加载器单测（构造样本 + 真实 parquet 兼容性）
-tests/test_real_data.py    UCI Adult 加载器测试
-docs/bias_report.md          偏差传播诊断与去偏验证 tech report
-docs/paper/                  论文预印本（Preprints.org 已发布 v1 + 作者排版版）
-docs/tech-report.md          面向论文读者的技术文档（实验配置 + 原始数据）
-data/bias/                   偏差实验产物（propagation/injection/boundary.json + report.html）
-data/real_validation/        真实数据验证结果（Criteo 100 万 / 20 万行 + Adult）
-artifacts/micro/           离线预训练的在线权重（numpy，约 29KB）
-requirements.txt           部署依赖（仅 numpy + streamlit，Streamlit Cloud 读这个）
-requirements_full.txt      完整依赖（含 torch / sklearn / pandas，本地开发与离线复现）
-pyproject.toml             打包元信息 + pytest / ruff / mypy / coverage 配置
-CHANGELOG.md               变更日志（Keep a Changelog 风格，W 里程碑 + 日期）
-LICENSE                    MIT 许可
-```
-
-## 诚实边界与局限性
-
-### 诚实边界
-
-- 数据为本项目**合成**（受控实验），仅用于演示工程链路；不涉任何真实业务数据，也不与任何真实企业系统关联。
-- 数据生成公式中注入了隐式非线性交叉项，用于让深度模型可学；模型只能拿到原始特征，交叉需自行学习，此设计明确标注为受控实验设置。
-- CTR / 召回模型使用标准模型（scikit-learn / PyTorch 实现的 Two-Tower、DeepFM 等均为已有方法的实现），本项目**不提出新算法**。
-- 实习经历仅作为项目动机来源（业务规则与流程启发），实习中未涉及深度排序模型的训练。
-
-### 已知局限
-
-主动列出，避免被误读：
-
-- **合成指标向真实出行流量的外推性仍未证明，但框架迁移性已在两个真实公开数据集上验证。**
-  同一套 `DeepFM`（与合成链路完全一致的实现）在两份真实、公开、可引用的数据上取得验证 AUC：
-  **Criteo Display Advertising Challenge**（真实 CTR，13 稠密 + 26 稀疏，全量 100 万行，验证 AUC **0.7733**，
-  见 `data/real_validation/result.json`）与 **UCI Adult / Census Income**（同构 `(dense, sparse)→二元`，
-  验证 AUC **0.9183**）。两者证明模型实现能在真实数据上学到信号。
-  **然而**这两份数据**都不是出行域流量**；合成指标（AUC 0.8019、相对热门 +28.5%）
-  向真实出行流量的外推性**仍待验证**。
-- **Criteo 上深度交叉项未显现出明显优势。** 100 万行档 DeepFM 验证 AUC **0.7733**，
-  同数据 LR 基线 **0.7716**，**差距仅 0.0017**，在单次运行下难以排除随机性（该档未做多种子方差估计；
-  20 万行档已补 3 种子误差棒 **0.7586 ± 0.0007**，见下「真实数据验证」一节）。
-  因此本节只声称「同一份实现能处理真实 CTR 数据、学到强信号（≫ 0.5）」，
-  **不声称**深度交叉项在真实数据上带来增量。Criteo 以高基数稀疏类别特征为主，
-  线性模型在此类任务上本就接近强基线，这一结果与文献观察一致。
-- **A/B 为离线反事实重放，非真实在线实验。** `simulate_ab` 在合成日志上重放，
-  不含网络效应、用户反馈循环与长短期收益的差异，仅用于验证统计流程（两比例 z 检验）实现是否正确。
-- **出行业务规则的收益未经真实数据检验。** 「里程兑换」「多段行程优先」等规则来自实习启发，
-  在合成数据上自洽，但其真实业务价值需线上实验确认。
-- **训练预算必须按「梯度更新次数」设定，不能随数据规模线性缩放。** 深度模型收敛取决于
-  **梯度更新次数**，与样本量无关。若按「固定 epoch」设定，小规模档位会**静默欠拟合**
-  （1.2 万样本 × 2 epoch ≈ 12 次更新时 AUC 仅 0.5109、相对热门 −57.3%）。
-  正确做法是用 `plan_epochs(target_updates=400)`（`src/rank/trainer.py`）按目标更新次数反推 epoch。
-  同一套模型跑多档位时，训练预算要用"目标更新次数"统一约束，否则小规模档位会悄悄欠拟合。
-- **本项目的贡献是「工程链路复现 + 评估口径的诚实性」，不是算法创新。**
-- **偏差实验的 propensity 为闭式已知，且边界数值不可迁移。** 本项目的去偏实验建立在「曝光策略自造、
-  故 propensity 是策略参数的确定性函数」这一前提上，这是能精确测量去偏误差的原因，
-  但真实系统必须*估计* propensity，会引入本实验里不存在的误差，**实际有效边界会更严苛**。
-  实测边界 `ESS/N ≈ 0.358` 是在本项目合成数据的规模与先验下得到的，
-  **可迁移的是方法（用 ESS/N 作预警），不是这个数值**。详见 [docs/bias_report.md](docs/bias_report.md)。
-- **偏差实验规模有限、且未覆盖用户侧偏好偏差。** 传播矩阵为 500 物品 × 5000 请求 × 5 坑位（30 种子均值±std），
-  边界实验 `n_records = 20000`（250 种子）；且仅建模曝光/位置偏差，未涉及「同一用户内跨物品的选择偏差」。
-
+See [LICENSE](LICENSE) and the data-permission notes in [README.md](README.md) (synthetic data MIT /
+UCI Adult citation requirement / Criteo terms).

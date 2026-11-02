@@ -12,6 +12,12 @@
   14 页，CC BY 4.0），README（中/英）新增 DOI 徽章、发布展示区、
   引用格式与 BibTeX（`zhao2026aerorec`）。
 
+### Changed
+- **仓库主 README 语言切换为英文**：英文版升为主 `README.md`，
+  中文版移至 `README.zh.md`；两个版本的语言切换链接、
+  Documentation 表与引用点同步更新，英文主 README 新增
+  徽章行（含 DOI）与 "Published Preprint" 展示区。
+
 ## [0.2.0] - 2026-10-15
 
 论文预印本版本锚点：**本 tag 包含论文全部 7 个偏差实验的可复现代码**
