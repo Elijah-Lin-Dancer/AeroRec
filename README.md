@@ -12,10 +12,44 @@
 [![Streamlit](https://img.shields.io/badge/built%20with-Streamlit-ff4b4b)](https://streamlit.io/)
 [![Pages](https://img.shields.io/badge/🌐%20Homepage-GitHub%20Pages-blue)](https://elijah-lin-dancer.github.io/AeroRec/)
 [![Reproducibility](https://github.com/Elijah-Lin-Dancer/AeroRec/actions/workflows/repro.yml/badge.svg)](https://github.com/Elijah-Lin-Dancer/AeroRec/actions/workflows/repro.yml)
+[![Preprint DOI](https://img.shields.io/badge/DOI-10.20944%2Fpreprints202610.2582.v1-c7215f)](https://doi.org/10.20944/preprints202610.2582.v1)
 
 > **快速体验**：[项目主页](https://elijah-lin-dancer.github.io/AeroRec/) · [交互 Demo（Streamlit Cloud）](https://aerorec-tourism.streamlit.app)
 >
-> **研究主线**（偏差传播诊断 + 去偏有效边界）：[tech report](docs/bias_report.md) · [论文读者技术文档](docs/tech-report.md) · [可视化报告（HTML）](data/bias/report.html) · [research one-pager (EN)](docs/research_highlight.md) · [论文预印本 (PDF)](docs/paper/AeroRec-preprint.pdf)
+> **研究主线**（偏差传播诊断 + 去偏有效边界）：[tech report](docs/bias_report.md) · [论文读者技术文档](docs/tech-report.md) · [可视化报告（HTML）](data/bias/report.html) · [research one-pager (EN)](docs/research_highlight.md) · [论文预印本（发布版 PDF）](docs/paper/AeroRec-preprints.org-v1.pdf)
+
+---
+
+## 📖 论文预印本（Preprints.org，已发布）
+
+> ***Bias Propagation and Effective Boundaries of Debiasing in Recommender Systems: An Oracle-Based Diagnosis Study*** — Yulin Zhao, Preprints.org **2026, 202610.2582** (V1, posted 2026-10-27).
+>
+> **DOI**：[10.20944/preprints202610.2582.v1](https://doi.org/10.20944/preprints202610.2582.v1) · [稿件页](https://www.preprints.org/manuscript/202610.2582/v1) · [发布版 PDF](docs/paper/AeroRec-preprints.org-v1.pdf) · [作者排版版 PDF](docs/paper/AeroRec-preprint.pdf)
+
+**引用格式**（How to cite）：
+
+```text
+Zhao, Y. Bias Propagation and Effective Boundaries of Debiasing in Recommender
+Systems: An Oracle-Based Diagnosis Study. Preprints 2026, 202610.2582.
+https://doi.org/10.20944/preprints202610.2582.v1
+```
+
+<details>
+<summary><strong>BibTeX</strong></summary>
+
+```bibtex
+@article{zhao2026aerorec,
+  title   = {Bias Propagation and Effective Boundaries of Debiasing in Recommender Systems: An Oracle-Based Diagnosis Study},
+  author  = {Zhao, Yulin},
+  journal = {Preprints},
+  year    = {2026},
+  number  = {202610.2582},
+  doi     = {10.20944/preprints202610.2582.v1},
+  url     = {https://doi.org/10.20944/preprints202610.2582.v1}
+}
+```
+
+</details>
 
 ---
 
@@ -477,7 +511,7 @@ tests/test_bias_*.py       偏差诊断 / 去偏估计 / 边界 / 报告 测试�
 tests/test_criteo*.py      Criteo 加载器单测（构造样本 + 真实 parquet 兼容性）
 tests/test_real_data.py    UCI Adult 加载器测试
 docs/bias_report.md          偏差传播诊断与去偏验证 tech report
-docs/paper/                  论文预印本（PDF，投稿 ChinaXiv）
+docs/paper/                  论文预印本（Preprints.org 已发布 v1 + 作者排版版）
 docs/tech-report.md          面向论文读者的技术文档（实验配置 + 原始数据）
 data/bias/                   偏差实验产物（propagation/injection/boundary.json + report.html）
 data/real_validation/        真实数据验证结果（Criteo 100 万 / 20 万行 + Adult）

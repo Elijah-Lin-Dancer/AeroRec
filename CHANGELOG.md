@@ -5,6 +5,13 @@
 
 ## [Unreleased]
 
+### Added
+- **论文预印本正式发布**：Preprints.org V1（posted 2026-10-27），
+  DOI [10.20944/preprints202610.2582.v1](https://doi.org/10.20944/preprints202610.2582.v1)；
+  发布版 PDF 归档于 `docs/paper/AeroRec-preprints.org-v1.pdf`（平台排版版，
+  14 页，CC BY 4.0），README（中/英）新增 DOI 徽章、发布展示区、
+  引用格式与 BibTeX（`zhao2026aerorec`）。
+
 ## [0.2.0] - 2026-10-15
 
 论文预印本版本锚点：**本 tag 包含论文全部 7 个偏差实验的可复现代码**

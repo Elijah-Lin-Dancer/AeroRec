@@ -11,6 +11,8 @@ analytically and the exposure propensity is closed-form, so bias can be *measure
 - **Project homepage**: <https://elijah-lin-dancer.github.io/AeroRec/>
 - **Research thread**: [tech report](docs/bias_report.md) · [paper-reader doc](docs/tech-report.md) ·
   [visual report (HTML)](data/bias/report.html) · [one-pager (EN)](docs/research_highlight.md)
+- **Published preprint (Preprints.org, 2026-10-27, V1)**: [DOI 10.20944/preprints202610.2582.v1](https://doi.org/10.20944/preprints202610.2582.v1) ·
+  [manuscript page](https://www.preprints.org/manuscript/202610.2582/v1) · [published PDF](docs/paper/AeroRec-preprints.org-v1.pdf) · [author-typeset PDF](docs/paper/AeroRec-preprint.pdf)
 
 ---
 
@@ -50,6 +52,31 @@ flowchart TB
 ```
 
 ## Research: bias diagnosis and the debiasing boundary
+
+> **Cite this preprint** — DOI: [10.20944/preprints202610.2582.v1](https://doi.org/10.20944/preprints202610.2582.v1)
+
+```text
+Zhao, Y. Bias Propagation and Effective Boundaries of Debiasing in Recommender
+Systems: An Oracle-Based Diagnosis Study. Preprints 2026, 202610.2582.
+https://doi.org/10.20944/preprints202610.2582.v1
+```
+
+<details>
+<summary><strong>BibTeX</strong></summary>
+
+```bibtex
+@article{zhao2026aerorec,
+  title   = {Bias Propagation and Effective Boundaries of Debiasing in Recommender Systems: An Oracle-Based Diagnosis Study},
+  author  = {Zhao, Yulin},
+  journal = {Preprints},
+  year    = {2026},
+  number  = {202610.2582},
+  doi     = {10.20944/preprints202610.2582.v1},
+  url     = {https://doi.org/10.20944/preprints202610.2582.v1}
+}
+```
+
+</details>
 
 Under biased exposure (π ∝ popularity^τ), the ranking-level Spearman correlation against the true CTR
 **inverts** (500 items × 5,000 requests, 30-seed mean ± std):
