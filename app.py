@@ -224,9 +224,26 @@ def _bias_full_sweep(n_items: int = 60, n_requests: int = 600, slots: int = 5,
         rng = np.random.default_rng(seed)
         r = run_stage_estimates(tctr[None, :], n_items, float(tau), n_requests,
                                 slots, alpha, 0.0, rng)
-        e1 = stage_error(r["L1_recall"], r["true_ctr"])
-        e2 = stage_error(r["L2_rank"], r["true_ctr"])
-        e3 = stage_error(r["L3_mix"], r["true_ctr"])
+
+        def _stage(est):
+            """逐级误差；对**常数估计**把 spearman 约定为 0。
+
+            为什么需要这条约定：τ=0 时 L1 的估计 `tmean·C·π` 是常数向量，
+            而 `_rank` 用稳定排序，会把「全等值」排成 0..N−1（即按物品下标），
+            与真值秩相关后得到一个**纯伪相关**（60 物品、单种子下约 +0.18；
+            落库的 500 物品/30 种子版只有 −0.0197，所以报告与论文不受影响）。
+            常数序列本就不携带排序信息，约定为 0 才符合语义。
+            注意：只改交互扫描的展示，不动 `src/bias/propagation.py` 的统计口径，
+            因此 `data/bias/*.json` 与论文数字保持逐字节不变。
+            """
+            d = stage_error(est, r["true_ctr"])
+            if np.asarray(est, dtype=np.float64).std() < 1e-12:
+                d["spearman"] = 0.0
+            return d
+
+        e1 = _stage(r["L1_recall"])
+        e2 = _stage(r["L2_rank"])
+        e3 = _stage(r["L3_mix"])
         rows.append({
             "tau": float(tau),
             "L1_spearman": e1["spearman"], "L2_spearman": e2["spearman"],
@@ -303,6 +320,9 @@ st.markdown(
     '</div></div>',
     unsafe_allow_html=True,
 )
+# 预印本条目放在页头正下方而不是页脚：这是全站可信度最高的一条信号，
+# 首屏可见决定访客是否继续往下看。
+st.markdown(t("hero.paper"))
 
 st.sidebar.markdown(
     '<div class="brand">'
@@ -311,9 +331,11 @@ st.sidebar.markdown(
     '</div>',
     unsafe_allow_html=True,
 )
+# Overview 排第一并作为默认页：多数访客不读论文、也不翻仓库，
+# 需要先给「是什么 / 做了什么 / 关键结论 / 有何意义」，再让他自己决定深入哪一块。
 page = st.sidebar.radio(
     t("nav.label"),
-    ["demo", "bias", "pipeline", "true_ctr", "ab", "model"],
+    ["overview", "demo", "bias", "pipeline", "true_ctr", "ab", "model"],
     format_func=lambda k: t(f"nav.{k}"),
 )
 st.sidebar.caption(t("sidebar.mode", mode=mode))
@@ -324,6 +346,12 @@ st.sidebar.caption(t("sidebar.mode", mode=mode))
 # 与「两套视觉语言打架」两个问题，且 Streamlit 流式渲染的 iframe 沙箱机制下再叠嵌 iframe 有额外风险。
 # 报告本质是「读」的成果，GitHub 上的渲染体验更好，故以链接形式给出。
 st.sidebar.divider()
+st.sidebar.markdown(
+    t("sidebar.paper_title") + "\n\n"
+    f"- [{t('sidebar.link.paper_doi')}](https://doi.org/10.20944/preprints202610.2582.v1)\n"
+    f"- [{t('sidebar.link.paper_pdf')}]"
+    "(https://github.com/Elijah-Lin-Dancer/AeroRec/blob/main/docs/paper/AeroRec-preprints.org-v1.pdf)"
+)
 st.sidebar.markdown(
     t("sidebar.research_title") + "\n\n"
     f"- [{t('sidebar.link.tech_report')}](https://github.com/Elijah-Lin-Dancer/AeroRec/blob/main/docs/bias_report.md)\n"
@@ -345,6 +373,102 @@ with st.expander(t("scope.title"), expanded=False):
         st.warning(t("scope.scale_micro") if mode == "micro" else t("scope.scale_lite"),
                    icon="⚠️")
         st.caption(t("scope.inference_note"))
+
+# --------------------------------------------------------------------------
+if page == "overview":
+    st.header(t("ov.header"))
+    st.markdown(t("ov.lead"))
+
+    # 四个数字全部取自仓库内可核验的产物，不在页面里手打：
+    #   · ESS/N 边界  ← data/bias/boundary.json
+    #   · Criteo AUC  ← data/real_validation/result.json
+    #   · +28.5% / 88.4% 来自完整档 `python -m src.eval.evaluate` 的落库结论（README 同源），
+    #     微实例无法重算，只能引用——故在 help 里写明口径与档位。
+    _bnd = _load_json("data/bias/boundary.json")
+    _crit = _load_json("data/real_validation/result.json")
+    m1, m2, m3, m4 = st.columns(4)
+    m1.metric(t("ov.m_gain"), "+28.5%", help=t("ov.m_gain_help"))
+    m2.metric(t("ov.m_oracle"), "88.4%", help=t("ov.m_oracle_help"))
+    m3.metric(t("ov.m_ess"), f"{_bnd['cross_ess_ratio']:.3f}", help=t("ov.m_ess_help"))
+    m4.metric(t("ov.m_real"), f"{_crit['val_auc_deepfm']:.4f}", help=t("ov.m_real_help"))
+
+    # ---- 做了什么：2×2 卡片 ------------------------------------------------
+    st.subheader(t("ov.what_title"))
+    # 变量名加 ov_ 前缀：app.py 是模块级脚本，所有页面共享一个作用域，
+    # 与 demo 页的 `_cards`（list[str]）同名会让 mypy 沿用首个推断类型而报错。
+    _ov_cards = [
+        ("ov.c1_title", "ov.c1_body"),
+        ("ov.c2_title", "ov.c2_body"),
+        ("ov.c3_title", "ov.c3_body"),
+        ("ov.c4_title", "ov.c4_body"),
+    ]
+    for _i in range(0, len(_ov_cards), 2):
+        _c1, _c2 = st.columns(2)
+        for _col, (_tk, _bk) in zip((_c1, _c2), _ov_cards[_i:_i + 2]):
+            with _col, st.container(border=True):
+                st.markdown(f"**{t(_tk)}**")
+                st.markdown(t(_bk))
+
+    # ---- 研究主线：三个发现 -----------------------------------------------
+    st.subheader(t("ov.k_title"))
+    for _tk, _bk in (("ov.k1_title", "ov.k1_body"),
+                     ("ov.k2_title", "ov.k2_body"),
+                     ("ov.k3_title", "ov.k3_body")):
+        with st.container(border=True):
+            st.markdown(f"**{t(_tk)}**")
+            st.markdown(t(_bk))
+
+    # ---- 为什么重要 --------------------------------------------------------
+    st.subheader(t("ov.why_title"))
+    st.markdown(t("ov.why_body"))
+
+    # ---- 一眼看全（事实表）------------------------------------------------
+    # 用 markdown 表格而不是 st.dataframe：dataframe 会**截断**超长单元格
+    # （qualities gates 那行实测被切掉尾句），而表格会换行，信息不丢。
+    st.subheader(t("ov.facts_title"))
+    _fact_pairs = [
+        ("paper_k", "paper_v"), ("chain_k", "chain_v"), ("tiers_k", "tiers_v"),
+        ("result_k", "result_v"), ("bias_k", "bias_v"), ("real_k", "real_v"),
+        ("gate_k", "gate_v"),
+    ]
+    _fmd = [f"| {t('ov.fact.item')} | {t('ov.fact.value')} |", "|---|---|"]
+    _fmd += [f"| {t('ov.fact.' + k)} | {t('ov.fact.' + v)} |" for k, v in _fact_pairs]
+    st.markdown("\n".join(_fmd))
+
+    # ---- 导航地图 ----------------------------------------------------------
+    st.subheader(t("ov.map_title"))
+    _order = ["demo", "bias", "pipeline", "true_ctr", "ab", "model"]
+    _mmd = [f"| {t('ov.map.page')} | {t('ov.map.what')} |", "|---|---|"]
+    _mmd += [f"| **{t(f'nav.{k}')}** | {t(f'ov.map.{k}')} |" for k in _order]
+    st.markdown("\n".join(_mmd))
+
+    # ---- 引用 --------------------------------------------------------------
+    st.subheader(t("ov.cite_title"))
+    st.markdown(t("ov.cite_body"))
+    # 引用串是语言无关的（学术引用不翻译），故写成模块内常量而非 i18n 条目。
+    st.code(
+        "Zhao, Y. Bias Propagation and Effective Boundaries of Debiasing in Recommender\n"
+        "Systems: An Oracle-Based Diagnosis Study. Preprints 2026, 202610.2582.\n"
+        "https://doi.org/10.20944/preprints202610.2582.v1",
+        language="text",
+    )
+    with st.expander(t("ov.cite_bibtex")):
+        st.code(
+            "@article{zhao2026aerorec,\n"
+            "  title   = {Bias Propagation and Effective Boundaries of Debiasing in Recommender Systems:\n"
+            "             An Oracle-Based Diagnosis Study},\n"
+            "  author  = {Zhao, Yulin},\n"
+            "  journal = {Preprints},\n"
+            "  year    = {2026},\n"
+            "  number  = {202610.2582},\n"
+            "  doi     = {10.20944/preprints202610.2582.v1},\n"
+            "  url     = {https://doi.org/10.20944/preprints202610.2582.v1}\n"
+            "}",
+            language="bibtex",
+        )
+
+    st.divider()
+    st.caption(t("ov.boundary"))
 
 # --------------------------------------------------------------------------
 if page == "demo":
@@ -546,58 +670,115 @@ elif page == "bias":
     with st.expander(t("bias.exp_title"), expanded=False):
         st.info(t("bias.exp_body"), icon="🧪")
 
-    tau = st.slider(t("bias.slider"), 0.0, 3.0, 2.0, 0.1,
-                    help=t("bias.slider_help"))
-    sweep = _bias_full_sweep()
-    row = _bias_row_at(sweep, tau)
-    sp = row["L2_spearman"]
+    # 两个标签对应研究主线的两半：① 偏差确实毁排序（可交互感受）；
+    # ② 去偏何时不划算（结论落地点）。只放 ① 会让访客以为「知道坏了」就完了。
+    _tab_sweep, _tab_bnd = st.tabs([t("bias.tab_sweep"), t("bias.tab_boundary")])
 
-    m1, m2, m3 = st.columns(3)
-    m1.metric(t("bias.m_sp"), f"{sp:+.3f}", help=t("bias.m_sp_help"))
-    m2.metric(t("bias.m_gini"), f"{row['exposure_gini']:.3f}", help=t("bias.m_gini_help"))
-    m3.metric(t("bias.m_impr"), t("bias.m_impr_val", v=int(row["impr_min"])),
-              help=t("bias.m_impr_help"))
+    with _tab_sweep:
+        tau = st.slider(t("bias.slider"), 0.0, 3.0, 2.0, 0.1,
+                        help=t("bias.slider_help"))
+        sweep = _bias_full_sweep()
+        row = _bias_row_at(sweep, tau)
+        sp = row["L2_spearman"]
 
-    if sp < -0.1:
-        st.error(t("bias.status_bad", tau=tau, sp=sp), icon="🔴")
-    elif sp > 0.3:
-        st.success(t("bias.status_good", tau=tau, sp=sp), icon="🟢")
-    else:
-        st.warning(t("bias.status_warn", tau=tau, sp=sp), icon="🟡")
+        m1, m2, m3 = st.columns(3)
+        m1.metric(t("bias.m_sp"), f"{sp:+.3f}", help=t("bias.m_sp_help"))
+        m2.metric(t("bias.m_gini"), f"{row['exposure_gini']:.3f}", help=t("bias.m_gini_help"))
+        m3.metric(t("bias.m_impr"), t("bias.m_impr_val", v=int(row["impr_min"])),
+                  help=t("bias.m_impr_help"))
 
-    st.subheader(t("bias.sub_line"))
-    st.line_chart(
-        {
-            "τ": [round(x, 1) for x in sweep["taus"]],
-            t("bias.series_l2"): [r["L2_spearman"] for r in sweep["rows"]],
-            t("bias.series_l1"): [r["L1_spearman"] for r in sweep["rows"]],
-            t("bias.series_l3"): [r["L3_spearman"] for r in sweep["rows"]],
-        },
-        x="τ", y=[t("bias.series_l2"), t("bias.series_l1"), t("bias.series_l3")], height=340,
-    )
-    st.caption(t("bias.line_caption", tau=tau, sp=sp))
+        if sp < -0.1:
+            st.error(t("bias.status_bad", tau=tau, sp=sp), icon="🔴")
+        elif sp > 0.3:
+            st.success(t("bias.status_good", tau=tau, sp=sp), icon="🟢")
+        else:
+            st.warning(t("bias.status_warn", tau=tau, sp=sp), icon="🟡")
 
-    c1, c2 = st.columns(2)
-    with c1:
-        st.subheader(t("bias.sub_scatter"))
-        tcr = sweep["true_ctr"]
-        l2 = row["L2_est"]
-        over = [t("bias.over") if a > b else t("bias.under") for a, b in zip(l2, tcr)]
-        st.scatter_chart(
-            {t("bias.scatter_x"): tcr, t("bias.scatter_y"): l2,
-             t("bias.scatter_status"): over},
-            x=t("bias.scatter_x"), y=t("bias.scatter_y"),
-            color=t("bias.scatter_status"), height=300,
+        st.subheader(t("bias.sub_line"))
+        st.line_chart(
+            {
+                "τ": [round(x, 1) for x in sweep["taus"]],
+                t("bias.series_l2"): [r["L2_spearman"] for r in sweep["rows"]],
+                t("bias.series_l1"): [r["L1_spearman"] for r in sweep["rows"]],
+                t("bias.series_l3"): [r["L3_spearman"] for r in sweep["rows"]],
+            },
+            x="τ", y=[t("bias.series_l2"), t("bias.series_l1"), t("bias.series_l3")], height=340,
         )
-        st.caption(t("bias.scatter_caption"))
-    with c2:
-        st.subheader(t("bias.sub_bar"))
-        ef = np.sort(row["exposure_freq"])[::-1]
-        st.bar_chart(
-            {t("bias.bar_x"): list(range(1, len(ef) + 1)), t("bias.bar_y"): ef},
-            x=t("bias.bar_x"), y=t("bias.bar_y"), color="#f59e0b", height=300,
-        )
-        st.caption(t("bias.bar_caption"))
+        st.caption(t("bias.line_caption", tau=tau, sp=sp))
+
+        c1, c2 = st.columns(2)
+        with c1:
+            st.subheader(t("bias.sub_scatter"))
+            tcr = sweep["true_ctr"]
+            l2 = row["L2_est"]
+            over = [t("bias.over") if a > b else t("bias.under") for a, b in zip(l2, tcr)]
+            st.scatter_chart(
+                {t("bias.scatter_x"): tcr, t("bias.scatter_y"): l2,
+                 t("bias.scatter_status"): over},
+                x=t("bias.scatter_x"), y=t("bias.scatter_y"),
+                color=t("bias.scatter_status"), height=300,
+            )
+            st.caption(t("bias.scatter_caption"))
+        with c2:
+            st.subheader(t("bias.sub_bar"))
+            ef = np.sort(row["exposure_freq"])[::-1]
+            st.bar_chart(
+                {t("bias.bar_x"): list(range(1, len(ef) + 1)), t("bias.bar_y"): ef},
+                x=t("bias.bar_x"), y=t("bias.bar_y"), color="#f59e0b", height=300,
+            )
+            st.caption(t("bias.bar_caption"))
+
+    with _tab_bnd:
+        # 数字全部由 data/bias/boundary.json 驱动（CI 对该文件做逐字节零漂移门禁），
+        # 页面里不手打任何边界值。
+        bnd = _load_json("data/bias/boundary.json")
+        cross = bnd["cross_ess_ratio"]
+        st.info(t("bnd.info"), icon="🎯")
+        st.success(t("bnd.cross", cross=cross), icon="📐")
+
+        # 判定带容差：gain 在 ±tolerance 内属于噪声，不能报成「有害 / 有益」。
+        # 否则会出现「ESS/N=0.91 却显示去偏有害（gain=−0.0001）」这类自相矛盾的行。
+        # 注意这是**展示层**的三态读法，不改 JSON 里的任何结论字段。
+        _tol = float(bnd.get("tolerance_used", 0.0))
+        _brows = []
+        for _r in bnd["rows"]:
+            _ess = _r["ess_ratio"]
+            _gain = _r["gain"]
+            if abs(_ess - cross) < 1e-9:
+                _verdict = t("bnd.verdict_edge")
+            elif _gain < -_tol:
+                _verdict = t("bnd.verdict_bad")
+            elif _gain > _tol:
+                _verdict = t("bnd.verdict_ok")
+            else:
+                _verdict = t("bnd.verdict_flat")
+            _brows.append({
+                t("bnd.col.range"): f"[{_r['pi_min']:g}, {_r['pi_max']:g}]",
+                t("bnd.col.ratio"): f"{_r['pi_ratio']:g}",
+                t("bnd.col.ess"): f"{_ess:.4f}",
+                t("bnd.col.naive"): f"{_r['naive_err']:.4f}",
+                t("bnd.col.snips"): f"{_r['snips_err']:.4f}",
+                t("bnd.col.gain"): f"{_r['gain']:+.4f}",
+                t("bnd.col.verdict"): _verdict,
+            })
+        st.subheader(t("bnd.sub_table"))
+        st.dataframe(_brows, use_container_width=True, hide_index=True)
+
+        st.subheader(t("bnd.chart_title"))
+        # 按 ESS/N 升序绘图，曲线才是单调可读的（JSON 里是按 π 范围从宽到窄排列的）。
+        _sorted = sorted(bnd["rows"], key=lambda r: r["ess_ratio"])
+        st.line_chart({
+            t("bnd.chart_x"): [r["ess_ratio"] for r in _sorted],
+            t("bnd.series_snips"): [r["snips_err"] for r in _sorted],
+            t("bnd.series_naive"): [r["naive_err"] for r in _sorted],
+            t("bnd.series_gain"): [r["gain"] for r in _sorted],
+        }, x=t("bnd.chart_x"),
+            y=[t("bnd.series_snips"), t("bnd.series_naive"), t("bnd.series_gain")], height=320)
+        st.caption(t("bnd.chart_caption"))
+
+        st.markdown(t("bnd.takeaway"))
+        st.markdown(t("bnd.robust"))
+        st.warning(t("bnd.caveat"), icon="⚠️")
 
 # --------------------------------------------------------------------------
 elif page == "model":
@@ -633,8 +814,22 @@ elif page == "model":
                  auc1m=criteo1m["val_auc_deepfm"], auc200k=criteo200k["val_auc_deepfm"],
                  lr=criteo1m["val_auc_logistic_baseline"]))
 
+    # 第二个真实数据集：单靠 Criteo 会被质疑「只是碰巧适合稀疏特征」，
+    # 补一份结构完全不同（稠密为主、表格二分类）的数据集才构成迁移性证据。
+    adult = _load_json("data/real_validation/result_adult.json")
+    st.subheader(t("model.sub_adult"))
+    st.info(t("model.adult_info"), icon="📊")
+    st.success(t("model.adult_success",
+                 adult=adult["val_auc_deepfm"], n_val=adult["n_val"],
+                 adult_lr=adult["val_auc_logistic_baseline"]), icon="✅")
+
     with st.expander(t("model.exp_title"), expanded=False):
         st.markdown(t("model.exp_body"))
+
+    # 复现性放在「模型与验证」页而非单独页：访客看到 AUC 后的第一个疑问
+    # 往往是「这数是真的吗」，此处正好接住。
+    st.subheader(t("model.sub_repro"))
+    st.info(t("model.repro_info"), icon="🔒")
 
     st.subheader(t("model.sub_live"))
     uid = st.number_input(t("model.uid"), 0, n_users_max, 0, 1, key="model_uid")

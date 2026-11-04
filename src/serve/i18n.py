@@ -48,11 +48,22 @@ TEXT: dict[str, dict[str, str]] = {
     "chip.mix": {"en": "5-step Mixing", "zh": "5 步混排"},
     "chip.degrade": {"en": "Graceful Fallback", "zh": "降级兜底"},
     "chip.true_ctr": {"en": "True-CTR Evaluation", "zh": "真实 CTR 评估"},
+    # 页头下方的「已发表预印本」条：这是全站权重最高的可信度信号，
+    # 放在 hero 内（而非页脚）是为了让首屏即见 DOI。
+    "hero.paper": {
+        "en": "📄 **Published preprint** · *Bias Propagation and Effective Boundaries of Debiasing "
+              "in Recommender Systems* · Preprints 2026, 202610.2582 · "
+              "[DOI 10.20944/preprints202610.2582.v1](https://doi.org/10.20944/preprints202610.2582.v1)",
+        "zh": "📄 **已发表预印本** ·《Bias Propagation and Effective Boundaries of Debiasing "
+              "in Recommender Systems》· Preprints 2026, 202610.2582 · "
+              "[DOI 10.20944/preprints202610.2582.v1](https://doi.org/10.20944/preprints202610.2582.v1)",
+    },
 
     # ------------------------------------------------------------- sidebar
     "brand.sub": {"en": "Travel Recommender · Demo", "zh": "出行智能推荐中台 · Demo"},
     "sidebar.language": {"en": "Language", "zh": "语言"},
     "nav.label": {"en": "Navigation", "zh": "导航"},
+    "nav.overview": {"en": "Overview (start here)", "zh": "项目总览（先看这页）"},
     "nav.demo": {"en": "Demo", "zh": "推荐演示"},
     "nav.bias": {"en": "Bias Diagnosis", "zh": "偏差诊断"},
     "nav.pipeline": {"en": "Ranking Pipeline", "zh": "排序流程"},
@@ -68,6 +79,13 @@ TEXT: dict[str, dict[str, str]] = {
     "sidebar.link.html_report": {"en": "visual report (HTML)", "zh": "可视化报告（HTML）"},
     "sidebar.link.repo": {"en": "full repository", "zh": "完整仓库"},
     "sidebar.link.highlight": {"en": "research one-pager (EN)", "zh": "研究 one-pager（EN）"},
+    # 侧边栏顶部的预印本入口：访客可能只想「看一眼论文」，不该逼他先去 Overview 页找。
+    "sidebar.paper_title": {
+        "en": "**📄 Preprint** · Preprints 2026, 202610.2582",
+        "zh": "**📄 论文预印本** · Preprints 2026, 202610.2582",
+    },
+    "sidebar.link.paper_doi": {"en": "DOI · publisher page", "zh": "DOI · 出版社页面"},
+    "sidebar.link.paper_pdf": {"en": "published PDF", "zh": "发布版 PDF"},
 
     # --------------------------------------------------- scope disclosure
     "scope.title": {
@@ -129,6 +147,236 @@ TEXT: dict[str, dict[str, str]] = {
               "（平台说明：Streamlit Community Cloud 免费实例的资源为区间：CPU 0.078～2 核、"
               "内存 690MB～2.7GB、无 GPU；**无流量 12 小时后休眠**，访问即自动唤醒，"
               "唤醒时可能需等待约十秒。）",
+    },
+
+    # -------------------------------------------------------- page: overview
+    # 设计意图：绝大多数访客既不会读论文、也不会翻仓库源码。这一页必须在
+    # **一屏到两屏内**回答四个问题：这是什么 / 做了什么 / 关键结论是什么 /
+    # 为什么值得在意。故文案全部写成「结论先行 + 一句证据」，不铺参数。
+    "ov.header": {"en": "Overview: what this is, and why it matters",
+                  "zh": "项目总览：这是什么，为什么值得看"},
+    "ov.lead": {
+        "en": "**AeroRec is a travel-recommendation platform that reproduces an industrial pipeline "
+              "end-to-end** — 4-way recall → DeepFM CTR ranking → 5-step mixing → graceful degradation → "
+              "serving — and, on top of it, a **research thread on how biased exposure quietly destroys "
+              "rankings** (published as a preprint, Preprints 2026, 202610.2582).\n\n"
+              "The enabling trick is that the data is **synthetic with an analytically known latent CTR**. "
+              "That turns bias from something you *estimate* into something you can **measure** — which is "
+              "why the numbers below are citable rather than illustrative.",
+        "zh": "**AeroRec 是一个端到端复现工业级链路的出行推荐平台**——四路召回 → DeepFM CTR 排序 → "
+              "5 步混排 → 降级兜底 → 服务化；在此之上还有一条**关于「有偏曝光如何悄悄摧毁排序」的研究主线**"
+              "（已发表预印本，Preprints 2026, 202610.2582）。\n\n"
+              "让这一切成立的关键，是数据为**合成数据、潜在真实 CTR 解析已知**："
+              "于是偏差从「只能估计」变成「可以精确测量」，"
+              "下面这些数字因此可引用，而不只是示意。",
+    },
+
+    # 四个「做了什么」的卡片
+    "ov.m_gain": {"en": "True CTR vs popularity", "zh": "真实 CTR vs 热门"},
+    "ov.m_gain_help": {
+        "en": "Full tier, 100 users × Top-10, computed from the known latent true CTR — citable, and "
+              "unaffected by smoothing-sparsity bias.",
+        "zh": "完整档，100 用户 × Top-10，由已知潜在真实 CTR 直接算出——可引用，且不受平滑稀疏性偏差影响。",
+    },
+    "ov.m_oracle": {"en": "of the Oracle ceiling", "zh": "占 Oracle 上界"},
+    "ov.m_oracle_help": {
+        "en": "Per-user best possible Top-10 within the candidate pool: the remaining headroom is the pool, "
+              "not the model.",
+        "zh": "逐用户候选池内理论最优 Top-10：剩下的差距来自候选池，不是模型。",
+    },
+    "ov.m_ess": {"en": "Debiasing boundary", "zh": "去偏有效边界"},
+    "ov.m_ess_help": {
+        "en": "Below ESS/N ≈ 0.358, IPS/SNIPS gains turn negative. Needs no ground truth → deployable as an "
+              "online warning.",
+        "zh": "ESS/N ≈ 0.358 以下，IPS/SNIPS 收益转负。不需要 ground-truth → 可作为线上预警落地。",
+    },
+    # 中文全角括号占位更宽，带「100万行」会在四列布局里被截断，故把口径移进 help。
+    "ov.m_real": {"en": "Real-data AUC (Criteo)", "zh": "真实数据 AUC"},
+    "ov.m_real_help": {
+        "en": "Same DeepFM implementation, zero model changes; LR baseline 0.7716, constant 0.5000.",
+        "zh": "同一套 DeepFM 实现、模型零改动；LR 基线 0.7716，常数基线 0.5000。",
+    },
+    "ov.what_title": {"en": "What it actually does", "zh": "它到底做了什么"},
+    "ov.c1_title": {"en": "① The full industrial chain", "zh": "① 完整工业链路"},
+    "ov.c1_body": {
+        "en": "4-way recall (**popularity / ItemCF / Two-Tower / travel rules**: mileage redemption, "
+              "multi-leg return priority) → fusion → **DeepFM CTR + LR CVR** multi-objective ranking → "
+              "**5-step mixing** (normalize / weight / stratify / de-cluster / dedup) → graceful fallback to "
+              "historical mean CTR → FastAPI + Streamlit. The same algorithm code runs three data tiers.",
+        "zh": "四路召回（**热门 / ItemCF / Two-Tower / 出行规则**：里程兑换、多段行程优先返程）→ 融合 → "
+              "**DeepFM CTR + LR CVR** 多目标排序 → **5 步混排**（归一化 / 加权 / 分层 / 打散 / 去重）→ "
+              "异常时降级为历史平均 CTR → FastAPI + Streamlit。同一套算法代码跑三档数据规模。",
+    },
+    "ov.c2_title": {"en": "② Serving discipline, actually measured", "zh": "② 服务侧纪律，实测而非估算"},
+    "ov.c2_body": {
+        "en": "Training and inference are **decoupled**: weights are exported to numpy, so the online side "
+              "**never imports torch** (`torch + sklearn + numpy + streamlit` = 673 MB baseline, i.e. it cannot "
+              "fit a free 690 MB instance at all). Measured: engine peak **129 MB**, single-thread "
+              "**P50 0.70 ms / P99 0.95 ms**, ~1378 QPS. PyTorch vs numpy forward max deviation **1.19e-07** — "
+              "same trained model, different runtime.",
+        "zh": "训练与推理**解耦**：权重导出为 numpy，在线侧**永不 import torch**"
+              "（`torch+sklearn+numpy+streamlit` 基线 673MB，在免费实例 690MB 下限上根本装不下）。"
+              "实测：引擎峰值 **129MB**、单线程 **P50 0.70ms / P99 0.95ms**、约 1378 QPS；"
+              "PyTorch 与 numpy 前向最大偏差 **1.19e-07**——同一个已训练模型，只换了运行时。",
+    },
+    "ov.c3_title": {"en": "③ An evaluation protocol worth trusting", "zh": "③ 一套站得住脚的评估口径"},
+    "ov.c3_body": {
+        "en": "Rankings are scored against the **known latent true CTR**, plus a per-user **Oracle upper "
+              "bound** over the candidate pool (popular ∪ rule ∪ random, so it is strictly ≥ every compared "
+              "method). **No smoothed-history estimate is involved**, so the gain is not an artifact of "
+              "sparsity bias — the flaw that makes the naive \"simulated A/B\" number untrustworthy.",
+        "zh": "用**已知的潜在真实 CTR** 给各方法的 Top-K 打分，并给出逐用户候选池的 **Oracle 上界**"
+              "（池 = 热门 ∪ 规则 ∪ 随机，故严格 ≥ 所有被比方法）。"
+              "**不依赖任何平滑历史估计**，因此增益不是稀疏性偏差的产物——"
+              "而正是这个偏差让「模拟 A/B」的那组数字不可引用。",
+    },
+    "ov.c4_title": {"en": "④ Real-data transferability", "zh": "④ 真实数据迁移性"},
+    "ov.c4_body": {
+        "en": "The *same* DeepFM implementation, **zero model changes**: validation AUC **0.7733** on Criteo "
+              "Display Advertising Challenge (1 M rows) and **0.9183** on UCI Adult. This claims "
+              "*the implementation learns real signal* — **not** that Criteo weights can rank travel items "
+              "(different feature schema). We report honestly that the edge over an LR baseline on Criteo is "
+              "only 0.0017.",
+        "zh": "**同一套** DeepFM 实现、**模型零改动**：Criteo Display Advertising Challenge（100 万行）"
+              "验证 AUC **0.7733**，UCI Adult **0.9183**。这证明的是*实现能在真实数据上学到信号*，"
+              "**不是**「Criteo 权重可以直接给出行物品排序」（特征 schema 不同）。"
+              "同时如实标注：Criteo 上相对 LR 基线仅高 0.0017。",
+    },
+
+    # 研究主线三个发现
+    "ov.k_title": {"en": "The research thread, in three findings", "zh": "研究主线：三个关键发现"},
+    "ov.k1_title": {"en": "The harm is inversion, not inflation", "zh": "危害是排序反转，不是整体偏高"},
+    "ov.k1_body": {
+        "en": "As exposure skew grows (π ∝ popularity^τ), ranking-level Spearman against the true CTR falls "
+              "from **+0.87 (τ=0) to −0.51 (τ=3)**: at τ=3 the leaderboard is *reversed* — cold items, pulled "
+              "toward the smoothing prior by a few accidental clicks, outrank genuinely good ones "
+              "(30 seeds, bootstrap p < 0.001). A mean-only view would call this \"modest bias\".",
+        "zh": "曝光越偏斜（π ∝ 热度^τ），排序级与真实 CTR 的 Spearman 从 **+0.87（τ=0）跌到 −0.51（τ=3）**："
+              "τ=3 时排行榜被*反转*——冷门物品靠少数偶然点击被平滑先验拉高，反超真正优质的物品"
+              "（30 种子，bootstrap p < 0.001）。只看「平均 CTR 偏高多少」会得出「偏差可控」的错误结论。",
+    },
+    "ov.k2_title": {"en": "Debiasing has an effective boundary", "zh": "去偏存在有效边界"},
+    "ov.k2_body": {
+        "en": "Below **ESS/N ≈ 0.358**, IPS/SNIPS gains turn **negative** — the variance cost of importance "
+              "weights exceeds the correction benefit (stable across an 8× scale-up). The boundary is set by "
+              "the **propensity dynamic range**, not by bias strength. Crucially `ESS/N` needs **no ground "
+              "truth**, so it ships as a deployable warning signal: `ess_warning_from_log(log, threshold=0.358)`.",
+        "zh": "**ESS/N ≈ 0.358** 以下，IPS/SNIPS 收益转**负**——重要性权重的方差代价超过纠偏收益"
+              "（8 倍扩规模后仍稳定）。边界由 **propensity 动态范围**决定，不是由偏差强度决定。"
+              "关键在于 `ESS/N` **不需要 ground-truth**，因此可作为线上预警落地："
+              "`ess_warning_from_log(log, threshold=0.358)`。",
+    },
+    "ov.k3_title": {"en": "User-side bias needs user-item granularity", "zh": "用户侧偏差必须在 user-item 粒度建模"},
+    "ov.k3_body": {
+        "en": "Self-selection drifts the pooled-CTR estimand from **0.281 to 0.702** (a 2.5× apparent "
+              "inflation). Debiasing with **item-marginal** propensities leaves a significant residual "
+              "(**+0.06 → +0.22**, p < 0.001) — only correct **user-item-level** propensity debiasing keeps "
+              "error at 0.004–0.037.",
+        "zh": "用户自选让池化 CTR 的估计目标从 **0.281 漂到 0.702**（虚高 2.5 倍）。"
+              "用**物品边际** propensity 去偏会留下显著残余（**+0.06 → +0.22**，p < 0.001）——"
+              "只有**user-item 粒度**的正确 propensity 去偏才能把误差压在 0.004–0.037。",
+    },
+
+    # 为什么值得在意
+    "ov.why_title": {"en": "Why it matters", "zh": "为什么值得在意"},
+    "ov.why_body": {
+        "en": "- **It reframes \"bias\"** from *a number that runs too high* into a **ranking-integrity "
+              "failure** — which is the thing actually worth monitoring in production.\n"
+              "- **It turns \"should we debias?\" into a decision rule** that needs no ground truth, hence "
+              "usable on real logs where the truth is unknowable.\n"
+              "- **It shows the engineering the claims rest on**: decoupled serving, three data tiers, "
+              "**133 tests**, and a **byte-for-byte drift gate** on 7 result JSONs re-run by CI on every push.\n"
+              "- **It keeps the boundary explicit**: synthetic data proves *method validity under controlled "
+              "conditions*, not *online transferability* — and says so everywhere.",
+        "zh": "- **它把「偏差」重新定义**：不是*某个数字偏高*，而是**排序完整性的失效**——"
+              "这才是生产环境真正该监控的东西。\n"
+              "- **它把「要不要去偏」变成一条判据**，且不需要 ground-truth，因此在真值不可知的真实日志上也能用。\n"
+              "- **它把结论所依赖的工程摆出来**：训练推理解耦、三档数据规模、**133 项测试**、"
+              "以及 CI 每次提交都对 7 个结果 JSON 做**逐字节零漂移门禁**。\n"
+              "- **它不藏边界**：合成数据证明的是*方法在受控条件下的有效性*，不是*线上可迁移性*——并且到处都这么说。",
+    },
+
+    # 事实表
+    "ov.facts_title": {"en": "At a glance", "zh": "一眼看全"},
+    "ov.fact.item": {"en": "Item", "zh": "项目"},
+    "ov.fact.value": {"en": "Value", "zh": "内容"},
+    "ov.fact.paper_k": {"en": "Preprint", "zh": "预印本"},
+    "ov.fact.paper_v": {
+        "en": "Preprints 2026, 202610.2582 · DOI 10.20944/preprints202610.2582.v1 (posted 2026-10-27)",
+        "zh": "Preprints 2026, 202610.2582 · DOI 10.20944/preprints202610.2582.v1（2026-10-27 发布）",
+    },
+    "ov.fact.chain_k": {"en": "Pipeline", "zh": "链路"},
+    "ov.fact.chain_v": {
+        "en": "4-way recall → DeepFM CTR + LR CVR → 5-step mixing → fallback → FastAPI / Streamlit",
+        "zh": "四路召回 → DeepFM CTR + LR CVR → 5 步混排 → 降级兜底 → FastAPI / Streamlit",
+    },
+    "ov.fact.tiers_k": {"en": "Data tiers", "zh": "数据档位"},
+    "ov.fact.tiers_v": {
+        "en": "full 100k×100k×5M (citable) · lite 20k×20k×1M · micro 10k×10k×500k (this app)",
+        "zh": "full 10万×10万×500万（可引用）· lite 2万×2万×100万 · micro 1万×1万×50万（本应用）",
+    },
+    "ov.fact.result_k": {"en": "Citable result (full tier)", "zh": "可引用结论（完整档）"},
+    "ov.fact.result_v": {
+        "en": "DeepFM+mixing: +28.5% true CTR vs popularity, reaching 88.4% of the Oracle bound",
+        "zh": "DeepFM+混排：真实 CTR 相对热门 +28.5%，达到 Oracle 上界的 88.4%",
+    },
+    "ov.fact.bias_k": {"en": "Bias research", "zh": "偏差研究"},
+    "ov.fact.bias_v": {
+        "en": "7 experiments, 30-seed mean ± std, numpy-only bootstrap B=10000, all in `data/bias/*.json`",
+        "zh": "7 个实验，30 种子均值±std，纯 numpy bootstrap B=10000，全部落盘 `data/bias/*.json`",
+    },
+    "ov.fact.real_k": {"en": "Real-data validation", "zh": "真实数据验证"},
+    "ov.fact.real_v": {
+        "en": "Criteo 1M AUC 0.7733 (LR 0.7716) · Criteo 200k 0.7586±0.0007 (3 seeds) · UCI Adult 0.9183",
+        "zh": "Criteo 100万行 AUC 0.7733（LR 0.7716）· Criteo 20万行 0.7586±0.0007（3 种子）· UCI Adult 0.9183",
+    },
+    "ov.fact.gate_k": {"en": "Quality gates", "zh": "质量门禁"},
+    "ov.fact.gate_v": {
+        "en": "133 tests · 7 result JSONs byte-for-byte drift-gated in CI · ruff + mypy · "
+             "assertion that the online engine never loads torch",
+        "zh": "133 项测试 · CI 对 7 个结果 JSON 逐字节零漂移门禁 · ruff + mypy · "
+              "断言在线引擎不加载 torch",
+    },
+
+    # 导航地图
+    "ov.map_title": {"en": "Where to look next", "zh": "接下来看哪里"},
+    "ov.map.page": {"en": "Page", "zh": "页面"},
+    "ov.map.what": {"en": "What you'll see", "zh": "你能看到什么"},
+    "ov.map.demo": {"en": "Live Top-K for any user, with per-item predicted CTR / CVR and the reason",
+                    "zh": "任意用户的实时 Top-K，含逐条预估 CTR / CVR 与推荐理由"},
+    "ov.map.bias": {"en": "Drag exposure skew τ and watch the ranking invert in real time; then the ESS/N boundary table",
+                    "zh": "拖动曝光偏斜 τ，实时看排序如何被反转；再看 ESS/N 边界表"},
+    "ov.map.pipeline": {"en": "The 5 mixing steps opened up, stage by stage",
+                    "zh": "把 5 步混排逐步拆开，看每一级的中间态"},
+    "ov.map.true_ctr": {"en": "The citable comparison: every method vs the Oracle ceiling",
+                    "zh": "可引用的对比：各方法 vs Oracle 上界"},
+    "ov.map.ab": {"en": "A simulated A/B, kept deliberately — and labelled non-citable",
+                    "zh": "模拟 A/B，特意保留并明确标注为不可引用"},
+    "ov.map.model": {"en": "DeepFM architecture, real-data AUC, and a live numpy forward pass",
+                    "zh": "DeepFM 结构、真实数据 AUC、以及一次真实的 numpy 前向"},
+
+    # 引用
+    "ov.cite_title": {"en": "If you use this work, please cite", "zh": "如果这项工作的内容对你有用，请引用"},
+    "ov.cite_body": {
+        "en": "Zhao, Y. Bias Propagation and Effective Boundaries of Debiasing in Recommender Systems: "
+              "An Oracle-Based Diagnosis Study. *Preprints* **2026**, 202610.2582. "
+              "https://doi.org/10.20944/preprints202610.2582.v1",
+        "zh": "Zhao, Y. Bias Propagation and Effective Boundaries of Debiasing in Recommender Systems: "
+              "An Oracle-Based Diagnosis Study. *Preprints* **2026**, 202610.2582. "
+              "https://doi.org/10.20944/preprints202610.2582.v1",
+    },
+    "ov.cite_bibtex": {"en": "BibTeX", "zh": "BibTeX"},
+
+    # 页尾的诚实边界（Overview 必须自带，否则「精炼介绍」会变成「过度宣传」）
+    "ov.boundary": {
+        "en": "**Honest boundary** — all data here is synthetic (script-generated, seeded, reproducible); "
+              "**no real business data is used or claimed**. What the numbers establish is *method validity "
+              "under controlled conditions*, **not** online transferability. The full limitation list lives in "
+              "the [README](https://github.com/Elijah-Lin-Dancer/AeroRec#honest-limitations).",
+        "zh": "**诚实边界**——本页全部数据为合成（脚本生成、固定种子、可复现），"
+              "**不使用、也不声称使用任何真实业务数据**。这些数字确立的是*方法在受控条件下的有效性*，"
+              "**不是**线上可迁移性。完整局限清单见 "
+              "[README](https://github.com/Elijah-Lin-Dancer/AeroRec/blob/main/README.zh.md#诚实边界与局限性)。",
     },
 
     # ------------------------------------------------------------ page: demo
@@ -414,8 +662,15 @@ TEXT: dict[str, dict[str, str]] = {
     "bias.series_l1": {"en": "Recall (L1)", "zh": "召回级(L1)"},
     "bias.series_l3": {"en": "Mixing (L3)", "zh": "混排级(L3)"},
     "bias.line_caption": {
-        "en": "Current τ={tau:.1f} → ranking-level spearman={sp:+.3f} (below the zero line = the “ranking inverted” region).",
-        "zh": "当前 τ={tau:.1f} → 排序级 spearman={sp:+.3f}（零线以下即「排序被反转」区）。",
+        "en": "Current τ={tau:.1f} → ranking-level spearman={sp:+.3f} (below the zero line = the “ranking "
+              "inverted” region).\n\nReading note — two curves overlap on purpose: with the project default "
+              "`w_base = 0` the mixing score **is** the ranking score, so **L3 lies exactly on L2**; and L1 is "
+              "derived from the exposure share alone, so it tracks τ monotonically **by construction**. "
+              "Neither is a finding — they are definitions, shown so you can see where the damage enters.",
+        "zh": "当前 τ={tau:.1f} → 排序级 spearman={sp:+.3f}（零线以下即「排序被反转」区）。\n\n"
+              "读图说明——有两条曲线是**按定义重合**的：项目默认 `w_base = 0`，混排得分**就是**排序得分，"
+              "故 **L3 严格落在 L2 上**；而 L1 只由曝光份额推导，因此**按构造**对 τ 单调。"
+              "这两条都不是发现，是定义——放在图上是让你看清「破坏是从哪一级进来的」。",
     },
     "bias.sub_scatter": {"en": "True CTR vs. smoothed CTR (current τ)", "zh": "真实 CTR vs 平滑 CTR（当前 τ）"},
     "bias.scatter_x": {"en": "True CTR", "zh": "真实CTR"},
@@ -434,6 +689,80 @@ TEXT: dict[str, dict[str, str]] = {
     "bias.bar_caption": {
         "en": "The long tail is pressed toward 0: a few popular items monopolize exposure; cold items are barely observed.",
         "zh": "长尾被压到接近 0：少数热门独占曝光，冷门几乎不被观测。",
+    },
+
+    # bias 页第二个标签：去偏的有效边界（结论落地点，不能只放在报告里）
+    "bias.tab_sweep": {"en": "Exposure sweep (τ)", "zh": "曝光扫描（τ）"},
+    "bias.tab_boundary": {"en": "Debiasing boundary (ESS/N)", "zh": "去偏有效边界（ESS/N）"},
+    "bnd.info": {
+        "en": "The first tab shows *that* bias wrecks the ranking. This one shows **when debiasing stops "
+              "paying off** — the project's single most actionable result.\n\n"
+              "Sweep the propensity's dynamic range `π_max/π_min`; below **ESS/N ≈ 0.358** the variance cost "
+              "of importance weights exceeds the correction benefit and IPS/SNIPS **gain turns negative**. "
+              "Note `naive_err` stays flat at 0.0024 across the whole sweep: the boundary is not about "
+              "*when naive becomes wrong*, it is about *when paying variance to fix that 0.0024 stops being worth it*.",
+        "zh": "上一个标签说明偏差**会**毁掉排序；这一页说明**去偏何时开始不划算**——本项目最可落地的一条结论。\n\n"
+              "扫描 propensity 的动态范围 `π_max/π_min`：**ESS/N ≈ 0.358** 以下，重要性权重的方差代价超过纠偏收益，"
+              "IPS/SNIPS 的**收益转为负**。注意 `naive_err` 全程恒为 0.0024——"
+              "边界说的不是*naive 何时开始不准*，而是*花方差代价去纠正那 0.0024 何时开始不划算*。",
+    },
+    "bnd.sub_table": {"en": "Measured boundary (n_records = 20000, 250 seeds)",
+                      "zh": "实测边界（n_records = 20000，250 种子）"},
+    "bnd.col.range": {"en": "Propensity range", "zh": "propensity 范围"},
+    "bnd.col.ratio": {"en": "π_max/π_min", "zh": "π_max/π_min"},
+    "bnd.col.ess": {"en": "ESS/N", "zh": "ESS/N"},
+    "bnd.col.naive": {"en": "Naive err", "zh": "naive 误差"},
+    "bnd.col.snips": {"en": "SNIPS err", "zh": "SNIPS 误差"},
+    "bnd.col.gain": {"en": "Gain", "zh": "增益"},
+    "bnd.col.verdict": {"en": "Verdict", "zh": "判定"},
+    "bnd.verdict_ok": {"en": "debias helps", "zh": "去偏有益"},
+    "bnd.verdict_flat": {"en": "no measurable change", "zh": "无显著差异"},
+    "bnd.verdict_edge": {"en": "◀ boundary", "zh": "◀ 边界"},
+    "bnd.verdict_bad": {"en": "debias hurts", "zh": "去偏有害"},
+    "bnd.cross": {
+        "en": "**Measured boundary: ESS/N ≈ {cross:.4f}** — stable across an 8× scale-up (0.3576 → 0.3579), "
+              "so it is a property of the weighting scheme, not of this sample size.",
+        "zh": "**实测边界：ESS/N ≈ {cross:.4f}**——8 倍扩规模后仍稳定（0.3576 → 0.3579），"
+              "说明它是加权方案的性质，不是这次抽样规模的偶然。",
+    },
+    "bnd.chart_title": {"en": "SNIPS error and gain vs ESS/N", "zh": "SNIPS 误差与增益随 ESS/N 的变化"},
+    "bnd.chart_x": {"en": "ESS/N", "zh": "ESS/N"},
+    "bnd.chart_y": {"en": "Error / gain", "zh": "误差 / 增益"},
+    "bnd.series_snips": {"en": "SNIPS error", "zh": "SNIPS 误差"},
+    "bnd.series_naive": {"en": "Naive error", "zh": "naive 误差"},
+    "bnd.series_gain": {"en": "Gain (naive − SNIPS)", "zh": "增益（naive − SNIPS）"},
+    "bnd.chart_caption": {
+        "en": "Read it this way: the naive error line is flat (the estimator is not broken); what collapses "
+              "is the *gain* — once ESS/N falls under the boundary, correcting costs more variance than it buys in bias.",
+        "zh": "读法：naive 误差那条线是平的（估计量本身没坏）；塌下去的是*增益*——"
+              "ESS/N 一旦跌到边界以下，纠偏付出的方差就超过它换回的偏差。",
+    },
+    "bnd.takeaway": {
+        "en": "**Why this is the deployable part**: `ESS/N` requires only the propensity and the sample size — "
+              "**no ground truth**. In a real system \"how large is the bias\" is exactly what you cannot "
+              "measure, so a warning signal that avoids it is the difference between a research result and "
+              "something you can actually ship: `ess_warning_from_log(log, threshold=0.358)`.",
+        "zh": "**为什么这条最能落地**：`ESS/N` 只需要 propensity 与样本量，**不需要 ground-truth**。"
+              "在真实系统里，「偏差到底有多大」恰恰是测不出来的——"
+              "所以一个绕开它的预警信号，才是「研究结论」与「能上线的东西」之间的差别："
+              "`ess_warning_from_log(log, threshold=0.358)`。",
+    },
+    "bnd.robust": {
+        "en": "**Is it robust to a real system's weakness?** Yes, at this scale. Replacing the closed-form π "
+              "with a **log-estimated π̂** leaves SNIPS error unchanged (Δ ≈ −0.002, **p = 0.87**), and the "
+              "ESS/N warning stays **fail-safe**: false alarms possible, **zero misses**. Caveat: a real "
+              "system's estimation error can be larger than modelled here, so the practical boundary would be "
+              "*stricter*, not looser.",
+        "zh": "**它对真实系统的软肋稳健吗？** 在本规模下是的。把闭式 π 换成**日志估计的 π̂** 后，"
+              "SNIPS 误差变化不显著（Δ ≈ −0.002，**p = 0.87**），且 ESS/N 预警保持 **fail-safe**："
+              "可能误报，**零漏报**。但需说明：真实系统的估计误差可能大于本实验建模的量，"
+              "因此实际边界只会*更严苛*，不会更宽松。",
+    },
+    "bnd.caveat": {
+        "en": "**Do not port the number, port the method.** 0.358 was measured at this project's scale and "
+              "prior; the transferable asset is *using ESS/N as a warning*, not this constant.",
+        "zh": "**可迁移的是方法，不是这个数字。** 0.358 是在本项目的规模与先验下测出的；"
+              "真正可迁移的是*用 ESS/N 作预警*这件事，而不是这个常数。",
     },
 
     # -------------------------------------------------------- page: model
@@ -520,18 +849,63 @@ TEXT: dict[str, dict[str, str]] = {
               "不同用户 / 物品分数不同，证明模型是真实在跑。",
     },
 
+    # 第二个真实数据集：单靠 Criteo 会被质疑「只是碰巧它适合稀疏特征」，
+    # 补一份结构完全不同（稠密为主、二分类表格数据）的数据集才构成迁移性证据。
+    "model.sub_adult": {"en": "Second real dataset: UCI Adult / Census Income",
+                        "zh": "第二个真实数据集：UCI Adult / Census Income"},
+    "model.adult_info": {
+        "en": "Deliberately a **different shape** from Criteo: 6 dense + 8 sparse (low cardinality), 48,842 "
+              "rows, binary income classification — a task that has nothing to do with advertising. The same "
+              "`(dense, sparse) → binary` interface and the same DeepFM code train on it unchanged.",
+        "zh": "刻意选一份与 Criteo **形状不同**的数据：6 稠密 + 8 稀疏（低基数）、48,842 行、"
+              "二分类收入预测——与广告毫无关系的任务。同一套 `(dense, sparse) → 二元` 接口、"
+              "同一份 DeepFM 代码，零改动直接训练。",
+    },
+    "model.adult_success": {
+        "en": "**Result**: validation AUC **{adult:.4f}** on {n_val:,} held-out rows (LR baseline "
+              "{adult_lr:.4f}, constant baseline 0.5000). Combined with Criteo's 0.7733, the evidence is "
+              "that *the implementation* transfers — while the travel-domain numbers remain synthetic by design.",
+        "zh": "**结果**：{n_val:,} 行留出集上验证 AUC **{adult:.4f}**（LR 基线 {adult_lr:.4f}，"
+              "常数基线 0.5000）。与 Criteo 的 0.7733 合起来，证明的是*实现本身*可迁移——"
+              "而出行域的数值仍按设计为合成。",
+    },
+    "model.sub_repro": {"en": "Reproducibility is enforced, not promised", "zh": "复现性是被强制的，不是被承诺的"},
+    "model.repro_info": {
+        "en": "- **133 tests** (`pytest`) in CI on every push: data / recall / ranking / mixing / online "
+              "engine / FastAPI error codes / bias estimators / boundary / loaders.\n"
+              "- **Byte-for-byte drift gate**: CI re-runs all 7 bias experiments with **numpy only** and fails "
+              "if `data/bias/*.json` differ by a single byte.\n"
+              "- **Zero-heavy-dependency assertion**: the bias research path may not import "
+              "torch / sklearn / pandas — enforced in CI, not by convention.\n"
+              "- **Memory discipline assertion**: the online benchmark asserts `torch_loaded = false`.\n"
+              "- Seeding is explicit (`src/rank/trainer.py`): DeepFM weights are initialised *after* "
+              "`torch.manual_seed`, otherwise AUC drifts ~0.004 across environments.",
+        "zh": "- **133 项测试**（`pytest`）每次 push 在 CI 跑：数据 / 召回 / 排序 / 混排 / 在线引擎 / "
+              "FastAPI 错误码 / 偏差估计 / 边界 / 数据加载。\n"
+              "- **逐字节零漂移门禁**：CI 只用 **numpy** 重跑全部 7 个偏差实验，"
+              "`data/bias/*.json` 差一个字节即失败。\n"
+              "- **零重依赖断言**：偏差研究路径不得 import torch / sklearn / pandas——由 CI 强制，不靠自觉。\n"
+              "- **内存纪律断言**：在线基准断言 `torch_loaded = false`。\n"
+              "- 播种显式化（`src/rank/trainer.py`）：DeepFM 权重必须在 `torch.manual_seed` **之后**初始化，"
+              "否则同一份代码跨环境 AUC 会漂移约 0.004。",
+    },
+
     # ------------------------------------------------------------ footer
     "foot.body": {
         "en": "<b>AeroRec</b> · Travel Recommendation Platform<br>"
               "This instance runs the micro tier (10k users × 10k items × 500k impressions); data is "
               "script-generated and reproducible; the model is offline pre-trained + numpy inference, "
               "with no torch / sklearn on the online side.<br>"
+              "Preprint: <a href=\"https://doi.org/10.20944/preprints202610.2582.v1\">DOI 10.20944/preprints202610.2582.v1</a> "
+              "(Preprints 2026, 202610.2582)<br>"
               "<a href=\"https://github.com/Elijah-Lin-Dancer/AeroRec\">Repository</a> · "
               "<a href=\"https://github.com/Elijah-Lin-Dancer/AeroRec/blob/main/docs/bias_report.md\">Bias-diagnosis tech report</a> · "
               "<a href=\"https://github.com/Elijah-Lin-Dancer/AeroRec/blob/main/data/bias/report.html\">Visual report</a>",
         "zh": "<b>AeroRec</b> · 出行智能推荐中台<br>"
               "本实例运行 micro 档（1 万用户 × 1 万物品 × 50 万曝光），数据由脚本合成、可复现；"
               "模型为离线预训练 + numpy 推理，在线侧不依赖 torch / sklearn。<br>"
+              "论文预印本：<a href=\"https://doi.org/10.20944/preprints202610.2582.v1\">DOI 10.20944/preprints202610.2582.v1</a>"
+              "（Preprints 2026, 202610.2582）<br>"
               "<a href=\"https://github.com/Elijah-Lin-Dancer/AeroRec\">完整仓库</a> · "
               "<a href=\"https://github.com/Elijah-Lin-Dancer/AeroRec/blob/main/docs/bias_report.md\">偏差诊断 tech report</a> · "
               "<a href=\"https://github.com/Elijah-Lin-Dancer/AeroRec/blob/main/data/bias/report.html\">可视化报告</a>",
