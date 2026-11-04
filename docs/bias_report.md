@@ -2,7 +2,13 @@
 
 > 本文档记录 AeroRec 研究主线（M1–M6）的完整结论、关键实现约束与可复现路径。
 > 所有数字均由 `scripts/run_bias_experiments.py` 与 `scripts/build_bias_report.py` 在固定种子下产出，
-> 可在本仓库一键复现。原始产物：`data/bias/{propagation,injection,boundary}.json`；可视化版本：`data/bias/report.html`。
+> 可在本仓库一键复现。原始产物：`data/bias/*.json`（**7 个实验**：propagation / injection / boundary /
+> estimand_check / boundary_sweep / propensity_estimation / userbias）；可视化版本：`data/bias/report.html`。
+>
+> **已发表预印本（Preprints.org）**：*Bias Propagation and Effective Boundaries of Debiasing in
+> Recommender Systems: An Oracle-Based Diagnosis Study* — Preprints **2026**, 202610.2582 ·
+> [DOI 10.20944/preprints202610.2582.v1](https://doi.org/10.20944/preprints202610.2582.v1) ·
+> [PDF](paper/AeroRec-preprints.org-v1.pdf)
 
 ---
 

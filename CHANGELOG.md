@@ -11,12 +11,56 @@
   发布版 PDF 归档于 `docs/paper/AeroRec-preprints.org-v1.pdf`（平台排版版，
   14 页，CC BY 4.0），README（中/英）新增 DOI 徽章、发布展示区、
   引用格式与 BibTeX（`zhao2026aerorec`）。
+- **Streamlit 新增「项目总览」页（Overview），并设为默认落地页**（全站第 7 页）：
+  一屏回答「这个项目做了什么 / 四个关键数字（+28.5% 真实 CTR、88.4% Oracle 上界、
+  ESS/N 0.358、Criteo AUC 0.7733）/ 研究主线三条结论 / 为什么值得在意 / 如何引用」，
+  含 BibTeX 与诚实边界声明。动机：多数访客既不读论文、也不翻仓库源码。
+- **偏差诊断页扩为两个标签**：「曝光扫描（τ）」保留原交互；新增
+  「去偏有效边界（ESS/N）」标签，把 `data/bias/boundary.json` 的 6 档边界直接画成
+  表格 + 曲线（含容差三态判定与 fail-safe 稳健性说明），页面不手打任何边界值。
+- **模型与验证页新增两节**：第二个真实数据集 UCI Adult（AUC 0.9183 / LR 0.9113 /
+  48,842 行）与「复现性是被强制的」区块（133 测试、7 JSON 逐字节门禁、
+  零重依赖断言、内存纪律断言、显式播种）。
+- **侧边栏与页脚新增预印本入口**（DOI · 出版社页面 · 发布版 PDF），页头正下方加
+  「已发表预印本」条 —— 首屏即见，不再只藏在 README 里。
+- **论文 6 图入库** `docs/paper/figures/`，配套 `scripts/make_paper_figures.py`
+  （直接读 `data/bias/*.json`，固定种子，可逐字节重生成；dpi 300–340 满足
+  ChinaXiv 有效 dpi ≥300）与 `docs/paper/README.md`（材料清单 + 图↔产物同源说明）。
+- **Pages 主页补两项扩展实验**：用户侧偏差的 user-item 粒度结论（β 扫描表）与
+  propensity 估计误差的稳健性（Δ=−0.0022，p=0.87，零漏报），并嵌入论文图 2/图 3。
 
 ### Changed
 - **仓库主 README 语言切换为英文**：英文版升为主 `README.md`，
   中文版移至 `README.zh.md`；两个版本的语言切换链接、
   Documentation 表与引用点同步更新，英文主 README 新增
   徽章行（含 DOI）与 "Published Preprint" 展示区。
+- **英文主 README 由摘要版补齐为完整版**（154 → 622 行）：新增截图、背景、21 项功能
+  清单、快速开始全命令、数据与复现（为什么合成数据 / 数据许可表 / 复现性 CI /
+  三档规模 / 训练推理解耦长文 / 推理基准）、方法与四组离线结果、目录结构、
+  诚实边界与已知局限，与中文版信息对等；中文版保留更详尽的工程论证。
+- **Pages 主页与文档同步到最新状态**：导航由「六页」改「七页」（含项目总览）、
+  测试数 107 → 133、Adult 对照列补 LR 基线、页脚加 DOI。
+- `docs/tech-report.md`、`docs/bias_report.md`、`docs/research_highlight.md`
+  均在开头标注已发表预印本与 DOI；`bias_report.md` 的产物清单由 3 个更正为 7 个。
+- 演示截图全部重截（`docs/assets/`，2720×3000 与旧图同规格，隐藏 Streamlit 工具栏），
+  并新增 `overview_en.png`；两版 README 的截图区改为「总览页 1 张大图 + 4 张 2×2」。
+
+### Fixed
+- **交互偏差页 τ=0 处的 L1 伪相关**：τ=0 时 L1 估计 `tmean·C·π` 是常数向量，
+  `_rank` 的稳定排序把「全等值」排成物品下标，与真值求秩相关得出纯伪相关
+  （60 物品、单种子下约 +0.176，图上表现为一条陡降红线）。现对常数估计把
+  spearman 约定为 0（数学上常数序列不携带排序信息）。**只改交互展示**，
+  不动 `src/bias/propagation.py` 的统计口径，故 `data/bias/*.json` 与论文数字
+  逐字节不变（落库 500 物品/30 种子版该值为 −0.0197，本就近零）。
+- **边界表判定与增益量级不符**：原按 gain 正负二分会把 gain=−0.0001 报成
+  「去偏有害」、与 ESS/N=0.905 自相矛盾；改为带 `tolerance_used`（0.001）的
+  三态判定（有益 / 无显著差异 / 有害），边界档单独标注。
+- **中文 README 两处指向不存在章节的引用**（「见下『真实数据验证』一节」、
+  「见『真实数据验证』一节」），改指实际存在的「数据许可」小节与结果 JSON。
+- **中文 README 边界表漏 `[0.002, 2.0]` 一档**（JSON 有 6 行、文档只列 5 行）。
+- **英文 README 的 `[README.md](README.md)` 自链**（License 节）改为指向本文档的
+  Data licensing 小节。
+- **CHANGELOG 图数描述** 4 图 → 6 图。
 
 ## [0.2.0] - 2026-10-15
 
@@ -29,8 +73,8 @@ Table 5–8 对应的 4 个实验在其后加入）。
   `src/bias/userbias.py` → `data/bias/propensity_estimation.json`、
   `data/bias/userbias.json`；
 - 历史补测落盘：`estimand_check.json`、`boundary_sweep.json`；
-- 论文预印本 PDF（`docs/paper/AeroRec-preprint.pdf`，4 图 8 表）
-  及生成图 `figures/`（数据直读产物 JSON）。
+- 论文预印本 PDF（`docs/paper/AeroRec-preprint.pdf`，**6 图 8 表**：另有框架图与
+  用户侧偏差图）及生成图 `docs/paper/figures/`（数据直读产物 JSON，可逐字节重生成）。
 
 ### Changed
 - 零漂移门禁扩至 7 个产物 JSON；

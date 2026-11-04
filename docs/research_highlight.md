@@ -3,6 +3,11 @@
 *AeroRec · travel-recommendation platform · one-page research summary*
 *(full report: [`docs/bias_report.md`](bias_report.md) · interactive: [`data/bias/report.html`](../data/bias/report.html))*
 
+> **Published as a preprint**: *Bias Propagation and Effective Boundaries of Debiasing in Recommender Systems:
+> An Oracle-Based Diagnosis Study* — Yulin Zhao, *Preprints* **2026**, 202610.2582.
+> DOI [10.20944/preprints202610.2582.v1](https://doi.org/10.20944/preprints202610.2582.v1) ·
+> [PDF](paper/AeroRec-preprints.org-v1.pdf)
+
 ---
 
 ## 1. Problem
