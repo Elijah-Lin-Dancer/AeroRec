@@ -56,12 +56,19 @@ https://doi.org/10.20944/preprints202610.2582.v1
 ## 效果预览
 
 <p align="center">
+  <img src="docs/assets/overview_en.png" width="72%">
+</p>
+
+<p align="center">
   <img src="docs/assets/demo_en.png" width="49%">
   <img src="docs/assets/bias_en.png" width="49%">
   <img src="docs/assets/model_en.png" width="49%">
   <img src="docs/assets/bias_zh.png" width="49%">
 </p>
 
+> 上：应用现在默认打开的是**项目总览**页——一屏讲清「做了什么、四个关键数字、三条研究结论、怎么引用」。
+> 下：实时推荐、偏差扫描、模型页，以及同一个偏差页的中文界面。
+>
 > Demo 全站支持**中英文一键切换**（侧边栏顶部 🌐 Language / 语言，默认 English）。
 
 ---
@@ -88,7 +95,7 @@ https://doi.org/10.20944/preprints202610.2582.v1
 - [x] 降级兜底：CTR 服务超时 → 历史平均 CTR 兜底
 - [x] 离线评估：LR vs DeepFM 的 AUC 对比 + 推荐列表真实 CTR 对比
 - [x] 服务化 API（FastAPI：推荐 / 排序流程 / A/B）
-- [x] 可解释面板（Streamlit **六页、中英双语可切换**：推荐演示 / 偏差诊断 / 排序流程 / 真实 CTR 对比 / 模拟 A/B / 模型与验证）
+- [x] 可解释面板（Streamlit **七页、中英双语可切换**：项目总览 / 推荐演示 / 偏差诊断 / 排序流程 / 真实 CTR 对比 / 模拟 A/B / 模型与验证）
 - [x] **在线推理性能基准**（micro 档实测：冷启动 init ≈ 0.08s、单线程 P50 ≈ 0.7ms / P99 ≈ 1ms、峰值 RSS ≈ 129MB、服务期不加载 torch，见 `scripts/bench_inference.py`）
 - [x] 模拟 A/B 报告（多目标 CTR+CVR，点击率 / 转化率双提升）
 - [x] **真实 CTR 口径评估 + Oracle 上界**（修正热门基线的平滑稀疏偏差，结论可引用）
@@ -131,11 +138,11 @@ streamlit run app.py                    # 交互式 Demo，默认 micro 档（�
 AEROREC_MODE=lite  streamlit run app.py # 轻量档（~0.93GB）
 AEROREC_MODE=full  streamlit run app.py # 完整档（需 ~1.5GB 内存）
 uvicorn src.serve.app:app --port 8000    # FastAPI 服务（推荐 / 排序流程 / A/B）
-python -m pytest tests/ -q              # 冒烟测试（107 项）
+python -m pytest tests/ -q              # 全量测试（133 项）
 python3.11 scripts/run_bias_experiments.py   # 偏差传播 + 去偏实验（产出 data/bias/*.json）
 python3.11 scripts/build_bias_report.py      # 生成自包含 HTML 可视化报告
 python3.11 scripts/validate_real_data_deepfm.py --dataset adult   # 真实数据迁移性验证（UCI Adult）
-# 真实 Criteo 验证需本机下载数据放入 data/criteo/（见「真实数据验证」一节）
+# 真实 Criteo 验证需本机下载数据放入 data/criteo/（见「数据许可」一节与 scripts/validate_real_data_deepfm.py）
 ```
 
 > **`requirements.txt` 为什么只有 numpy + streamlit**：Streamlit Community Cloud
@@ -433,6 +440,7 @@ naive 池化 CTR 对 `T_exp = Σ truth·π`（曝光分布下的平均真实 CTR
 | [1, 1] | 1 | 1.0000 | 0.0024 | 0.0024 | +0.0000 |
 | [0.5, 1.5] | 3 | 0.9052 | 0.0024 | 0.0026 | −0.0001 |
 | [0.05, 2.0] | 40 | **0.3579** | 0.0024 | 0.0041 | −0.0017 ← 边界 |
+| [0.002, 2.0] | 1 000 | 0.0482 | 0.0024 | 0.0109 | −0.0084 |
 | [1e-4, 2.0] | 20 000 | 0.0064 | 0.0024 | 0.0330 | −0.0306 |
 | [1e-6, 2.0] | 2 000 000 | 0.0031 | 0.0024 | 0.0651 | −0.0627 |
 
@@ -512,6 +520,8 @@ tests/test_criteo*.py      Criteo 加载器单测（构造样本 + 真实 parque
 tests/test_real_data.py    UCI Adult 加载器测试
 docs/bias_report.md          偏差传播诊断与去偏验证 tech report
 docs/paper/                  论文预印本（Preprints.org 已发布 v1 + 作者排版版）
+docs/paper/figures/          论文 6 张图（由 data/bias/*.json 直接生成，可逐字节重生成）
+scripts/make_paper_figures.py 论文图生成脚本（数据直读产物 JSON，dpi 300–340）
 docs/tech-report.md          面向论文读者的技术文档（实验配置 + 原始数据）
 data/bias/                   偏差实验产物（propagation/injection/boundary.json + report.html）
 data/real_validation/        真实数据验证结果（Criteo 100 万 / 20 万行 + Adult）
@@ -519,7 +529,7 @@ artifacts/micro/           离线预训练的在线权重（numpy，约 29KB）
 requirements.txt           部署依赖（仅 numpy + streamlit，Streamlit Cloud 读这个）
 requirements_full.txt      完整依赖（含 torch / sklearn / pandas，本地开发与离线复现）
 pyproject.toml             打包元信息 + pytest / ruff / mypy / coverage 配置
-CHANGELOG.md               变更日志（Keep a Changelog 风格，W 里程碑 + 日期）
+CHANGELOG.md               变更日志（Keep a Changelog 风格；当前版本锚点 v0.2.0）
 LICENSE                    MIT 许可
 ```
 
@@ -540,12 +550,13 @@ LICENSE                    MIT 许可
   同一套 `DeepFM`（与合成链路完全一致的实现）在两份真实、公开、可引用的数据上取得验证 AUC：
   **Criteo Display Advertising Challenge**（真实 CTR，13 稠密 + 26 稀疏，全量 100 万行，验证 AUC **0.7733**，
   见 `data/real_validation/result.json`）与 **UCI Adult / Census Income**（同构 `(dense, sparse)→二元`，
-  验证 AUC **0.9183**）。两者证明模型实现能在真实数据上学到信号。
+  验证 AUC **0.9183**，同数据 LR 基线 0.9113）。两者证明模型实现能在真实数据上学到信号。
   **然而**这两份数据**都不是出行域流量**；合成指标（AUC 0.8019、相对热门 +28.5%）
   向真实出行流量的外推性**仍待验证**。
 - **Criteo 上深度交叉项未显现出明显优势。** 100 万行档 DeepFM 验证 AUC **0.7733**，
   同数据 LR 基线 **0.7716**，**差距仅 0.0017**，在单次运行下难以排除随机性（该档未做多种子方差估计；
-  20 万行档已补 3 种子误差棒 **0.7586 ± 0.0007**，见下「真实数据验证」一节）。
+  20 万行档单种子 **0.7583**、3 种子误差棒 **0.7586 ± 0.0007**，
+  见 `data/real_validation/result_criteo_200k_3seeds.json`）。
   因此本节只声称「同一份实现能处理真实 CTR 数据、学到强信号（≫ 0.5）」，
   **不声称**深度交叉项在真实数据上带来增量。Criteo 以高基数稀疏类别特征为主，
   线性模型在此类任务上本就接近强基线，这一结果与文献观察一致。
