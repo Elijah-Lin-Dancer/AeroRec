@@ -549,6 +549,8 @@ tests/test_criteo*.py        Criteo loader tests (synthetic sample + real parque
 tests/test_real_data.py      UCI Adult loader tests
 docs/bias_report.md          bias-propagation diagnosis and debiasing validation tech report
 docs/paper/                  preprint (Preprints.org v1 + author-typeset version)
+docs/paper/PROVENANCE.md     provenance: which artifact backs which table/figure
+scripts/audit_paper_numbers.py  re-checks the paper's 8 tables against data/*.json
 docs/tech-report.md          paper-reader technical doc (experiment config + raw numbers)
 data/bias/                   bias experiment artifacts (propagation/injection/boundary.json + report.html)
 data/real_validation/        real-data validation results (Criteo 1 M / 200 k + Adult)
@@ -622,6 +624,7 @@ LICENSE                      MIT license
 | [docs/research_highlight.md](docs/research_highlight.md) | One-page EN research summary |
 | [data/bias/report.html](data/bias/report.html) | Self-contained visual report |
 | [docs/paper/](docs/paper/) | Preprint PDFs + the 6 figures, all regenerable from `data/bias/*.json` |
+| [docs/paper/PROVENANCE.md](docs/paper/PROVENANCE.md) | Number-by-number trace from every table/figure to the artifact file that produces it |
 | [CHANGELOG.md](CHANGELOG.md) | Version history ([0.2.0] = 2026-10-15) |
 
 ## License

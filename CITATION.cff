@@ -27,12 +27,14 @@ keywords:
 authors:
   - family-names: Zhao
     given-names: Yulin
+    orcid: "https://orcid.org/0009-0005-4623-8465"
 preferred-citation:
   type: article
   title: "Bias propagation and effective boundaries of debiasing in recommender systems: An oracle-based diagnosis study"
   authors:
     - family-names: Zhao
       given-names: Yulin
+      orcid: "https://orcid.org/0009-0005-4623-8465"
   year: 2026
   journal: Preprints
   doi: "10.20944/preprints202610.2582.v1"

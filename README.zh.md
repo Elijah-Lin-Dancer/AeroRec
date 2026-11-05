@@ -521,6 +521,8 @@ tests/test_real_data.py    UCI Adult 加载器测试
 docs/bias_report.md          偏差传播诊断与去偏验证 tech report
 docs/paper/                  论文预印本（Preprints.org 已发布 v1 + 作者排版版）
 docs/paper/figures/          论文 6 张图（由 data/bias/*.json 直接生成，可逐字节重生成）
+docs/paper/PROVENANCE.md     数字溯源：论文每张表/每张图对应哪个产物文件
+scripts/audit_paper_numbers.py 论文 8 张表 ↔ 产物 JSON 的自动核对
 scripts/make_paper_figures.py 论文图生成脚本（数据直读产物 JSON，dpi 300–340）
 docs/tech-report.md          面向论文读者的技术文档（实验配置 + 原始数据）
 data/bias/                   偏差实验产物（propagation/injection/boundary.json + report.html）

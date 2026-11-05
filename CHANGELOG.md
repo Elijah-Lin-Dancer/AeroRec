@@ -6,6 +6,12 @@
 ## [Unreleased]
 
 ### Added
+- **论文数字溯源审计**：新增 `docs/paper/PROVENANCE.md`（8 张表 / 6 张图 → 产物文件的
+  逐项对应 + 冻结文件清单）与 `scripts/audit_paper_numbers.py`（逐单元格比对，支持
+  `--strict` 接 CI）。首次全量核对结果：**207 项中 206 一致、1 项已知差异、0 不一致**；
+  另用内嵌位图比对确认仓库 6 张图与已发布 PDF 的 Figure 2–6 一一对应（MAE ≈ 0.2）。
+  已知差异为论文 §4.3 的 `0.3576`——当前实现同配置复算为 `0.3625`（差 0.0049，稳定性
+  结论不变），已在三份文档与溯源文件中标注。
 - **软件归档元数据**：新增 `CITATION.cff`（GitHub 侧栏 "Cite this repository" 可直接
   产出 BibTeX，并由 `preferred-citation` 指向预印本）与 `.zenodo.json`（Zenodo 归档页
   标题/作者/许可/关键词，并通过 `related_identifiers` 与预印本 DOI 双向绑定）。
