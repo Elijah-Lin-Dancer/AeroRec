@@ -19,13 +19,17 @@ docs/paper/PROVENANCE.md 里写明原因——不允许脚本自己给自己发�
 from __future__ import annotations
 
 import argparse
+import difflib
 import json
 import re
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-PAPER_MD = ROOT.parent / "AeroRec-论文终稿-精确数字版.md"   # 论文源文件在仓库外
+# 论文源文的唯一权威副本在仓库内。仓库外曾有一份工作副本，已迁移至此；
+# 两侧若同时存在且内容不同，说明有人在改错的文件，直接报错而不是静默取其一。
+PAPER_MD = ROOT / "docs/paper/manuscript.md"
+PAPER_MD_STALE = ROOT.parent / "AeroRec-论文终稿-精确数字版.md"
 DATA = ROOT / "data"
 
 # 跨规模稳定性基线：论文 §4.3 与 Fig. 3 图注的报告值，由 boundary_by_range 现场复算比对。
@@ -105,6 +109,19 @@ def main() -> int:
     if not PAPER_MD.exists():
         print(f"[skip] 找不到论文源文件 {PAPER_MD}，仅做产物自检")
         return 0
+
+    # 仓库外若还留着一份内容不同的工作副本，说明改错了文件——直接失败，避免
+    # "审计通过但审的是旧稿"这种最坏情况。
+    if PAPER_MD_STALE.exists():
+        text = PAPER_MD.read_text(encoding="utf-8")
+        paper_body = text.split("-->", 1)[1].lstrip("\n") if text.startswith("<!--") else text
+        old_lines = PAPER_MD_STALE.read_text(encoding="utf-8").splitlines()
+        if old_lines != paper_body.splitlines():
+            print(f"[FAIL] {PAPER_MD_STALE.name} 与 docs/paper/manuscript.md 内容不同")
+            for line in list(difflib.unified_diff(old_lines, paper_body.splitlines(), lineterm=""))[:20]:
+                print("  " + line)
+            print("  论文源文以仓库内 docs/paper/manuscript.md 为准，请同步或删除仓库外副本。")
+            return 1
 
     md = table_blocks(PAPER_MD.read_text(encoding="utf-8").splitlines())
     a = Audit()

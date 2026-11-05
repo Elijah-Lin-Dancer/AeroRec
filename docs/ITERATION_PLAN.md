@@ -65,6 +65,14 @@
 - [x] 新增 `docs/ITERATION_PLAN.md`（本文件）
 - [x] commit + push，`preprint-v1` 与 `v1.0.0` 保持原位
 
+**5a-补 — 源文入库与 CI 门禁（已提交）**
+
+- [x] 论文源文入库为 `docs/paper/manuscript.md`（带 v2 版本说明注释），成为唯一权威副本
+- [x] `audit_paper_numbers.py` 改读仓库内副本；仓库外若留有不一致的工作副本则直接失败并打印 diff
+- [x] `.github/workflows/repro.yml` 的 `bias-experiments` job 挂上 `audit_paper_numbers.py --strict`
+      *（此前 `--strict` 只是能力，没有任何地方调用；现在每次 push 都会真的校验论文数字）*
+- [x] `docs/paper/README.md` 清单收录 `manuscript.md`；`PROVENANCE.md` 第 4 节说明 CI 门禁
+
 **5b — v2 上线后收尾（待办）**
 
 - [ ] 放入正式 PDF 为 `docs/paper/AeroRec-preprints.org-v2.pdf`，删除 `-draft` 后缀的中间稿

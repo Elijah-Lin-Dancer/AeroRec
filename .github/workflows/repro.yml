@@ -80,6 +80,12 @@ jobs:
             data/bias/userbias.json
           echo "✓ committed JSON matches recomputation byte-for-byte"
 
+      # 论文里的每一个数字都必须能在上面这些产物里找到出处，且跨规模基线要能
+      # 现场复算出来。差一处即红——这比"人工核对一遍"可靠，也防止以后改产物
+      # 时悄悄与论文脱节。
+      - name: Audit paper numbers against artifacts
+        run: python scripts/audit_paper_numbers.py --strict
+
       - name: Upload experiment artifacts
         if: always()
         uses: actions/upload-artifact@v4

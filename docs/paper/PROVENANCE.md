@@ -69,6 +69,12 @@ python scripts/audit_paper_numbers.py           # 逐单元格比对 8 张表 + 
 python scripts/audit_paper_numbers.py --strict  # 有不一致则退出码 1（可接 CI）
 ```
 
+论文源文以 `docs/paper/manuscript.md` 为准（v2 更正稿）。仓库外若还留着一份内容不同的工作副本，
+脚本会直接失败并打印 diff——避免"审计通过但审的是旧稿"。
+
+**CI 已接入**：`.github/workflows/repro.yml` 的 `bias-experiments` job 在逐字节复现校验之后
+运行 `audit_paper_numbers.py --strict`，任何一处数字与产物脱节都会让流水线变红。
+
 当前结果：**核对 207 项，207 一致，0 项已知差异，0 不一致**（v2 更正后，豁免项已清零）。
 
 图与 PDF 的一致性用另一条路验证：从 `AeroRec-preprints.org-v1.pdf` 抽出内嵌位图，与

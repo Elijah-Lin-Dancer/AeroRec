@@ -7,6 +7,7 @@ Everything needed to read, verify or regenerate the preprint:
 
 | File | What it is |
 |---|---|
+| `manuscript.md` | **Source text of v2** (corrected). Every number in it is machine-checked against `data/` by `scripts/audit_paper_numbers.py`, which runs in CI on every push. |
 | `AeroRec-preprints.org-v1.pdf` | **Version of record (v1)** — the PDF typeset and published by Preprints.org (14 pages, CC BY 4.0). Kept as-is: it is the evidence for the `0.3576` value corrected in v2. |
 | `AeroRec-preprints.org-v2-draft.docx` | **v2 upload manuscript** — the corrected version submitted to Preprints.org (boundary in §4.3 and the Fig. 3 caption: `0.3576` → `0.3625`). Regenerate with `python scripts/build_preprint_docx.py`. Replaced by the publisher's PDF once v2 is posted. |
 | `AeroRec-preprint.pdf` | Author-typeset version, laid out to the ChinaXiv template (structured abstract, three-line tables, sequential numeric citations). Same results, different house style. |
