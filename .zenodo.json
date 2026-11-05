@@ -1,0 +1,36 @@
+{
+  "title": "AeroRec: an oracle-based diagnosis platform for bias propagation and debiasing boundaries in recommender systems",
+  "upload_type": "software",
+  "access_right": "open",
+  "license": "MIT",
+  "language": "eng",
+  "version": "1.0.0",
+  "creators": [
+    {
+      "name": "Zhao, Yulin"
+    }
+  ],
+  "keywords": [
+    "recommender systems",
+    "exposure bias",
+    "inverse propensity scoring",
+    "off-policy evaluation",
+    "effective sample size",
+    "debiasing",
+    "reproducibility"
+  ],
+  "description": "<p><strong>AeroRec</strong> is a travel-recommendation platform built as a measurement instrument rather than a leaderboard entry. It runs a four-way recall &rarr; DeepFM ranking &rarr; five-step mixing pipeline with a graceful-degradation path, and wraps it in an <em>oracle-based diagnostic harness</em> in which the true CTR and the exposure propensity are known in closed form.</p><p>That construction makes two questions answerable that production logs cannot answer: (i) how exposure bias propagates through the recall / ranking / mixing stages, and (ii) under what conditions inverse-propensity-scoring (IPS/SNIPS) debiasing costs more variance than the bias it removes.</p><p><strong>What this archive contains</strong></p><ul><li>the full source tree (pipeline, FastAPI service, Streamlit explainability panel, 133 automated tests);</li><li>seven bias-diagnosis experiment outputs under <code>data/bias/</code> and four real-data validation outputs under <code>data/real_validation/</code> (Criteo 1M, Criteo 200k with a 3-seed error bar, UCI Adult);</li><li>the preprint PDF and the six figures, each regenerable byte-for-byte from the committed JSONs by <code>scripts/make_paper_figures.py</code>;</li><li>a reproducibility CI workflow that re-runs the experiments and asserts the artifacts do not drift.</li></ul><p><strong>Headline findings</strong></p><ul><li>Bias primarily induces <em>ranking reversal</em> rather than a level shift: ranking-level Spearman falls from +0.87 to &minus;0.51 as skew increases, while the naive level error stays flat.</li><li>Debiasing has an <em>effective boundary</em> in propensity space (ESS/N): above it, the gain is within the experiment's tolerance of zero; below it, the variance cost dominates. The threshold is reported as a conservative operating point derived from a coarse propensity grid, not as a precise crossing.</li><li>Replacing the closed-form propensity with a log-estimated one leaves SNIPS error essentially unchanged (|&Delta;| &le; 0.0023), and the ESS/N warning remains fail-safe with respect to missed alarms.</li></ul><p><strong>Reproducing</strong>: see <code>README.md</code> and <code>docs/paper/README.md</code>. Every reported number is produced by a committed script from committed inputs.</p><p><strong>Related work</strong>: this software accompanies the preprint <em>Bias propagation and effective boundaries of debiasing in recommender systems: An oracle-based diagnosis study</em> (Preprints 2026, 202610.2582), DOI <a href=\"https://doi.org/10.20944/preprints202610.2582.v1\">10.20944/preprints202610.2582.v1</a>. The repository state that the preprint's numbers were produced from is tagged <code>preprint-v1</code>; this release adds archival metadata on top of that state and changes no code or result file.</p>",
+  "notes": "Provenance: code and result artifacts are identical to the git tag preprint-v1 (commit c41997b), which is the state the accompanying preprint was produced from. This release only adds CITATION.cff and .zenodo.json.",
+  "related_identifiers": [
+    {
+      "identifier": "10.20944/preprints202610.2582.v1",
+      "relation": "isSupplementTo",
+      "resource_type": "publication-preprint"
+    },
+    {
+      "identifier": "https://github.com/Elijah-Lin-Dancer/AeroRec",
+      "relation": "isIdenticalTo",
+      "resource_type": "software"
+    }
+  ]
+}

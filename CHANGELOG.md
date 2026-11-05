@@ -6,6 +6,10 @@
 ## [Unreleased]
 
 ### Added
+- **软件归档元数据**：新增 `CITATION.cff`（GitHub 侧栏 "Cite this repository" 可直接
+  产出 BibTeX，并由 `preferred-citation` 指向预印本）与 `.zenodo.json`（Zenodo 归档页
+  标题/作者/许可/关键词，并通过 `related_identifiers` 与预印本 DOI 双向绑定）。
+  代码与结果文件与 `preprint-v1` 标签逐字节一致，本次仅新增元数据。
 - **论文预印本正式发布**：Preprints.org V1（posted 2026-10-27），
   DOI [10.20944/preprints202610.2582.v1](https://doi.org/10.20944/preprints202610.2582.v1)；
   发布版 PDF 归档于 `docs/paper/AeroRec-preprints.org-v1.pdf`（平台排版版，
