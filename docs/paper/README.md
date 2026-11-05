@@ -9,7 +9,7 @@ Everything needed to read, verify or regenerate the preprint:
 |---|---|
 | `manuscript.md` | **Source text of v2** (corrected). Every number in it is machine-checked against `data/` by `scripts/audit_paper_numbers.py`, which runs in CI on every push. |
 | `AeroRec-preprints.org-v1.pdf` | **Version of record (v1)** — the PDF typeset and published by Preprints.org (14 pages, CC BY 4.0). Kept as-is: it is the evidence for the `0.3576` value corrected in v2. |
-| `AeroRec-preprints.org-v2-draft.docx` | **v2 upload manuscript** — the corrected version submitted to Preprints.org (boundary in §4.3 and the Fig. 3 caption: `0.3576` → `0.3625`). Regenerate with `python scripts/build_preprint_docx.py`. Replaced by the publisher's PDF once v2 is posted. |
+| `AeroRec-preprints.org-v2-draft.docx` | **v2 upload manuscript** — the corrected version submitted to Preprints.org (boundary in §4.3 and the Fig. 3 caption: `0.3576` → `0.3625`). Submitted 2026-11-05, Preprints ID `242644`, pending editorial check; the resulting DOI will be `10.20944/preprints202610.2582.v2`. Regenerate with `python scripts/build_preprint_docx.py`. Replaced by the publisher's PDF once v2 is posted. |
 | `AeroRec-preprint.pdf` | Author-typeset version, laid out to the ChinaXiv template (structured abstract, three-line tables, sequential numeric citations). Same results, different house style. |
 | `figures/fig1_framework.png` | Fig. 1 — Oracle-based diagnostic framework (schematic: data → policy → estimators → boundary) |
 | `figures/fig2_propagation.png` | Fig. 2 — Ranking-level Spearman vs exposure skew τ (30 seeds, mean ± std; sign flip at τ ≈ 2–3) |
