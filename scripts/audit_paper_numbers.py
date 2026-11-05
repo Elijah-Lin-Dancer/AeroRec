@@ -10,11 +10,11 @@
 检查内容：
  1. 8 张表逐单元格比对（按论文呈现的小数位数四舍五入后比较，避免精度误报）；
  2. 论文中的关键统计断言（|Δ| 上界、p 值、误报率、τ-sweep 增益）；
- 3. 实验设置表与各产物 JSON 的元数据（n_records / n_seeds / n_requests）。
+ 3. 实验设置表与各产物 JSON 的元数据（n_records / n_seeds / n_requests）；
+ 4. 跨规模稳定性基线（论文 §4.3 的 0.3625）由 boundary_by_range 现场复算后比对。
 
-已知例外（在 docs/paper/PROVENANCE.md 中说明）：跨规模稳定性里的 0.3576 是论文
-报告值，当前实现在同配置下复算为 0.3625，二者相差 0.005（约 1.3%），不影响
-"边界对规模稳健"这一结论；该数字因此列入 EXPECTED_GAPS，不计为失败。
+EXPECTED_GAPS 为空，表示当前没有任何豁免项。若将来新增，必须在
+docs/paper/PROVENANCE.md 里写明原因——不允许脚本自己给自己发豁免。
 """
 from __future__ import annotations
 
@@ -28,12 +28,13 @@ ROOT = Path(__file__).resolve().parent.parent
 PAPER_MD = ROOT.parent / "AeroRec-论文终稿-精确数字版.md"   # 论文源文件在仓库外
 DATA = ROOT / "data"
 
-# 论文报告值 vs 当前实现复算值的已知差异（见 PROVENANCE.md）
-PAPER_SCALE_BASELINE = 0.3576
+# 跨规模稳定性基线：论文 §4.3 与 Fig. 3 图注的报告值，由 boundary_by_range 现场复算比对。
+# 另一个参照值是扩规模配置的 0.3579（data/bias/boundary.json → cross_ess_ratio），
+# 两者相差 0.005，而相邻网格点的 ESS/N 间距为 0.29，故称"对规模稳健"。
+PAPER_SCALE_BASELINE = 0.3625
+SCALE_TOLERANCE = 2e-4          # 复算确定性，仅留浮点余量
 
-EXPECTED_GAPS = {
-    0.3576: "跨规模稳定性基线：论文报告值，当前代码复算 0.3625（差 0.005，结论不变）",
-}
+EXPECTED_GAPS: dict[float, str] = {}   # 空 = 无豁免；新增必须在 PROVENANCE.md 说明
 
 
 def table_blocks(md_lines: list[str]) -> list[list[str]]:
@@ -76,7 +77,7 @@ class Audit:
         self.checked = 0
 
     def cell(self, where: str, label: str, paper_text: str | float, artifact: float | None,
-             dec: int | None = None) -> None:
+             dec: int | None = None, tol: float = 0.0) -> None:
         self.checked += 1
         if isinstance(paper_text, str):
             value, nd = parse_cell(paper_text)
@@ -88,7 +89,10 @@ class Audit:
         if artifact is None:
             self.rows.append((where, label, "产物缺字段", value, None))
             return
-        if round(float(artifact), nd) != round(value, nd):
+        # tol > 0：按绝对差比对（用于现场复算值）；否则按呈现精度四舍五入比对
+        mismatch = (abs(float(artifact) - value) > tol) if tol > 0 \
+            else (round(float(artifact), nd) != round(value, nd))
+        if mismatch:
             tag = "已知差异" if round(value, 4) in EXPECTED_GAPS else "不一致"
             self.rows.append((where, label, tag, value, artifact))
 
@@ -205,24 +209,19 @@ def main() -> int:
         a.cell("正文断言", f"τ-sweep 增益 τ={tau}", gain, g["gain"], dec=4)
         a.cell("正文断言", f"τ-sweep 标准差 τ={tau}", std, g["gain_std"], dec=4)
 
-    # ---- 跨规模稳定性复算：论文 0.3576 vs 当前实现 ------------------------
-    # 论文 §4.3 称边界在小规模配置（60 物品 × 600 请求 × 30 种子）下为 0.3576，
-    # 扩规模后为 0.3579。当前实现按同配置复算得到约 0.3625，差异 0.005（1.3%），
-    # "对规模稳健"的结论不受影响，但该数字本身已无法逐位复现，故列入已知差异。
+    # ---- 跨规模稳定性复算：论文 0.3625 vs 现场复算 -------------------------
+    # 论文 §4.3 与 Fig. 3 图注称：边界在小规模配置（60 物品 × 600 请求 × 30 种子）下
+    # 为 0.3625，扩规模到（500 物品 × 5000 请求 × 250 种子）后为 0.3579（见 boundary.json），
+    # 差 0.005，而相邻网格点的 ESS/N 间距是 0.29，故"对规模稳健"。
+    # 这里按同配置现场复算小规模值并比对；差异超容差即判不一致，不再自动豁免。
     try:
         sys.path.insert(0, str(ROOT))
         from src.bias.boundary import boundary_by_range
         small = boundary_by_range(t_pop=0.25, n_records=600, n_seeds=30)["cross_ess_ratio"]
-        gap = abs(small - PAPER_SCALE_BASELINE)
-        tag = "已知差异" if gap < 0.01 else "不一致"
-        a.checked += 1
-        a.rows.append(("正文断言", "跨规模基线 (0.3576)", tag, PAPER_SCALE_BASELINE, round(small, 4)))
-        if tag == "已知差异":
-            EXPECTED_GAPS[round(PAPER_SCALE_BASELINE, 4)] = (
-                f"复算值 {small:.4f}，差 {gap:.4f}（{gap / PAPER_SCALE_BASELINE:.1%}），"
-                "稳定性结论不变")
+        a.cell("正文断言", "跨规模基线 (0.3625)", PAPER_SCALE_BASELINE, small,
+               dec=4, tol=SCALE_TOLERANCE)
     except Exception as exc:                      # 复算失败不应让整份审计崩掉
-        a.rows.append(("正文断言", "跨规模基线 (0.3576)", "复算失败", PAPER_SCALE_BASELINE, str(exc)))
+        a.rows.append(("正文断言", "跨规模基线 (0.3625)", "复算失败", PAPER_SCALE_BASELINE, str(exc)))
 
     # ---- 实验设置表 vs 产物元数据 -----------------------------------------
     meta = {
