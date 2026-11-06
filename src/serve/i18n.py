@@ -53,10 +53,10 @@ TEXT: dict[str, dict[str, str]] = {
     "hero.paper": {
         "en": "📄 **Published preprint** · *Bias Propagation and Effective Boundaries of Debiasing "
               "in Recommender Systems* · Preprints 2026, 202610.2582 · "
-              "[DOI 10.20944/preprints202610.2582.v1](https://doi.org/10.20944/preprints202610.2582.v1)",
+              "[DOI 10.20944/preprints202610.2582.v2](https://doi.org/10.20944/preprints202610.2582.v2)",
         "zh": "📄 **已发表预印本** ·《Bias Propagation and Effective Boundaries of Debiasing "
               "in Recommender Systems》· Preprints 2026, 202610.2582 · "
-              "[DOI 10.20944/preprints202610.2582.v1](https://doi.org/10.20944/preprints202610.2582.v1)",
+              "[DOI 10.20944/preprints202610.2582.v2](https://doi.org/10.20944/preprints202610.2582.v2)",
     },
 
     # ------------------------------------------------------------- sidebar
@@ -302,8 +302,8 @@ TEXT: dict[str, dict[str, str]] = {
     "ov.fact.value": {"en": "Value", "zh": "内容"},
     "ov.fact.paper_k": {"en": "Preprint", "zh": "预印本"},
     "ov.fact.paper_v": {
-        "en": "Preprints 2026, 202610.2582 · DOI 10.20944/preprints202610.2582.v1 (posted 2026-10-27)",
-        "zh": "Preprints 2026, 202610.2582 · DOI 10.20944/preprints202610.2582.v1（2026-10-27 发布）",
+        "en": "Preprints 2026, 202610.2582 · DOI 10.20944/preprints202610.2582.v2 (posted 2026-11-06)",
+        "zh": "Preprints 2026, 202610.2582 · DOI 10.20944/preprints202610.2582.v2（2026-11-06 发布，v1 为 2026-10-27）",
     },
     "ov.fact.chain_k": {"en": "Pipeline", "zh": "链路"},
     "ov.fact.chain_v": {
@@ -360,10 +360,10 @@ TEXT: dict[str, dict[str, str]] = {
     "ov.cite_body": {
         "en": "Zhao, Y. Bias Propagation and Effective Boundaries of Debiasing in Recommender Systems: "
               "An Oracle-Based Diagnosis Study. *Preprints* **2026**, 202610.2582. "
-              "https://doi.org/10.20944/preprints202610.2582.v1",
+              "https://doi.org/10.20944/preprints202610.2582.v2",
         "zh": "Zhao, Y. Bias Propagation and Effective Boundaries of Debiasing in Recommender Systems: "
               "An Oracle-Based Diagnosis Study. *Preprints* **2026**, 202610.2582. "
-              "https://doi.org/10.20944/preprints202610.2582.v1",
+              "https://doi.org/10.20944/preprints202610.2582.v2",
     },
     "ov.cite_bibtex": {"en": "BibTeX", "zh": "BibTeX"},
 
@@ -896,7 +896,7 @@ TEXT: dict[str, dict[str, str]] = {
               "This instance runs the micro tier (10k users × 10k items × 500k impressions); data is "
               "script-generated and reproducible; the model is offline pre-trained + numpy inference, "
               "with no torch / sklearn on the online side.<br>"
-              "Preprint: <a href=\"https://doi.org/10.20944/preprints202610.2582.v1\">DOI 10.20944/preprints202610.2582.v1</a> "
+              "Preprint: <a href=\"https://doi.org/10.20944/preprints202610.2582.v2\">DOI 10.20944/preprints202610.2582.v2</a> "
               "(Preprints 2026, 202610.2582)<br>"
               "<a href=\"https://github.com/Elijah-Lin-Dancer/AeroRec\">Repository</a> · "
               "<a href=\"https://github.com/Elijah-Lin-Dancer/AeroRec/blob/main/docs/bias_report.md\">Bias-diagnosis tech report</a> · "
@@ -904,7 +904,7 @@ TEXT: dict[str, dict[str, str]] = {
         "zh": "<b>AeroRec</b> · 出行智能推荐中台<br>"
               "本实例运行 micro 档（1 万用户 × 1 万物品 × 50 万曝光），数据由脚本合成、可复现；"
               "模型为离线预训练 + numpy 推理，在线侧不依赖 torch / sklearn。<br>"
-              "论文预印本：<a href=\"https://doi.org/10.20944/preprints202610.2582.v1\">DOI 10.20944/preprints202610.2582.v1</a>"
+              "论文预印本：<a href=\"https://doi.org/10.20944/preprints202610.2582.v2\">DOI 10.20944/preprints202610.2582.v2</a>"
               "（Preprints 2026, 202610.2582）<br>"
               "<a href=\"https://github.com/Elijah-Lin-Dancer/AeroRec\">完整仓库</a> · "
               "<a href=\"https://github.com/Elijah-Lin-Dancer/AeroRec/blob/main/docs/bias_report.md\">偏差诊断 tech report</a> · "

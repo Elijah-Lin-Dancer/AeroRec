@@ -2,7 +2,7 @@
 
 > **已发表预印本**：*Bias Propagation and Effective Boundaries of Debiasing in Recommender Systems:
 > An Oracle-Based Diagnosis Study* — Preprints **2026**, 202610.2582 ·
-> [DOI 10.20944/preprints202610.2582.v1](https://doi.org/10.20944/preprints202610.2582.v1)
+> [DOI 10.20944/preprints202610.2582.v2](https://doi.org/10.20944/preprints202610.2582.v2)
 >
 > 面向论文读者的技术文档。与 `README.md`（面向访客的展示页）并列；实验数字的
 > 唯一来源是 `data/bias/*.json` 与 `docs/bias_report.md`，本文档与其逐项一致（H-6）。

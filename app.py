@@ -348,9 +348,9 @@ st.sidebar.caption(t("sidebar.mode", mode=mode))
 st.sidebar.divider()
 st.sidebar.markdown(
     t("sidebar.paper_title") + "\n\n"
-    f"- [{t('sidebar.link.paper_doi')}](https://doi.org/10.20944/preprints202610.2582.v1)\n"
+    f"- [{t('sidebar.link.paper_doi')}](https://doi.org/10.20944/preprints202610.2582.v2)\n"
     f"- [{t('sidebar.link.paper_pdf')}]"
-    "(https://github.com/Elijah-Lin-Dancer/AeroRec/blob/main/docs/paper/AeroRec-preprints.org-v1.pdf)"
+    "(https://github.com/Elijah-Lin-Dancer/AeroRec/blob/main/docs/paper/AeroRec-preprints.org-v2.pdf)"
 )
 st.sidebar.markdown(
     t("sidebar.research_title") + "\n\n"
@@ -449,7 +449,7 @@ if page == "overview":
     st.code(
         "Zhao, Y. Bias Propagation and Effective Boundaries of Debiasing in Recommender\n"
         "Systems: An Oracle-Based Diagnosis Study. Preprints 2026, 202610.2582.\n"
-        "https://doi.org/10.20944/preprints202610.2582.v1",
+        "https://doi.org/10.20944/preprints202610.2582.v2",
         language="text",
     )
     with st.expander(t("ov.cite_bibtex")):
@@ -461,8 +461,8 @@ if page == "overview":
             "  journal = {Preprints},\n"
             "  year    = {2026},\n"
             "  number  = {202610.2582},\n"
-            "  doi     = {10.20944/preprints202610.2582.v1},\n"
-            "  url     = {https://doi.org/10.20944/preprints202610.2582.v1}\n"
+            "  doi     = {10.20944/preprints202610.2582.v2},\n"
+            "  url     = {https://doi.org/10.20944/preprints202610.2582.v2}\n"
             "}",
             language="bibtex",
         )

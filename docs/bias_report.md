@@ -7,8 +7,8 @@
 >
 > **已发表预印本（Preprints.org）**：*Bias Propagation and Effective Boundaries of Debiasing in
 > Recommender Systems: An Oracle-Based Diagnosis Study* — Preprints **2026**, 202610.2582 ·
-> [DOI 10.20944/preprints202610.2582.v1](https://doi.org/10.20944/preprints202610.2582.v1) ·
-> [PDF](paper/AeroRec-preprints.org-v1.pdf)
+> [DOI 10.20944/preprints202610.2582.v2](https://doi.org/10.20944/preprints202610.2582.v2) ·
+> [PDF](paper/AeroRec-preprints.org-v2.pdf)
 
 ---
 

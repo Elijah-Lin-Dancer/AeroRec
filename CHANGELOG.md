@@ -6,6 +6,13 @@
 ## [Unreleased]
 
 ### Added
+- **预印本 v2 上线**：Preprints.org 于 2026-11-06 发布更正版，DOI 变为
+  [10.20944/preprints202610.2582.v2](https://doi.org/10.20944/preprints202610.2582.v2)
+  （v1 的 `.v1` DOI 永久保留，两版互链）。v2 的版式由我们提交的 Word 稿排版而来，
+  平台回传 PDF 归档为 `docs/paper/AeroRec-preprints.org-v2.pdf`；入库前逐项核对：
+  14 页、6 图与仓库 PNG 一一对应（MAE ≤ 0.14，次优 ≥ 10）、8 表齐全、
+  `0.3625` 出现 2 次且 `0.3576` 归零。`AeroRec-preprints.org-v1.pdf` 原地保留，
+  作为 `0.3576` 的物证。
 - **论文数字溯源审计**：新增 `docs/paper/PROVENANCE.md`（8 张表 / 6 张图 → 产物文件的
   逐项对应 + 冻结文件清单）与 `scripts/audit_paper_numbers.py`（逐单元格比对，支持
   `--strict` 接 CI）。另用内嵌位图比对确认仓库 6 张图与已发布 PDF 的 Figure 2–6 一一对应
@@ -39,7 +46,16 @@
   propensity 估计误差的稳健性（Δ=−0.0022，p=0.87，零漏报），并嵌入论文图 2/图 3。
 
 ### Changed
-- **仓库主 README 语言切换为英文**：英文版升为主 `README.md`，
+- **全仓库 DOI 指向 `.v2`**：`CITATION.cff`、`.zenodo.json`、两版 README（徽章 +
+  稿件页 + 引用 + BibTeX）、`docs/index.html`（首屏条 + 页脚）、三份技术文档、
+  Streamlit 侧边栏与页脚引用、论文材料清单与溯源文件共 13 个文件；`.v2` 尚未全局
+  解析（平台侧当晚生效），但 DOI 本身已由平台分配，链接按最终形态写死即可。
+- **`CITATION.cff` 升版 1.0.0 → 1.1.0**，`date-released` 改为 2026-11-06；
+  `.zenodo.json` 同步升版并在 description / notes 里说明"结果文件与 `preprint-v1`
+  逐字节相同，变的只有论文里一个值、审计基建与文档"。
+- **两版 README 增补「v2 改了什么」一段**：一句话说清改动、结论是否受影响、
+  v1 为何保留，避免读者点开摘要看不出两版差别。
+：英文版升为主 `README.md`，
   中文版移至 `README.zh.md`；两个版本的语言切换链接、
   Documentation 表与引用点同步更新，英文主 README 新增
   徽章行（含 DOI）与 "Published Preprint" 展示区。

@@ -50,6 +50,7 @@
            color: #7c2d12; line-height: 1.65; text-align: left; }
   .paper b { color: #9a3412; }
   .paper a { color: #c2410c; font-weight: 600; }
+  .paper .paper-sub { display: block; margin-top: 6px; font-size: 13px; color: #9a3412; opacity: .88; }
   footer { text-align: center; color: var(--muted); font-size: 13px; margin-top: 36px; }
   @media (max-width: 640px) { .grid { grid-template-columns: 1fr; } }
 </style>
@@ -71,10 +72,11 @@
     </p>
 
     <p class="paper">
-      <b>论文预印本已发表</b>（Preprints.org，2026-10-27）：<i>Bias Propagation and Effective Boundaries of
+      <b>论文预印本已发表</b>（Preprints.org，v2 更新于 2026-11-06）：<i>Bias Propagation and Effective Boundaries of
       Debiasing in Recommender Systems: An Oracle-Based Diagnosis Study</i> · Preprints 2026, 202610.2582 ·
-      <a href="https://doi.org/10.20944/preprints202610.2582.v1">DOI 10.20944/preprints202610.2582.v1</a> ·
-      <a href="paper/AeroRec-preprints.org-v1.pdf">发布版 PDF</a>
+      <a href="https://doi.org/10.20944/preprints202610.2582.v2">DOI 10.20944/preprints202610.2582.v2</a> ·
+      <a href="paper/AeroRec-preprints.org-v2.pdf">发布版 PDF</a>
+      <br><span class="paper-sub">v2 更正了 §4.3 与 Fig. 3 图注中的小规模边界值（0.3576 → 0.3625，该值在 v1 中无法从仓库复现）；结论不变，v1 页面与 DOI 永久保留。</span>
     </p>
 
     <p class="links">
@@ -363,7 +365,7 @@ python -m pytest tests/ -q         # 全量测试（133 项）</pre>
     <a class="btn" style="background:#1a1d23;margin-left:10px" href="https://github.com/Elijah-Lin-Dancer/AeroRec" target="_blank">源码仓库 →</a>
   </div>
 
-  <footer>AeroRec · 出行智能推荐中台 · 合成数据、可复现、诚实标注边界<br>预印本：<a href="https://doi.org/10.20944/preprints202610.2582.v1">DOI 10.20944/preprints202610.2582.v1</a>（Preprints 2026, 202610.2582）</footer>
+  <footer>AeroRec · 出行智能推荐中台 · 合成数据、可复现、诚实标注边界<br>预印本：<a href="https://doi.org/10.20944/preprints202610.2582.v2">DOI 10.20944/preprints202610.2582.v2</a>（Preprints 2026, 202610.2582）</footer>
 </div>
 </body>
 </html>

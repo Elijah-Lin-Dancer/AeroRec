@@ -10,9 +10,10 @@ abstract: >-
   questions answerable that production logs cannot answer: how exposure bias propagates through the
   recall / ranking / mixing stages, and under what conditions inverse-propensity-scoring debiasing
   costs more variance than the bias it removes. All reported numbers are regenerated from the
-  committed result JSONs by scripts in this repository.
-version: 1.0.0
-date-released: 2026-11-04
+  committed result JSONs by scripts in this repository, and re-checked in CI by
+  scripts/audit_paper_numbers.py against the manuscript's reported values.
+version: 1.1.0
+date-released: 2026-11-06
 license: MIT
 repository-code: "https://github.com/Elijah-Lin-Dancer/AeroRec"
 url: "https://github.com/Elijah-Lin-Dancer/AeroRec"
@@ -37,4 +38,4 @@ preferred-citation:
       orcid: "https://orcid.org/0009-0005-4623-8465"
   year: 2026
   journal: Preprints
-  doi: "10.20944/preprints202610.2582.v1"
+  doi: "10.20944/preprints202610.2582.v2"

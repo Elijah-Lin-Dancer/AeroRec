@@ -8,7 +8,7 @@
 [![Streamlit](https://img.shields.io/badge/built%20with-Streamlit-ff4b4b)](https://streamlit.io/)
 [![Pages](https://img.shields.io/badge/🌐%20Homepage-GitHub%20Pages-blue)](https://elijah-lin-dancer.github.io/AeroRec/)
 [![Reproducibility](https://github.com/Elijah-Lin-Dancer/AeroRec/actions/workflows/repro.yml/badge.svg)](https://github.com/Elijah-Lin-Dancer/AeroRec/actions/workflows/repro.yml)
-[![Preprint DOI](https://img.shields.io/badge/DOI-10.20944%2Fpreprints202610.2582.v1-c7215f)](https://doi.org/10.20944/preprints202610.2582.v1)
+[![Preprint DOI](https://img.shields.io/badge/DOI-10.20944%2Fpreprints202610.2582.v2-c7215f)](https://doi.org/10.20944/preprints202610.2582.v2)
 
 **AeroRec** is an engineering-grade **travel recommendation platform** (flights / hotels / shopping / deals /
 live) that reproduces an industrial pipeline end-to-end on a **reproducible synthetic dataset**, plus a fully
@@ -24,16 +24,18 @@ analytically and the exposure propensity is closed-form, so bias can be *measure
 
 ## 📖 Published Preprint (Preprints.org)
 
-> ***Bias Propagation and Effective Boundaries of Debiasing in Recommender Systems: An Oracle-Based Diagnosis Study*** — Yulin Zhao, Preprints.org **2026, 202610.2582** (V1, posted 2026-10-27).
+> ***Bias Propagation and Effective Boundaries of Debiasing in Recommender Systems: An Oracle-Based Diagnosis Study*** — Yulin Zhao, Preprints.org **2026, 202610.2582** (V2, posted 2026-11-06; V1 posted 2026-10-27).
 >
-> **DOI**: [10.20944/preprints202610.2582.v1](https://doi.org/10.20944/preprints202610.2582.v1) · [Manuscript page](https://www.preprints.org/manuscript/202610.2582/v1) · [Published PDF](docs/paper/AeroRec-preprints.org-v1.pdf) · [Author-typeset PDF](docs/paper/AeroRec-preprint.pdf)
+> **DOI**: [10.20944/preprints202610.2582.v2](https://doi.org/10.20944/preprints202610.2582.v2) · [Manuscript page](https://www.preprints.org/manuscript/202610.2582/v2) · [Published PDF](docs/paper/AeroRec-preprints.org-v2.pdf) · [Author-typeset PDF](docs/paper/AeroRec-preprint.pdf)
+>
+> **What changed in v2**: one value. The small-scale debiasing boundary in §4.3 and the Fig. 3 caption was reported as `ESS/N = 0.3576`, which cannot be reproduced from the released code; re-running the committed pipeline with the same configuration gives `0.3625`. The conclusion — the boundary is stable across pipeline scales — is unchanged. V1 stays online with its own DOI and remains the record of that value; the repository state it corresponds to is tagged `preprint-v1`.
 
 **How to cite**:
 
 ```text
 Zhao, Y. Bias Propagation and Effective Boundaries of Debiasing in Recommender
 Systems: An Oracle-Based Diagnosis Study. Preprints 2026, 202610.2582.
-https://doi.org/10.20944/preprints202610.2582.v1
+https://doi.org/10.20944/preprints202610.2582.v2
 ```
 
 <details>
@@ -46,8 +48,8 @@ https://doi.org/10.20944/preprints202610.2582.v1
   journal = {Preprints},
   year    = {2026},
   number  = {202610.2582},
-  doi     = {10.20944/preprints202610.2582.v1},
-  url     = {https://doi.org/10.20944/preprints202610.2582.v1}
+  doi     = {10.20944/preprints202610.2582.v2},
+  url     = {https://doi.org/10.20944/preprints202610.2582.v2}
 }
 ```
 

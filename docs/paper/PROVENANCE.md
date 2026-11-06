@@ -2,7 +2,9 @@
 
 预印本已发布：*Bias propagation and effective boundaries of debiasing in recommender systems:
 An oracle-based diagnosis study*, Preprints **2026**, 202610.2582 ·
-DOI [10.20944/preprints202610.2582.v1](https://doi.org/10.20944/preprints202610.2582.v1)
+**DOI [10.20944/preprints202610.2582.v2](https://doi.org/10.20944/preprints202610.2582.v2)**（v2，2026-11-06 上线）
+
+v1（2026-10-27，DOI `10.20944/preprints202610.2582.v1`）作为原始记录永久保留，两版在平台页面互链。
 
 论文一经发布即不可原地修改，所以"可复现"这件事只能由仓库承担：**论文里的每一个数字，都必须能在本仓库的某个产物文件里找到出处，并且能由某个脚本重新算出来。**
 
@@ -77,8 +79,9 @@ python scripts/audit_paper_numbers.py --strict  # 有不一致则退出码 1（�
 
 当前结果：**核对 207 项，207 一致，0 项已知差异，0 不一致**（v2 更正后，豁免项已清零）。
 
-图与 PDF 的一致性用另一条路验证：从 `AeroRec-preprints.org-v1.pdf` 抽出内嵌位图，与
-`docs/paper/figures/*.png` 做灰度缩略图比对，6 张全部一一对应（MAE ≈ 0.2，次优匹配 ≥ 7）。
+图与 PDF 的一致性用另一条路验证：从已发布的 `AeroRec-preprints.org-v2.pdf` 抽出内嵌位图，与
+`docs/paper/figures/*.png` 做灰度缩略图比对，6 张全部一一对应（v2：MAE 0.07–0.14，次优匹配
+≥ 10；v1 同样 6/6 对应，MAE ≈ 0.2）。也就是说平台排版时没有替换、重绘或裁剪任何一张图。
 
 ---
 
@@ -129,7 +132,10 @@ PDF 保持一致；若因新实验需要改图，另存到 `docs/thesis/figures/
 | 标签 | 指向 | 含义 |
 |---|---|---|
 | `preprint-v1` | `c41997b` | **不再移动**。预印本 v1 全部数字的产出状态（含 0.3576），作为历史记录保留 |
-| `preprint-v2` | （v2 收尾时打） | 预印本 v2 的状态：边界值更正为 0.3625 |
-| `v1.0.0` | `37c0727` | Zenodo 归档版本（在 `preprint-v1` 之上仅新增元数据与审计脚本，代码与产物不变） |
+| `preprint-v2` | v2 收尾提交 | 预印本 v2 的状态：边界值更正为 0.3625，文档与 DOI 全部指向 `.v2` |
+| `v1.0.0` | `37c0727` | 首个 Zenodo 归档版本（对应预印本 v1） |
+| `v1.1.0` | 同 `preprint-v2` | 第二个 Zenodo 归档版本（对应预印本 v2） |
+
+取当前 v2 状态的提交：`git rev-parse preprint-v2`。
 
 核对历史状态：`git diff preprint-v1 -- data/`（应为空）。

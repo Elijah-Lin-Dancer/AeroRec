@@ -49,13 +49,12 @@
 
 ### 阶段 4 — 取回 v2 产出（用户执行）
 
-- [ ] 上线后提供新的 `.v2` DOI
-- [ ] 下载平台回传的正式 PDF（带水印与 DOI）
+- [x] 上线后提供新的 `.v2` DOI → `10.20944/preprints202610.2582.v2`
+- [x] 下载平台回传的正式 PDF → `docs/paper/AeroRec-preprints.org-v2.pdf`（14 页，1.7 MB）
 
-> 进展记录：v2 已提交待审（Preprints ID `242644`）。审核通过后平台会邮件通知，
-> 届时页面 URL 形如 `preprints.org/manuscript/202610.2582/v2`，DOI 为
-> `10.20944/preprints202610.2582.v2`（前缀不变，仅版本号递增）。
-> 注意：**v1 的 DOI 永久保留**，两版在页面上互链，删不掉也不需要删。
+> **结果（2026-11-06）**：v2 通过审核并上线，平台排版 PDF 已入库。入库前核对：
+> 6 图与 `docs/paper/figures/` 逐张对应（MAE 0.07–0.14，次优 ≥ 10）、8 表齐全、
+> `0.3625` ×2 / `0.3576` ×0。DOI 尚在平台侧生效中（当晚至次日），链接按最终形态写死。
 
 ### 阶段 5 — 仓库落地
 
@@ -79,25 +78,33 @@
       *（此前 `--strict` 只是能力，没有任何地方调用；现在每次 push 都会真的校验论文数字）*
 - [x] `docs/paper/README.md` 清单收录 `manuscript.md`；`PROVENANCE.md` 第 4 节说明 CI 门禁
 
-**5b — v2 上线后收尾（待办）**
+**5b — v2 上线后收尾（已完成）**
 
-- [ ] 放入正式 PDF 为 `docs/paper/AeroRec-preprints.org-v2.pdf`，删除 `-draft` 后缀的中间稿
-- [ ] DOI 全量替换：`CITATION.cff`、`.zenodo.json`、`README.md`、`README.zh.md`、`docs/index.html`、三份 docs
-- [ ] `docs/paper/README.md` 材料清单加 v2，v1 标注为历史版本
-- [ ] `CHANGELOG.md` 记录本次更正
-- [ ] 打标签 `preprint-v2`
+- [x] 放入正式 PDF 为 `docs/paper/AeroRec-preprints.org-v2.pdf`，删除 `-draft` 后缀的中间稿
+      *（中间稿可由 `scripts/build_preprint_docx.py` 从 `manuscript.md` 确定性重生成，故不入库）*
+- [x] DOI 全量替换：`CITATION.cff`、`.zenodo.json`、`README.md`、`README.zh.md`、`docs/index.html`、
+      三份 docs、`app.py`、`src/serve/i18n.py`、`PROVENANCE.md`、`docs/paper/README.md`（共 13 个文件）
+- [x] `docs/paper/README.md` 材料清单：v2 标为 version of record，v1 标为 superseded（保留为 0.3576 的物证）
+- [x] `CHANGELOG.md` 记录 v2 上线与 DOI 替换；`CITATION.cff` / `.zenodo.json` 升版 1.1.0
+- [ ] 打标签 `preprint-v2` 与 `v1.1.0`
+      *（`preprint-v1` → `c41997b`、`v1.0.0` → `37c0727` 保持不动）*
 
 ### 阶段 6 — Zenodo 归档（用户执行）
 
-- [ ] 用 `preprint-v2` 对应的新版本号发 GitHub Release
+- [ ] 用标签 **`v1.1.0`** 发 GitHub Release（标题/描述已备好，见下）
 - [ ] Zenodo 自动归档，取得软件 DOI
+
+> Release 标题：`AeroRec v1.1.0 — preprint v2 correction (boundary 0.3576 → 0.3625)`
+> 描述要点：结果文件与 v1 归档逐字节相同；变的只有论文一个值、审计基建与文档。
+> 归档后 Zenodo 记录会生成**新**的软件 DOI（与 v1.0.0 那条独立），两者靠
+> `related_identifiers` 互链。
 
 ### 阶段 7 — 补软件 DOI（1 个 commit）
 
 - [ ] 两版 README 徽章并列预印本 DOI 与软件 DOI
 - [ ] `docs/index.html` 页脚
 - [ ] `CHANGELOG.md`
-- [ ] `.zenodo.json` 的 `related_identifiers` 指向 `.v2`
+- [ ] `.zenodo.json` 的 `related_identifiers` 指向 `.v2`（已指向，待补软件 DOI 互链）
 
 ## 3. 红线
 

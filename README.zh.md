@@ -12,26 +12,28 @@
 [![Streamlit](https://img.shields.io/badge/built%20with-Streamlit-ff4b4b)](https://streamlit.io/)
 [![Pages](https://img.shields.io/badge/🌐%20Homepage-GitHub%20Pages-blue)](https://elijah-lin-dancer.github.io/AeroRec/)
 [![Reproducibility](https://github.com/Elijah-Lin-Dancer/AeroRec/actions/workflows/repro.yml/badge.svg)](https://github.com/Elijah-Lin-Dancer/AeroRec/actions/workflows/repro.yml)
-[![Preprint DOI](https://img.shields.io/badge/DOI-10.20944%2Fpreprints202610.2582.v1-c7215f)](https://doi.org/10.20944/preprints202610.2582.v1)
+[![Preprint DOI](https://img.shields.io/badge/DOI-10.20944%2Fpreprints202610.2582.v2-c7215f)](https://doi.org/10.20944/preprints202610.2582.v2)
 
 > **快速体验**：[项目主页](https://elijah-lin-dancer.github.io/AeroRec/) · [交互 Demo（Streamlit Cloud）](https://aerorec-tourism.streamlit.app)
 >
-> **研究主线**（偏差传播诊断 + 去偏有效边界）：[tech report](docs/bias_report.md) · [论文读者技术文档](docs/tech-report.md) · [可视化报告（HTML）](data/bias/report.html) · [research one-pager (EN)](docs/research_highlight.md) · [论文预印本（发布版 PDF）](docs/paper/AeroRec-preprints.org-v1.pdf)
+> **研究主线**（偏差传播诊断 + 去偏有效边界）：[tech report](docs/bias_report.md) · [论文读者技术文档](docs/tech-report.md) · [可视化报告（HTML）](data/bias/report.html) · [research one-pager (EN)](docs/research_highlight.md) · [论文预印本（发布版 PDF）](docs/paper/AeroRec-preprints.org-v2.pdf)
 
 ---
 
 ## 📖 论文预印本（Preprints.org，已发布）
 
-> ***Bias Propagation and Effective Boundaries of Debiasing in Recommender Systems: An Oracle-Based Diagnosis Study*** — Yulin Zhao, Preprints.org **2026, 202610.2582** (V1, posted 2026-10-27).
+> ***Bias Propagation and Effective Boundaries of Debiasing in Recommender Systems: An Oracle-Based Diagnosis Study*** — Yulin Zhao, Preprints.org **2026, 202610.2582** (V2, posted 2026-11-06; V1 posted 2026-10-27).
 >
-> **DOI**：[10.20944/preprints202610.2582.v1](https://doi.org/10.20944/preprints202610.2582.v1) · [稿件页](https://www.preprints.org/manuscript/202610.2582/v1) · [发布版 PDF](docs/paper/AeroRec-preprints.org-v1.pdf) · [作者排版版 PDF](docs/paper/AeroRec-preprint.pdf)
+> **DOI**：[10.20944/preprints202610.2582.v2](https://doi.org/10.20944/preprints202610.2582.v2) · [稿件页](https://www.preprints.org/manuscript/202610.2582/v2) · [发布版 PDF](docs/paper/AeroRec-preprints.org-v2.pdf) · [作者排版版 PDF](docs/paper/AeroRec-preprint.pdf)
+>
+> **v2 改了什么**：只有一个数值。§4.3 与 Fig. 3 图注里的小规模去偏边界原报 `ESS/N = 0.3576`，该值无法用本仓库代码复现；同配置重跑已提交的流水线得到 `0.3625`。结论——边界对流水线规模稳健——不变。v1 保留独立 DOI 继续在线，是该值的原始记录，对应仓库状态打 `preprint-v1` 标签。
 
 **引用格式**（How to cite）：
 
 ```text
 Zhao, Y. Bias Propagation and Effective Boundaries of Debiasing in Recommender
 Systems: An Oracle-Based Diagnosis Study. Preprints 2026, 202610.2582.
-https://doi.org/10.20944/preprints202610.2582.v1
+https://doi.org/10.20944/preprints202610.2582.v2
 ```
 
 <details>
@@ -44,8 +46,8 @@ https://doi.org/10.20944/preprints202610.2582.v1
   journal = {Preprints},
   year    = {2026},
   number  = {202610.2582},
-  doi     = {10.20944/preprints202610.2582.v1},
-  url     = {https://doi.org/10.20944/preprints202610.2582.v1}
+  doi     = {10.20944/preprints202610.2582.v2},
+  url     = {https://doi.org/10.20944/preprints202610.2582.v2}
 }
 ```
 
