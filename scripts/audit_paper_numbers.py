@@ -11,7 +11,7 @@
  1. 8 张表逐单元格比对（按论文呈现的小数位数四舍五入后比较，避免精度误报）；
  2. 论文中的关键统计断言（|Δ| 上界、p 值、误报率、τ-sweep 增益）；
  3. 实验设置表与各产物 JSON 的元数据（n_records / n_seeds / n_requests）；
- 4. 跨规模稳定性基线（论文 §4.3 的 0.3625）由 boundary_by_range 现场复算后比对。
+ 4. 跨规模稳定性基线（论文 §4.2 的 0.3625）由 boundary_by_range 现场复算后比对。
 
 EXPECTED_GAPS 为空，表示当前没有任何豁免项。若将来新增，必须在
 docs/paper/PROVENANCE.md 里写明原因——不允许脚本自己给自己发豁免。
@@ -32,7 +32,7 @@ PAPER_MD = ROOT / "docs/paper/manuscript.md"
 PAPER_MD_STALE = ROOT.parent / "AeroRec-论文终稿-精确数字版.md"
 DATA = ROOT / "data"
 
-# 跨规模稳定性基线：论文 §4.3 与 Fig. 3 图注的报告值，由 boundary_by_range 现场复算比对。
+# 跨规模稳定性基线：论文 §4.2 与 Fig. 3 图注的报告值，由 boundary_by_range 现场复算比对。
 # 另一个参照值是扩规模配置的 0.3579（data/bias/boundary.json → cross_ess_ratio），
 # 两者相差 0.005，而相邻网格点的 ESS/N 间距为 0.29，故称"对规模稳健"。
 PAPER_SCALE_BASELINE = 0.3625
@@ -227,7 +227,7 @@ def main() -> int:
         a.cell("正文断言", f"τ-sweep 标准差 τ={tau}", std, g["gain_std"], dec=4)
 
     # ---- 跨规模稳定性复算：论文 0.3625 vs 现场复算 -------------------------
-    # 论文 §4.3 与 Fig. 3 图注称：边界在小规模配置（60 物品 × 600 请求 × 30 种子）下
+    # 论文 §4.2 与 Fig. 3 图注称：边界在小规模配置（60 物品 × 600 请求 × 30 种子）下
     # 为 0.3625，扩规模到（500 物品 × 5000 请求 × 250 种子）后为 0.3579（见 boundary.json），
     # 差 0.005，而相邻网格点的 ESS/N 间距是 0.29，故"对规模稳健"。
     # 这里按同配置现场复算小规模值并比对；差异超容差即判不一致，不再自动豁免。

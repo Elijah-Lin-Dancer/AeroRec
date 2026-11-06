@@ -260,11 +260,11 @@ TEXT: dict[str, dict[str, str]] = {
         "en": "Below **ESS/N ≈ 0.358**, IPS/SNIPS gains turn **negative** — the variance cost of importance "
               "weights exceeds the correction benefit (stable across an 8× scale-up). The boundary is set by "
               "the **propensity dynamic range**, not by bias strength. Crucially `ESS/N` needs **no ground "
-              "truth**, so it ships as a deployable warning signal: `ess_warning_from_log(log, threshold=0.358)`.",
+              "truth**, so it ships as a deployable warning signal: `ess_warning_from_log(propensity)`.",
         "zh": "**ESS/N ≈ 0.358** 以下，IPS/SNIPS 收益转**负**——重要性权重的方差代价超过纠偏收益"
               "（8 倍扩规模后仍稳定）。边界由 **propensity 动态范围**决定，不是由偏差强度决定。"
               "关键在于 `ESS/N` **不需要 ground-truth**，因此可作为线上预警落地："
-              "`ess_warning_from_log(log, threshold=0.358)`。",
+              "`ess_warning_from_log(propensity)`。",
     },
     "ov.k3_title": {"en": "User-side bias needs user-item granularity", "zh": "用户侧偏差必须在 user-item 粒度建模"},
     "ov.k3_body": {
@@ -741,11 +741,11 @@ TEXT: dict[str, dict[str, str]] = {
         "en": "**Why this is the deployable part**: `ESS/N` requires only the propensity and the sample size — "
               "**no ground truth**. In a real system \"how large is the bias\" is exactly what you cannot "
               "measure, so a warning signal that avoids it is the difference between a research result and "
-              "something you can actually ship: `ess_warning_from_log(log, threshold=0.358)`.",
+              "something you can actually ship: `ess_warning_from_log(propensity)`.",
         "zh": "**为什么这条最能落地**：`ESS/N` 只需要 propensity 与样本量，**不需要 ground-truth**。"
               "在真实系统里，「偏差到底有多大」恰恰是测不出来的——"
               "所以一个绕开它的预警信号，才是「研究结论」与「能上线的东西」之间的差别："
-              "`ess_warning_from_log(log, threshold=0.358)`。",
+              "`ess_warning_from_log(propensity)`。",
     },
     "bnd.robust": {
         "en": "**Is it robust to a real system's weakness?** Yes, at this scale. Replacing the closed-form π "

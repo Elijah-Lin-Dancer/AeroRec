@@ -6,7 +6,8 @@
 >
 > 面向论文读者的技术文档。与 `README.md`（面向访客的展示页）并列；实验数字的
 > 唯一来源是 `data/bias/*.json` 与 `docs/bias_report.md`，本文档与其逐项一致（H-6）。
-> 复现命令见第 8 节；代码版本锚点为 tag `v0.2.0`（v0.1.0 仅含前 3 个实验，论文全部 7 实验自 v0.2.0 起）。
+> 复现命令见第 8 节；代码版本锚点为软件归档 tag `v1.1.0`（预印本 v2 对应 `preprint-v2`；
+> 更早的 `v0.1.0` 仅含前 3 个实验，论文全部 7 个实验自 `v0.2.0` 起）。
 
 ## 1. Overview
 
@@ -127,7 +128,12 @@ IPS/SNIPS 做的是在两个估计目标之间转换，而不是修复坏估计�
 60 物品、40 种子，N∈{1000, 2000, 5000, 10000}。N=5000 时去偏收益 gain
 （naive_err − snips_err）随 τ 单调上升：τ=1 → **+0.0468±0.0062**，τ=2 → +0.0976±0.0083，
 τ=3 → **+0.1395±0.0094**。τ 只拉大 `T_exp` 与 `T_pop` 的差距（estimand 之差），
-而 propensity 闭式已知，因此偏差强度本身不决定去偏成败——π 动态范围才决定。
+而 propensity 闭式已知，因此这里的收益几乎全部来自「naive 收敛的目标本身偏离 `T_pop`」。
+
+**与 §5.4 不是同一设定，不可混读**：本节的 π ∝ truth^τ，naive 收敛 `T_exp` 故本身有偏，
+τ 越大可纠的偏差越多——即便同期 ESS/N 已由 0.819 跌到 **0.181**（远低于 0.358），
+去偏仍然净赚；§5.4 的边界则在 π 独立均匀抽样、naive 无偏的受控设定下标定，是纯
+**方差侧**判据。两个结论都对，但边界数值不能脱离设定外推。
 
 ### 5.7 Propensity estimation error (improvement-plan #4)
 
@@ -171,7 +177,7 @@ modeled at the user-item granularity.**
   （gain≡0）p=1.0 正确不显著。bootstrap p 的最小可达值为 1/(B+1)=0.0001，
   应读作「p < 0.001」。
 - **零漂移门禁**：CI 在干净环境重跑全部实验，`git diff --exit-code` 逐字节校验
-  5 个产物 JSON；任何「改代码没更新产物」的提交直接变红。
+  7 个产物 JSON；任何「改代码没更新产物」的提交直接变红。
 
 ## 7. Limitations
 
@@ -179,7 +185,6 @@ modeled at the user-item granularity.**
   真实系统必须估计 propensity，会引入本实验不存在的误差，实际有效边界会更严苛。
 - **边界数值不可迁移**：`ESS/N ≈ 0.358` 与容差 0.001 在本项目合成数据的规模与
   先验下测出。可迁移的是方法（ESS/N 预警），不是数值。
-- **单物品域**：未涉及用户侧偏好偏差（同一用户内跨物品的选择偏差）。
 - **真实数据非出行域**：Criteo / Adult 只验证模型实现的迁移性，不改变合成
   指标的口径。
 - **本项目不提出新算法**：所有估计量（IPS/SNIPS/DR）与度量均为文献标准方法，
@@ -189,16 +194,16 @@ modeled at the user-item granularity.**
 
 ```bash
 pip install numpy==2.3.5          # 研究路径唯一依赖
-python scripts/run_bias_experiments.py    # 生成 5 个产物 JSON
+python scripts/run_bias_experiments.py    # 生成 7 个产物 JSON
 python scripts/build_bias_report.py       # 自包含 HTML 报告
-python -m pytest                          # 全量测试（125 项）
+python -m pytest                          # 全量测试（133 项）
 ```
 
-- 实验耗时约 23 s（单机、单进程）；随机种子、bootstrap 种子、RNG 策略
+- 实验耗时约 19 s（单机单进程实测 19.2 s）；随机种子、bootstrap 种子、RNG 策略
   （`rng_policy` 字段）均写入产物。
-- 零漂移门禁：`.github/workflows/repro.yml`，对 5 个产物 JSON 逐字节校验。
+- 零漂移门禁：`.github/workflows/repro.yml`，对 7 个产物 JSON 逐字节校验。
 - 在线侧内存纪律：服务进程不加载 torch（峰值 RSS ≈ 129 MB，
   单线程 P50 0.7 ms / P95 0.85 ms / P99 0.95 ms，QPS ≈ 1378，micro 档实测）。
-- 代码版本锚点：tag **`v0.2.0`**。
+- 代码版本锚点：软件归档 tag **`v1.1.0`**（预印本 v2 对应 `preprint-v2`）。
 - 更完整的机理叙事与被修正的错误见 `docs/bias_report.md`；研究贡献一页纸摘要见
   `docs/research_highlight.md`。

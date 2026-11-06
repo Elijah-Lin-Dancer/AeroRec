@@ -7,6 +7,7 @@
 产出：
     data/bias/propagation.json     传播矩阵（多 τ）
     data/bias/injection.json       混排二次注入扫描（多 w_base）
+    data/bias/boundary.json        去偏有效边界标定（π 动态范围 6 档，250 种子）
     data/bias/estimand_check.json  估计目标对照（naive→T_exp / SNIPS→T_pop）
     data/bias/boundary_sweep.json  去偏收益 τ×N 网格
     data/bias/propensity_estimation.json  propensity 估计误差（π̂ vs 真 π）

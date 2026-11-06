@@ -27,7 +27,7 @@
 >
 > **DOI**：[10.20944/preprints202610.2582.v2](https://doi.org/10.20944/preprints202610.2582.v2) · [稿件页](https://www.preprints.org/manuscript/202610.2582/v2) · [发布版 PDF](docs/paper/AeroRec-preprints.org-v2.pdf) · [作者排版版 PDF](docs/paper/AeroRec-preprint.pdf)
 >
-> **v2 改了什么**：只有一个数值。§4.3 与 Fig. 3 图注里的小规模去偏边界原报 `ESS/N = 0.3576`，该值无法用本仓库代码复现；同配置重跑已提交的流水线得到 `0.3625`。结论——边界对流水线规模稳健——不变。v1 保留独立 DOI 继续在线，是该值的原始记录，对应仓库状态打 `preprint-v1` 标签。
+> **v2 改了什么**：只有一个数值。§4.2 与 Fig. 3 图注里的小规模去偏边界原报 `ESS/N = 0.3576`，该值无法用本仓库代码复现；同配置重跑已提交的流水线得到 `0.3625`。结论——边界对流水线规模稳健——不变。v1 保留独立 DOI 继续在线，是该值的原始记录，对应仓库状态打 `preprint-v1` 标签。
 
 **论文引用格式**（How to cite）：
 

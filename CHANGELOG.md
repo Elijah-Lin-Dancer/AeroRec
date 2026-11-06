@@ -36,7 +36,7 @@
 - **论文数字溯源审计**：新增 `docs/paper/PROVENANCE.md`（8 张表 / 6 张图 → 产物文件的
   逐项对应 + 冻结文件清单）与 `scripts/audit_paper_numbers.py`（逐单元格比对，支持
   `--strict` 接 CI）。另用内嵌位图比对确认仓库 6 张图与已发布 PDF 的 Figure 2–6 一一对应
-  （MAE ≈ 0.2）。首次全量核对 207 项中有 1 项已知差异（§4.3 的 `0.3576`），该差异已在下条
+  （MAE ≈ 0.2）。首次全量核对 207 项中有 1 项已知差异（§4.2 的 `0.3576`），该差异已在下条
   修复，现为 **207 项全部一致、0 豁免**。
 - **软件归档元数据**：新增 `CITATION.cff`（GitHub 侧栏 "Cite this repository" 可直接
   产出 BibTeX，并由 `preferred-citation` 指向预印本）与 `.zenodo.json`（Zenodo 归档页
@@ -103,7 +103,7 @@
   `RecommendationEngine` 绑到同一个名字 `factory`，mypy 判定为类型不兼容。改用
   `_Engine` / `_EngineFactory` 两个 Protocol 显式化三档引擎的共有契约（**未退化成
   `Any`**，反证实验确认接口被改坏时 mypy 会立刻报错）。脚本行为与性能口径不变。
-- **论文 §4.3 与 Fig. 3 图注的跨规模边界值（`0.3576` → `0.3625`）**：预印本 v1 报告
+- **论文 §4.2 与 Fig. 3 图注的跨规模边界值（`0.3576` → `0.3625`）**：预印本 v1 报告
   小规模配置（60 物品 × 600 请求 × 30 种子）下边界为 `0.3576`，该值来自早期实现的一次
   运行、当时未落盘，仓库内无产物支撑，当前代码按同配置复算为 `0.3625`。v2 更正稿已把
   正文与图注改为 `0.3625`，并补上量化依据——两个配置落在同一网格档（π_ratio = 40），
@@ -126,6 +126,25 @@
 - **英文 README 的 `[README.md](README.md)` 自链**（License 节）改为指向本文档的
   Data licensing 小节。
 - **CHANGELOG 图数描述** 4 图 → 6 图。
+- **文档把论文边界实验的章节号写成 §4.3（实为 §4.2）**：三份 PDF 的边界实验均在
+  **4.2. Effective Debiasing Boundary**（§4.3 是 `Mixing Re-Injection`），仓库却有
+  9 个文件共 16 处写成 §4.3。现统一更正：`README.md`、`README.zh.md`、`docs/index.html`、
+  `docs/paper/PROVENANCE.md`、`docs/paper/manuscript.md`、`docs/ITERATION_PLAN.md`、
+  `CHANGELOG.md`、`.zenodo.json`、`scripts/audit_paper_numbers.py`。
+  `scripts/make_paper_figures.py` 图内 `(§4.3)` 标注指向混排，**未动**（改了会让图漂移）。
+  Zenodo 已归档记录的元数据不可修改，该处笔误只在新提交里更正。
+- **`docs/tech-report.md` 多处口径过期**：产物数 5 → **7**（三处）、测试数 125 → **133**、
+  `run_bias_experiments.py` 耗时 23 s → **19 s**（实测 19.2 s）、代码版本锚点
+  `v0.2.0` → **`v1.1.0`**；§7 删除已被 §5.8 覆盖的「单物品域」局限，现为 4 条，
+  与论文 §5.2 对齐。
+- **`docs/tech-report.md` §5.6 的 τ-sweep 结论与自身数据相抵**：原文称「偏差强度本身
+  不决定去偏成败——π 动态范围才决定」，而同段数据是 τ=3 时增益 +0.1395、同期 ESS/N
+  仅 0.181（远低于 0.358）仍净赚。现补明该组 π ∝ truth^τ、naive 收敛 `T_exp` 故本身
+  有偏，与 §5.4（π 独立均匀抽样、naive 无偏）**不是同一设定**，边界数值不可脱离设定外推。
+- **`scripts/run_bias_experiments.py` 文件头产出清单漏列 `boundary.json`**（6 → 7 项）。
+- **`src/serve/i18n.py` 的落地接口示例与真实签名不符**：4 处写作
+  `ess_warning_from_log(log, threshold=0.358)`，实际签名只接受 `propensity`、
+  阈值内置 0.4（高于实测边界，偏保守）。改为 `ess_warning_from_log(propensity)`。
 
 ## [0.2.0] - 2026-10-15
 

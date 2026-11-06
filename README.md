@@ -29,7 +29,7 @@ analytically and the exposure propensity is closed-form, so bias can be *measure
 >
 > **DOI**: [10.20944/preprints202610.2582.v2](https://doi.org/10.20944/preprints202610.2582.v2) · [Manuscript page](https://www.preprints.org/manuscript/202610.2582/v2) · [Published PDF](docs/paper/AeroRec-preprints.org-v2.pdf) · [Author-typeset PDF](docs/paper/AeroRec-preprint.pdf)
 >
-> **What changed in v2**: one value. The small-scale debiasing boundary in §4.3 and the Fig. 3 caption was reported as `ESS/N = 0.3576`, which cannot be reproduced from the released code; re-running the committed pipeline with the same configuration gives `0.3625`. The conclusion — the boundary is stable across pipeline scales — is unchanged. V1 stays online with its own DOI and remains the record of that value; the repository state it corresponds to is tagged `preprint-v1`.
+> **What changed in v2**: one value. The small-scale debiasing boundary in §4.2 and the Fig. 3 caption was reported as `ESS/N = 0.3576`, which cannot be reproduced from the released code; re-running the committed pipeline with the same configuration gives `0.3625`. The conclusion — the boundary is stable across pipeline scales — is unchanged. V1 stays online with its own DOI and remains the record of that value; the repository state it corresponds to is tagged `preprint-v1`.
 
 **How to cite the preprint**:
 
