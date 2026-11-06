@@ -110,6 +110,27 @@
 - [ ] **`.v2` DOI 尚未在注册机构生效**：`doi.org/.../2582.v2` 返回 404，Crossref 与 DataCite 均未收录（`.v1` 正常 302）
       *（平台已于 v2 正式 PDF 页脚声明该 DOI，注册滞后于分配；属平台侧时序问题，不影响引用，待其生效后复核链接可用性）*
 
+### 阶段 5d — Zenodo 归档元数据准备（2026-11-06）
+
+> 前提核实：**Zenodo 归档读取的是 tag 指向 commit 的 `.zenodo.json`**（Zenodo 会用 tag
+> 覆盖 `version`，自行生成 `doi` / `publication_date`；且 `.zenodo.json` 一旦归档，
+> 改动只能靠下一个版本生效）。因此本阶段必须先于标签移动完成。
+
+- [x] `creators` 补 `affiliation`（论文署名机构：Henan University of Economics and Law）
+      与 `type: ProjectMember` —— 原先只有 name + orcid，Zenodo 记录会显示作者无机构；
+      GitHub 归档的 metadata 事后改不了，故必须现在补
+- [x] `description` / `notes` 表述校正：本归档快照 = `preprint-v2` 定版态 + 纯文档增补，
+      并写明"未重跑任何实验、未改动任何产物、只更正了论文中一个数值"
+- [x] 按 Zenodo 规范做等价结构校验（title / upload_type / access_right / license /
+      creators / keywords / language / related_identifiers 的 relation 与 resource_type
+      枚举 / 未手写 Zenodo 生成字段 / LICENSE 存在）—— 21 项全通过
+      *（Zenodo 官方 deposit schema 当前返回 403，改用本地等价校验）*
+- [x] 归档体积复核：`git archive` 快照仅 **8.7 MB**，最大被跟踪文件 1.79 MB
+      *（`data/processed/`、`data/criteo/` 等大文件已被 `.gitignore` 排除，Zenodo 不受影响）*
+- [x] 确认 Zenodo 上 **无任何既有 AeroRec 记录**（`v1.1.0` 将是第一条，能拿到全新概念 DOI）
+- [ ] 标签 `v1.1.0` 由 `d187766` 移至本阶段的收尾提交（远端强制更新），使归档快照
+      含本次元数据补充；`preprint-v1` / `preprint-v2` / `v1.0.0` 均不动
+
 ### 阶段 6 — Zenodo 归档（用户执行）
 
 - [ ] 用标签 **`v1.1.0`** 发 GitHub Release（标题/描述已备好，见下）
