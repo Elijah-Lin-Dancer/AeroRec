@@ -86,7 +86,7 @@
       三份 docs、`app.py`、`src/serve/i18n.py`、`PROVENANCE.md`、`docs/paper/README.md`（共 13 个文件）
 - [x] `docs/paper/README.md` 材料清单：v2 标为 version of record，v1 标为 superseded（保留为 0.3576 的物证）
 - [x] `CHANGELOG.md` 记录 v2 上线与 DOI 替换；`CITATION.cff` / `.zenodo.json` 升版 1.1.0
-- [ ] 打标签 `preprint-v2` 与 `v1.1.0`
+- [x] 打标签 `preprint-v2` 与 `v1.1.0`，均指向 v2 收尾提交（2026-11-06 推送）
       *（`preprint-v1` → `c41997b`、`v1.0.0` → `37c0727` 保持不动）*
 
 ### 阶段 6 — Zenodo 归档（用户执行）
@@ -96,8 +96,9 @@
 
 > Release 标题：`AeroRec v1.1.0 — preprint v2 correction (boundary 0.3576 → 0.3625)`
 > 描述要点：结果文件与 v1 归档逐字节相同；变的只有论文一个值、审计基建与文档。
-> 归档后 Zenodo 记录会生成**新**的软件 DOI（与 v1.0.0 那条独立），两者靠
-> `related_identifiers` 互链。
+> **更正**：`v1.0.0` 标签从未发布过 Release，所以 Zenodo 上目前**没有任何记录**，
+> `v1.1.0` 将是第一条（概念 DOI + 版本 DOI 一次生成）。它的 `data/` 与 `v1.0.0`
+> 逐字节相同，无需为旧状态单独归档。
 
 ### 阶段 7 — 补软件 DOI（1 个 commit）
 

@@ -720,9 +720,9 @@ TEXT: dict[str, dict[str, str]] = {
     "bnd.verdict_edge": {"en": "◀ boundary", "zh": "◀ 边界"},
     "bnd.verdict_bad": {"en": "debias hurts", "zh": "去偏有害"},
     "bnd.cross": {
-        "en": "**Measured boundary: ESS/N ≈ {cross:.4f}** — stable across an 8× scale-up (0.3576 → 0.3579), "
+        "en": "**Measured boundary: ESS/N ≈ {cross:.4f}** — stable across an 8× scale-up (0.3625 → 0.3579), "
               "so it is a property of the weighting scheme, not of this sample size.",
-        "zh": "**实测边界：ESS/N ≈ {cross:.4f}**——8 倍扩规模后仍稳定（0.3576 → 0.3579），"
+        "zh": "**实测边界：ESS/N ≈ {cross:.4f}**——8 倍扩规模后仍稳定（0.3625 → 0.3579），"
               "说明它是加权方案的性质，不是这次抽样规模的偶然。",
     },
     "bnd.chart_title": {"en": "SNIPS error and gain vs ESS/N", "zh": "SNIPS 误差与增益随 ESS/N 的变化"},

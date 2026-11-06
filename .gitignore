@@ -17,3 +17,8 @@ data/criteo/
 # 环境 / 系统
 .DS_Store
 *.log
+
+# 预印本上传中间稿：由 scripts/build_preprint_docx.py 从 manuscript.md 确定性生成，
+# 平台回传的正式 PDF 才是 version of record
+docs/paper/*-draft.docx
+docs/paper/_preprint_v2.md

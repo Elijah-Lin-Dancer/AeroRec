@@ -54,9 +54,10 @@ conclusions — an earlier version of this project did exactly that and was corr
 Sweeping the propensity's dynamic range gives a clean threshold:
 
 > **`ESS/N ≈ 0.358`** — below it, IPS/SNIPS/DR gains turn **negative** (the variance cost of importance weights
-> exceeds the correction benefit). The threshold is stable across scales (0.3576 → 0.3579 after an
-> 8× scale-up, as published; recomputing the small-scale point with the current code gives 0.3625 —
-> a 0.005 difference that leaves the stability conclusion intact, see `PROVENANCE.md` §5).
+> exceeds the correction benefit). The threshold is stable across scales: 0.3625 → 0.3579 after an
+> 8× scale-up, a 0.005 difference against a grid spacing of 0.29 in ESS/N (see `PROVENANCE.md` §5).
+> The v1 preprint reported 0.3576 for the small-scale point — a value that could not be reproduced
+> from the released code; v2 corrects it and leaves the stability conclusion intact.
 
 Crucially, **`ESS/N` needs no ground truth**, so it is deployable as an online warning signal (exposed as
 `ess_warning_from_log`). This is the project's single most actionable engineering takeaway.
