@@ -66,6 +66,25 @@
   propensity 估计误差的稳健性（Δ=−0.0022，p=0.87，零漏报），并嵌入论文图 2/图 3。
 
 ### Changed
+- **文档与产物的口径一致性清理**（6 处，全部是「文档写的 ≠ 产物算的」，无代码行为变更）：
+  - `src/bias/boundary.py` 模块文档串的边界表停留在早期版本（gain `−0.0010 / −0.0065 /
+    −0.0316 / −0.0850 / −0.1070`、ESS `0.019 / 0.017`），与 `data/bias/boundary.json`
+    现值不符。已按 `boundary_by_range(t_pop≈0.2459, n_records=20000, 250 seed)` 的现产物
+    改写为 `−0.0001 / −0.0017 / −0.0084 / −0.0306 / −0.0627`、ESS `0.006 / 0.003`；
+    同段 τ 扫描的「60/200 物品、40 seed」更正为「40 seed × 每 seed 5000 条记录」，
+    gain 由 `≈+0.07 / ≈+0.16` 改为实测 `+0.0468 / +0.1395`；预警线表述改为
+    「ESS/N 降至约 0.36（实测越界点 0.3579）以下开始亏本，代码默认阈值取 0.4」。
+  - `.github/workflows/repro.yml` 头部注释写「三个 job」，实际 4 个（漏了 `lint`），
+    已补齐 job 清单与分工说明。
+  - `README.zh.md` 的文件清单仍写「当前版本锚点 v0.2.0」，而最新发布锚点是 `v1.1.0`、
+    `[0.2.0]` 只是 CHANGELOG 的最后一个语义版本节 —— 改为同时说明两者。
+  - 两版 README 仍指向 `README_spaces.md` / `requirements_spaces.txt`，这两个文件已在
+    `e42ae7e` 移除，读者点了只会 404 —— 改为「草案文件已从仓库移除」。
+  - `CRITEO_NOTE`（`src/data/criteo.py`）与两份 `data/real_validation/*.json` 的
+    `note` 写 LR 基线 `0.7717`，而同文件的 `val_auc_logistic_baseline` 是 `0.7716`
+    （`round(auc_lr, 4)` 的输出）—— 统一为 `0.7716`。只改 `note` 文本，数值字段一律未动。
+  - GitHub Release `v1.1.0` 说明里「§4.3 and the Fig. 3 caption」仍用旧章节号，
+    已改为 `§4.2`（标签树与 Zenodo 归档快照不可变，仍保留 §4.3）。
 - **CI 静态检查范围扩大**：mypy 由 `mypy src` 改为 `mypy .`（50 → 59 个文件），
   ruff 由 `ruff check src tests` 改为 `ruff check src tests scripts`。
   此前 `scripts/` 完全不在 CI 检查范围内 —— 这是 `bench_inference.py` 的类型错误

@@ -48,7 +48,7 @@ SPARSE_NAMES = [f"C{i}" for i in range(1, N_SPARSE + 1)]
 COLUMNS = [NAME_LABEL] + DENSE_NAMES + SPARSE_NAMES
 
 CRITEO_NOTE = (
-    "已用真实 criteo-1M（100 万行 parquet）跑通：DeepFM 验证 AUC 0.7733 / LR 基线 0.7717 / "
+    "已用真实 criteo-1M（100 万行 parquet）跑通：DeepFM 验证 AUC 0.7733 / LR 基线 0.7716 / "
     "常数基线 0.5000（详见 data/real_validation/result.json）。"
     "注意：自动化构建环境无法直接下载数据（官方 S3 / go.criteo.net / HuggingFace CDN 均不可达），"
     "需先在本机取得文件再放入 data/criteo/（该目录已 gitignore），"

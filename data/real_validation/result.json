@@ -83,7 +83,7 @@
   ],
   "max_card_per_field": 50000,
   "preprocessing": "dense: 缺失->0, log1p, Z-score(训练集); sparse: 缺失/OOV->0 的频率词表整数编码",
-  "note": "已用真实 criteo-1M（100 万行 parquet）跑通：DeepFM 验证 AUC 0.7733 / LR 基线 0.7717 / 常数基线 0.5000（详见 data/real_validation/result.json）。注意：构建沙箱无法直接下载数据（官方 S3 / go.criteo.net / HuggingFace CDN 均不可达），需先在本机取得文件再放入 data/criteo/（该目录已 gitignore），然后运行 `python scripts/validate_real_data_deepfm.py --dataset criteo --criteo-path <file>`。",
+  "note": "已用真实 criteo-1M（100 万行 parquet）跑通：DeepFM 验证 AUC 0.7733 / LR 基线 0.7716 / 常数基线 0.5000（详见 data/real_validation/result.json）。注意：构建沙箱无法直接下载数据（官方 S3 / go.criteo.net / HuggingFace CDN 均不可达），需先在本机取得文件再放入 data/criteo/（该目录已 gitignore），然后运行 `python scripts/validate_real_data_deepfm.py --dataset criteo --criteo-path <file>`。",
   "model": "DeepFM (Guo et al. 2017) — 与本项目合成链路同一实现",
   "deepfm_epochs": 2,
   "deepfm_batch_size": 512,

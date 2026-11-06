@@ -193,8 +193,8 @@ python scripts/validate_real_data_deepfm.py --dataset adult   # real-data transf
 - **Interactive panel (Streamlit Community Cloud)**: <https://aerorec-tourism.streamlit.app>
 
 > **On deployment choices**: only two online entry points are kept — the static GitHub Pages homepage and the
-> Streamlit Cloud demo. A HuggingFace Space was prepared early on (`README_spaces.md`,
-> `requirements_spaces.txt`) but deliberately **not created**: it would be the same class of "interactive Python
+> Streamlit Cloud demo. A HuggingFace Space was considered early on (its draft files were later removed from the
+> repo) but deliberately **not created**: it would be the same class of "interactive Python
 > demo" as Streamlit Cloud, adding a maintenance surface with no differentiated value, while Pages already
 > covers the landing-page role.
 

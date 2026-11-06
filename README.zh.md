@@ -190,7 +190,7 @@ python3.11 scripts/validate_real_data_deepfm.py --dataset adult   # 真实数据
   不会带来差异化价值，只会多一个部署与维护面；
 - **静态主页已由 GitHub Pages 承担**：`docs/index.html`（项目主页）已覆盖「落地页」需求，无需 Space 补位。
 
-> 故 HF Spaces 仅停留在早期规划（曾为其准备 `README_spaces.md` 与 `requirements_spaces.txt`），实际未创建。
+> 故 HF Spaces 仅停留在早期规划（其草案文件已从仓库移除，当前树内不含），实际未创建。
 
 ## 数据与复现
 
@@ -555,7 +555,7 @@ artifacts/micro/           离线预训练的在线权重（numpy，约 29KB）
 requirements.txt           部署依赖（仅 numpy + streamlit，Streamlit Cloud 读这个）
 requirements_full.txt      完整依赖（含 torch / sklearn / pandas，本地开发与离线复现）
 pyproject.toml             打包元信息 + pytest / ruff / mypy / coverage 配置
-CHANGELOG.md               变更日志（Keep a Changelog 风格；当前版本锚点 v0.2.0）
+CHANGELOG.md               变更日志（Keep a Changelog 风格；语义版本节止于 [0.2.0]，发布锚点见 v1.1.0 标签）
 LICENSE                    MIT 许可
 ```
 
