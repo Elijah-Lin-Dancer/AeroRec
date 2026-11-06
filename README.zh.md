@@ -542,6 +542,7 @@ tests/test_bias_*.py       偏差诊断 / 去偏估计 / 边界 / 报告 测试�
 tests/test_criteo*.py      Criteo 加载器单测（构造样本 + 真实 parquet 兼容性）
 tests/test_real_data.py    UCI Adult 加载器测试
 docs/bias_report.md          偏差传播诊断与去偏验证 tech report
+docs/RELEASING.md            发布规范：已发布标签不可变、版本号永不回收
 docs/paper/                  论文预印本（Preprints.org 已发布 v1 + 作者排版版）
 docs/paper/figures/          论文 6 张图（由 data/bias/*.json 直接生成，可逐字节重生成）
 docs/paper/PROVENANCE.md     数字溯源：论文每张表/每张图对应哪个产物文件

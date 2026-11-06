@@ -198,8 +198,12 @@ jobs:
           python -m pip install "ruff==0.17.0" "mypy==1.19.1"
 
       - name: ruff
-        run: ruff check src tests
+        run: ruff check src tests scripts
 
       # mypy 无需安装 numpy/torch 等：ignore_missing_imports 已配置
+      # 范围是全仓（mypy .），不只是 src —— 脚本目录 scripts/ 里同样有
+      # 需要类型保证的代码（如 bench_inference.py 的三档引擎工厂）。
+      # 此前 CI 只跑 `mypy src`，导致 scripts/ 的类型错误长期逃逸；
+      # pyproject.toml 的 exclude 已排除 tests/。
       - name: mypy
-        run: mypy src
+        run: mypy .

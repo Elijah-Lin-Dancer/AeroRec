@@ -572,6 +572,7 @@ tests/test_bias_*.py         bias diagnosis / debiasing estimators / boundary / 
 tests/test_criteo*.py        Criteo loader tests (synthetic sample + real parquet compatibility)
 tests/test_real_data.py      UCI Adult loader tests
 docs/bias_report.md          bias-propagation diagnosis and debiasing validation tech report
+docs/RELEASING.md            release policy: published tags are immutable, version numbers never reused
 docs/paper/                  preprint (Preprints.org v1 + author-typeset version)
 docs/paper/PROVENANCE.md     provenance: which artifact backs which table/figure
 scripts/audit_paper_numbers.py  re-checks the paper's 8 tables against data/*.json

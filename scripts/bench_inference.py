@@ -30,9 +30,28 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+from typing import Protocol
 
 _ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(_ROOT))
+
+
+class _Engine(Protocol):
+    """三档引擎共有的最小接口（本脚本只用到 `recommend`）。
+
+    三档引擎是三个**互不继承**的类，但对外接口刻意保持一致
+    （见 src/serve/engine_micro.py 的类注释）。用 Protocol 把这份契约
+    写进类型系统，既避免把 `factory` 退化成 `Any` 而丢失检查，
+    也让"接口漂移"在 mypy 阶段就暴露出来，而不是等到线上才炸。
+    """
+
+    def recommend(self, user_id: int, top_k: int | None = None) -> list: ...
+
+
+class _EngineFactory(Protocol):
+    """可调用、无参构造的引擎工厂。"""
+
+    def __call__(self) -> _Engine: ...
 
 
 def _cpu_model() -> str:
@@ -82,12 +101,18 @@ def main():
 
     # 只导入**当前档位**所需的引擎模块：micro / lite 走纯 numpy，
     # 绝不能因为导入 full 引擎（src.serve.engine）而把 torch 拖进内存。
+    # 三个引擎类互不继承，故先分别导入，再统一收进一个工厂变量；
+    # 类型由 _EngineFactory 协议约束（见文件头）。
+    factory: _EngineFactory
     if args.mode == "micro":
-        from src.serve.engine_micro import MicroRecommendationEngine as factory
+        from src.serve.engine_micro import MicroRecommendationEngine
+        factory = MicroRecommendationEngine
     elif args.mode == "lite":
-        from src.serve.engine_lite import LiteRecommendationEngine as factory
+        from src.serve.engine_lite import LiteRecommendationEngine
+        factory = LiteRecommendationEngine
     else:
-        from src.serve.engine import RecommendationEngine as factory
+        from src.serve.engine import RecommendationEngine
+        factory = RecommendationEngine
 
     t0 = time.perf_counter()
     engine = factory()

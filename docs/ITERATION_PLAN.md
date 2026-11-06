@@ -165,6 +165,41 @@
       下个版本生效，对已归档的 v1.1.0 记录无效——不动它可保证 v1.1.0 归档快照与
       归档时刻的 main HEAD 逐字节一致）*
 
+### 阶段 8 — 发布标签不可变化 + 类型检查补强（2026-11-06，本轮）
+
+起因：外部提醒"**已发布版本号绝不可删除后以同名重建**"——Zenodo 依据 Release 事件归档，
+读取 tag 指向 commit 的 `.zenodo.json`，同名 tag 被"狸猫换太子"会导致 Zenodo 归档混乱、
+版本 DOI 与内容对不上、引用失真；而 Zenodo 上归档过的 metadata **事后不可修改**，错误无法撤回。
+
+- [x] **排查现状**：仓库此前**既无任何 ruleset、`main` 也无分支保护** —— 上述风险无任何技术拦截
+- [x] **发现历史隐患**：`v1.0.0` 的远端 tag 对象（tagger `Elijah-Lin`）与本地
+      （tagger `AeroRec Agent <agent@local>`）**不是同一个对象**，说明该 tag 曾被重建过
+      （指向 commit 相同，且**从未挂过 Release**，故 Zenodo 无记录、未造成实际混乱）；
+      已用 `git update-ref` 将本地对齐远端权威对象，6 个标签本地/远端现已逐一相同
+- [x] **建立 ruleset `published-tags-are-immutable`**（id `26684005`，target=tag）：
+      include `refs/tags/v*`、`refs/tags/preprint-*`，rules = `deletion` + `update`
+      → 已发布标签**不可删除、不可改指**
+- [x] **建立 ruleset `no-reuse-of-released-version-numbers`**（id `26684019`，target=tag）：
+      include 精确列出 4 个已发布版本，rules = `creation` → 版本号**不可再次创建**
+- [x] **实测四条路径**（均以真实 git push 验证，非纸面推断）：
+      删除 `v1.1.0` → 被拒（`Cannot delete this tag`）；
+      改指 `v1.1.0` → 被拒（`Cannot update this protected ref`）；
+      同名重建 `v1.1.0` → 被拒；
+      **创建全新 `v1.2.0-rc.test` → 成功**（证明不误伤未来正常发布流程）
+- [x] **清理测试标签**：因 `v*` 通配规则，测试标签亦不可删 —— 经临时加入 ruleset 的
+      `exclude` 完成删除后**立即恢复**原状；远端标签回到基线的 6 个，与操作前逐一相同
+- [x] **补 `docs/RELEASING.md`**：铁律、技术强制、**逃生舱操作步骤**（含"改完必须恢复
+      exclude"与 CHANGELOG 留痕要求）、发布命令序列、标签含义表、版本号↔DOI 对应表
+- [x] **红线第 6 条**：已发布标签不得删除/改指/复用版本号
+- [x] **修 `scripts/bench_inference.py` 的 2 个 mypy 报错**：根因是三个分支把
+      `MicroRecommendationEngine` / `LiteRecommendationEngine` / `RecommendationEngine`
+      绑到同一名字 `factory`。改用 `_Engine` / `_EngineFactory` 两个 Protocol 显式化
+      三档引擎的共有契约——**未退化成 `Any`**，反证实验（故意改坏引擎的 `recommend`）
+      确认 mypy 会立刻报错，说明约束真实生效
+- [x] **CI 类型检查范围扩大**：`mypy src` → `mypy .`（50 → 59 个文件），
+      `ruff check src tests` → `ruff check src tests scripts`；
+      此前 `scripts/` 完全不在 CI 检查范围内，是这 2 个报错能长期存活的根因
+
 ## 3. 红线
 
 1. `docs/paper/AeroRec-preprints.org-v1.pdf` 不得覆盖、不得删除。
@@ -172,6 +207,9 @@
 3. `data/bias/*.json` 与 `data/real_validation/*.json` 不得改动（论文数值底座）。
 4. 不得为了"对上"而改代码去凑 `0.3576`。
 5. 阶段 5c 的 commit 必须是 Zenodo 归档前最后一次改动。
+6. **已发布的标签不得删除、不得改指、版本号不得复用** —— 一律发新版本号。
+   *（GitHub Ruleset `published-tags-are-immutable` / `no-reuse-of-released-version-numbers`
+   已从技术上强制；详见 [docs/RELEASING.md](RELEASING.md)）*
 
 ## 4. 验收
 

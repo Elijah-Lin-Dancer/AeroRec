@@ -6,6 +6,16 @@
 ## [Unreleased]
 
 ### Added
+- **已发布标签纳入 GitHub Ruleset 保护**：此前仓库无任何 ruleset、`main` 也无分支保护，
+  "删掉已发布 tag 再以同名重建"这一风险**没有任何技术拦截**。现建立两条仓库级规则集：
+  - `published-tags-are-immutable`（id `26684005`）：`refs/tags/v*` 与 `refs/tags/preprint-*`
+    禁止删除、禁止改指；
+  - `no-reuse-of-released-version-numbers`（id `26684019`）：已发布的 4 个版本号禁止再次创建。
+
+  规则集**刻意不含 `creation` 通配规则**，未来的 `v1.2.0` 可正常创建，不误伤发布流程。
+  四条路径均以真实 git push 实测：删除 / 改指 / 同名重建**三项全部被拒**，
+  而创建全新版本号**成功**。新增 `docs/RELEASING.md` 记录铁律、技术强制、逃生舱步骤、
+  发布命令序列与版本号↔DOI 对应表。
 - **软件已在 Zenodo 完成归档（本项目首个 GitHub Release）**：Release `v1.1.0`
   （标签 `v1.1.0` → `8aee4f9`），Zenodo 的 release hook 自动归档，产出
   概念 DOI [10.5281/zenodo.24003810](https://doi.org/10.5281/zenodo.24003810)（永远指向最新版）
@@ -56,6 +66,10 @@
   propensity 估计误差的稳健性（Δ=−0.0022，p=0.87，零漏报），并嵌入论文图 2/图 3。
 
 ### Changed
+- **CI 静态检查范围扩大**：mypy 由 `mypy src` 改为 `mypy .`（50 → 59 个文件），
+  ruff 由 `ruff check src tests` 改为 `ruff check src tests scripts`。
+  此前 `scripts/` 完全不在 CI 检查范围内 —— 这是 `bench_inference.py` 的类型错误
+  能长期存活的根因。
 - **全仓库 DOI 指向 `.v2`**：`CITATION.cff`、`.zenodo.json`、两版 README（徽章 +
   稿件页 + 引用 + BibTeX）、`docs/index.html`（首屏条 + 页脚）、三份技术文档、
   Streamlit 侧边栏与页脚引用、论文材料清单与溯源文件共 13 个文件；`.v2` 尚未全局
@@ -84,6 +98,11 @@
   并新增 `overview_en.png`；两版 README 的截图区改为「总览页 1 张大图 + 4 张 2×2」。
 
 ### Fixed
+- **`scripts/bench_inference.py` 的 2 个 mypy 报错**（`Incompatible import of "factory"`）：
+  三个分支把 `MicroRecommendationEngine` / `LiteRecommendationEngine` /
+  `RecommendationEngine` 绑到同一个名字 `factory`，mypy 判定为类型不兼容。改用
+  `_Engine` / `_EngineFactory` 两个 Protocol 显式化三档引擎的共有契约（**未退化成
+  `Any`**，反证实验确认接口被改坏时 mypy 会立刻报错）。脚本行为与性能口径不变。
 - **论文 §4.3 与 Fig. 3 图注的跨规模边界值（`0.3576` → `0.3625`）**：预印本 v1 报告
   小规模配置（60 物品 × 600 请求 × 30 种子）下边界为 `0.3576`，该值来自早期实现的一次
   运行、当时未落盘，仓库内无产物支撑，当前代码按同配置复算为 `0.3625`。v2 更正稿已把
