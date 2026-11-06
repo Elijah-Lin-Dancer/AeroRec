@@ -9,6 +9,7 @@
 [![Pages](https://img.shields.io/badge/🌐%20Homepage-GitHub%20Pages-blue)](https://elijah-lin-dancer.github.io/AeroRec/)
 [![Reproducibility](https://github.com/Elijah-Lin-Dancer/AeroRec/actions/workflows/repro.yml/badge.svg)](https://github.com/Elijah-Lin-Dancer/AeroRec/actions/workflows/repro.yml)
 [![Preprint DOI](https://img.shields.io/badge/DOI-10.20944%2Fpreprints202610.2582.v2-c7215f)](https://doi.org/10.20944/preprints202610.2582.v2)
+[![Zenodo DOI](https://img.shields.io/badge/Zenodo-10.5281%2Fzenodo.24003810-blue)](https://doi.org/10.5281/zenodo.24003810)
 
 **AeroRec** is an engineering-grade **travel recommendation platform** (flights / hotels / shopping / deals /
 live) that reproduces an industrial pipeline end-to-end on a **reproducible synthetic dataset**, plus a fully
@@ -30,13 +31,24 @@ analytically and the exposure propensity is closed-form, so bias can be *measure
 >
 > **What changed in v2**: one value. The small-scale debiasing boundary in §4.3 and the Fig. 3 caption was reported as `ESS/N = 0.3576`, which cannot be reproduced from the released code; re-running the committed pipeline with the same configuration gives `0.3625`. The conclusion — the boundary is stable across pipeline scales — is unchanged. V1 stays online with its own DOI and remains the record of that value; the repository state it corresponds to is tagged `preprint-v1`.
 
-**How to cite**:
+**How to cite the preprint**:
 
 ```text
 Zhao, Y. Bias Propagation and Effective Boundaries of Debiasing in Recommender
 Systems: An Oracle-Based Diagnosis Study. Preprints 2026, 202610.2582.
 https://doi.org/10.20944/preprints202610.2582.v2
 ```
+
+**How to cite the software** — archived on Zenodo as v1.1.0 (the archive of `preprint-v2`):
+
+```text
+Zhao, Y. AeroRec: an oracle-based diagnosis platform for bias propagation and
+debiasing boundaries in recommender systems. Zenodo (2026), v1.1.0.
+https://doi.org/10.5281/zenodo.24003811
+```
+
+> The **concept DOI** `10.5281/zenodo.24003810` always resolves to the latest release; the **version DOI** above
+> pins this exact archive.
 
 <details>
 <summary><strong>BibTeX</strong></summary>
@@ -50,6 +62,16 @@ https://doi.org/10.20944/preprints202610.2582.v2
   number  = {202610.2582},
   doi     = {10.20944/preprints202610.2582.v2},
   url     = {https://doi.org/10.20944/preprints202610.2582.v2}
+}
+
+@software{zhao2026aerorec_zenodo,
+  title   = {AeroRec: an oracle-based diagnosis platform for bias propagation and debiasing boundaries in recommender systems},
+  author  = {Zhao, Yulin},
+  year    = {2026},
+  version = {1.1.0},
+  doi     = {10.5281/zenodo.24003811},
+  url     = {https://doi.org/10.5281/zenodo.24003811},
+  license = {MIT}
 }
 ```
 

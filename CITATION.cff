@@ -15,6 +15,7 @@ abstract: >-
 version: 1.1.0
 date-released: 2026-11-06
 license: MIT
+doi: "10.5281/zenodo.24003811"
 repository-code: "https://github.com/Elijah-Lin-Dancer/AeroRec"
 url: "https://github.com/Elijah-Lin-Dancer/AeroRec"
 keywords:

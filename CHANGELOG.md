@@ -6,6 +6,16 @@
 ## [Unreleased]
 
 ### Added
+- **软件已在 Zenodo 完成归档（本项目首个 GitHub Release）**：Release `v1.1.0`
+  （标签 `v1.1.0` → `8aee4f9`），Zenodo 的 release hook 自动归档，产出
+  概念 DOI [10.5281/zenodo.24003810](https://doi.org/10.5281/zenodo.24003810)（永远指向最新版）
+  与版本 DOI [10.5281/zenodo.24003811](https://doi.org/10.5281/zenodo.24003811)（锁定本次归档）。
+  归档内容为 `preprint-v2` 的逐字节快照（151 个条目、含 v1/v2 两版论文 PDF 与全部 `data/bias/`
+  产物，`data/` 与 `preprint-v1` 标签逐字节相同，**未重跑任何实验、未改动任何产物**）；
+  creator 元数据补入作者机构（Henan University of Economics and Law）与 ORCID。
+  Release 同时附上两版论文 PDF。README（中/英）新增 Zenodo 徽章与软件引用条目，
+  `docs/index.html` 首屏与页脚新增软件 DOI 入口。`preprint-v1` / `preprint-v2` /
+  `v1.0.0` 三个标签一律未移动。
 - **预印本 v2 上线**：Preprints.org 于 2026-11-06 发布更正版，DOI 变为
   [10.20944/preprints202610.2582.v2](https://doi.org/10.20944/preprints202610.2582.v2)
   （v1 的 `.v1` DOI 永久保留，两版互链）。v2 的版式由我们提交的 Word 稿排版而来，

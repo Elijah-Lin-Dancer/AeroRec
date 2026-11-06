@@ -13,6 +13,7 @@
 [![Pages](https://img.shields.io/badge/🌐%20Homepage-GitHub%20Pages-blue)](https://elijah-lin-dancer.github.io/AeroRec/)
 [![Reproducibility](https://github.com/Elijah-Lin-Dancer/AeroRec/actions/workflows/repro.yml/badge.svg)](https://github.com/Elijah-Lin-Dancer/AeroRec/actions/workflows/repro.yml)
 [![Preprint DOI](https://img.shields.io/badge/DOI-10.20944%2Fpreprints202610.2582.v2-c7215f)](https://doi.org/10.20944/preprints202610.2582.v2)
+[![Zenodo DOI](https://img.shields.io/badge/Zenodo-10.5281%2Fzenodo.24003810-blue)](https://doi.org/10.5281/zenodo.24003810)
 
 > **快速体验**：[项目主页](https://elijah-lin-dancer.github.io/AeroRec/) · [交互 Demo（Streamlit Cloud）](https://aerorec-tourism.streamlit.app)
 >
@@ -28,13 +29,23 @@
 >
 > **v2 改了什么**：只有一个数值。§4.3 与 Fig. 3 图注里的小规模去偏边界原报 `ESS/N = 0.3576`，该值无法用本仓库代码复现；同配置重跑已提交的流水线得到 `0.3625`。结论——边界对流水线规模稳健——不变。v1 保留独立 DOI 继续在线，是该值的原始记录，对应仓库状态打 `preprint-v1` 标签。
 
-**引用格式**（How to cite）：
+**论文引用格式**（How to cite）：
 
 ```text
 Zhao, Y. Bias Propagation and Effective Boundaries of Debiasing in Recommender
 Systems: An Oracle-Based Diagnosis Study. Preprints 2026, 202610.2582.
 https://doi.org/10.20944/preprints202610.2582.v2
 ```
+
+**软件引用格式**——已在 Zenodo 归档为 v1.1.0（即 `preprint-v2` 的归档）：
+
+```text
+Zhao, Y. AeroRec: an oracle-based diagnosis platform for bias propagation and
+debiasing boundaries in recommender systems. Zenodo (2026), v1.1.0.
+https://doi.org/10.5281/zenodo.24003811
+```
+
+> **概念 DOI** `10.5281/zenodo.24003810` 永远指向最新版本；上面的**版本 DOI** 锁定这一份归档。
 
 <details>
 <summary><strong>BibTeX</strong></summary>
@@ -48,6 +59,16 @@ https://doi.org/10.20944/preprints202610.2582.v2
   number  = {202610.2582},
   doi     = {10.20944/preprints202610.2582.v2},
   url     = {https://doi.org/10.20944/preprints202610.2582.v2}
+}
+
+@software{zhao2026aerorec_zenodo,
+  title   = {AeroRec: an oracle-based diagnosis platform for bias propagation and debiasing boundaries in recommender systems},
+  author  = {Zhao, Yulin},
+  year    = {2026},
+  version = {1.1.0},
+  doi     = {10.5281/zenodo.24003811},
+  url     = {https://doi.org/10.5281/zenodo.24003811},
+  license = {MIT}
 }
 ```
 

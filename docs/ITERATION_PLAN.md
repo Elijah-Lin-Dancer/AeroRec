@@ -131,23 +131,39 @@
 - [ ] 标签 `v1.1.0` 由 `d187766` 移至本阶段的收尾提交（远端强制更新），使归档快照
       含本次元数据补充；`preprint-v1` / `preprint-v2` / `v1.0.0` 均不动
 
-### 阶段 6 — Zenodo 归档（用户执行）
+### 阶段 6 — Zenodo 归档（2026-11-06 已执行）
 
-- [ ] 用标签 **`v1.1.0`** 发 GitHub Release（标题/描述已备好，见下）
-- [ ] Zenodo 自动归档，取得软件 DOI
+- [x] 标签 `v1.1.0` 由 `d187766` 强制更新至 `8aee4f9`（远端 `c5ac449...314af47 forced update`）；
+      `preprint-v1` / `preprint-v2` / `v1.0.0` 三个标签**一律未动**
+- [x] 用标签 **`v1.1.0`** 发 GitHub Release（published，非 draft / 非 prerelease），
+      附 `AeroRec-preprints-v2.pdf`（version of record）与 `AeroRec-preprints-v1.pdf`（历史物证）
+      → https://github.com/Elijah-Lin-Dancer/AeroRec/releases/tag/v1.1.0
+- [x] Zenodo 自动归档，取得软件 DOI
+      *（release hook 触发后约 1 分钟落库）*
+      - 概念 DOI **10.5281/zenodo.24003810**（永远指向最新版）
+      - 版本 DOI **10.5281/zenodo.24003811**（锁定本次归档）
+- [x] 归档内容逐项核对：151 个条目；含 v1/v2 两版论文 PDF（v1 的 sha256 与仓库一致）
+      与全部 `data/bias/` 产物；`.zenodo.json` 的 creator 机构信息**确已生效**
+      （证明 Zenodo 读的正是 tag 指向 commit 的那份）；`data/` 与 `preprint-v1` 逐字节相同
 
 > Release 标题：`AeroRec v1.1.0 — preprint v2 correction (boundary 0.3576 → 0.3625)`
 > 描述要点：结果文件与 v1 归档逐字节相同；变的只有论文一个值、审计基建与文档。
-> **更正**：`v1.0.0` 标签从未发布过 Release，所以 Zenodo 上目前**没有任何记录**，
-> `v1.1.0` 将是第一条（概念 DOI + 版本 DOI 一次生成）。它的 `data/` 与 `v1.0.0`
+> **更正**：`v1.0.0` 标签从未发布过 Release，所以 Zenodo 上此前**没有任何记录**，
+> `v1.1.0` 是第一条（概念 DOI + 版本 DOI 一次生成）。它的 `data/` 与 `v1.0.0`
 > 逐字节相同，无需为旧状态单独归档。
 
 ### 阶段 7 — 补软件 DOI（1 个 commit）
 
-- [ ] 两版 README 徽章并列预印本 DOI 与软件 DOI
-- [ ] `docs/index.html` 页脚
-- [ ] `CHANGELOG.md`
-- [ ] `.zenodo.json` 的 `related_identifiers` 指向 `.v2`（已指向，待补软件 DOI 互链）
+- [x] 两版 README 徽章并列预印本 DOI 与软件 DOI（概念 DOI），引用区新增软件条目
+      （版本 DOI + `@software` BibTeX）
+- [x] `docs/index.html` 首屏与页脚
+- [x] `CHANGELOG.md`
+- [x] `CITATION.cff` 顶层补 `doi: 10.5281/zenodo.24003811`（此前只有 `preferred-citation`
+      的预印本 DOI，GitHub 侧栏"Cite this repository"因此给不出软件 DOI）；CFF 1.2.0 校验通过
+- [x] `.zenodo.json` 的 `related_identifiers` → **刻意不补自引用**
+      *（Zenodo 自动建立版本↔概念关系，手加指向自家概念 DOI 是冗余；且该文件改动只对
+      下个版本生效，对已归档的 v1.1.0 记录无效——不动它可保证 v1.1.0 归档快照与
+      归档时刻的 main HEAD 逐字节一致）*
 
 ## 3. 红线
 
