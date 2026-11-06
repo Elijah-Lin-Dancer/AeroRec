@@ -89,6 +89,27 @@
 - [x] 打标签 `preprint-v2` 与 `v1.1.0`，均指向 v2 收尾提交（2026-11-06 推送）
       *（`preprint-v1` → `c41997b`、`v1.0.0` → `37c0727` 保持不动）*
 
+### 阶段 5c — 发布前复核（2026-11-06，本轮）
+
+> 结论：**仓库侧无问题，可以发 Release**；剩两项属平台/托管侧，非代码问题。
+
+- [x] 复算 `0.3625`：`boundary_by_range(t_pop=0.25, n_records=600, n_seeds=30)` → `ess_ratio = 0.3625`，与论文 §4.3 及 Fig. 3 图注逐位吻合
+      *（审计脚本本身就现场跑这条路径，`--strict` 通过即等于已固化复现）*
+- [x] 复算大规模侧 `0.3579`，与 `data/bias/boundary.json` 的 `cross_ess_ratio` 及论文表格行（0.3579 / −0.0017 / 250 种子）三方一致
+- [x] v1 → v2 改动面精确：仅 §4.3 一句与 Fig. 3 图注共 2 处 `0.3576 → 0.3625`；大规模值、摘要、其余 6 图 8 表逐项未变
+- [x] 摘要的 `ESS/N ≈ 0.358` 无误——它是**大规模边界** `0.3579` 的四舍五入，与被更正的小规模点不是同一个量（勿误判为前后矛盾）
+- [x] 红线复核：`data/` 相对 `preprint-v1` **逐字节一致**；v1 PDF 的 sha256 与标签版本相同（未被覆盖）
+- [x] 工程面：`pytest` 133 passed；`ruff` 全绿；`mypy src` 干净；CI 四个 job 全 success；`CITATION.cff` 通过 cffconvert 1.2.0 校验
+- [x] 元数据面：远端 `CITATION.cff` / `.zenodo.json` 均为 1.1.0 + `.v2`；`.zenodo.json` 的 `related_identifiers` 指向 `.v2`；README 与 Pages 的图片引用无缺失
+- [x] 平台侧：Preprints.org v2 页面在线（标题带 `[v2]`，与 v1 互链）；v2 正式 PDF 页脚已声明 `.v2` DOI
+- [x] 标签面：`preprint-v1`→`c41997b`、`preprint-v2`→`d187766`、`v1.0.0`→`37c0727`、`v1.1.0`→`d187766`，本地与远端一致
+- [x] 发布状态：**GitHub Release 仍为 0 条**，Zenodo hook（监听 release）active —— 按约定等用户另行下令才发
+
+- [ ] **Streamlit Cloud 需手动 Reboot**：线上实例至今仍显示 `.v1` DOI
+      *（实测线上呈混合态——`app.py` 引用块已是 `.v2`、`src/serve/i18n.py` 的 hero / 规格表 / 引用链接 / 页脚仍是 `.v1`；遍历全部历史后确认该组合**不对应仓库任何 commit**（历史是干净二分：≤`18129bc` 全 v1，≥`54f4486` 全 v2），故属 Cloud 侧未完整重建，非仓库漏改。push webhook `share.streamlit.io/hook` 状态 active，已用空提交触发重建，8 分钟后仍为旧版）*
+- [ ] **`.v2` DOI 尚未在注册机构生效**：`doi.org/.../2582.v2` 返回 404，Crossref 与 DataCite 均未收录（`.v1` 正常 302）
+      *（平台已于 v2 正式 PDF 页脚声明该 DOI，注册滞后于分配；属平台侧时序问题，不影响引用，待其生效后复核链接可用性）*
+
 ### 阶段 6 — Zenodo 归档（用户执行）
 
 - [ ] 用标签 **`v1.1.0`** 发 GitHub Release（标题/描述已备好，见下）
@@ -113,7 +134,7 @@
 2. `preprint-v1` 标签不得移动。
 3. `data/bias/*.json` 与 `data/real_validation/*.json` 不得改动（论文数值底座）。
 4. 不得为了"对上"而改代码去凑 `0.3576`。
-5. 阶段 5 的 commit 必须是 Zenodo 归档前最后一次改动。
+5. 阶段 5c 的 commit 必须是 Zenodo 归档前最后一次改动。
 
 ## 4. 验收
 
