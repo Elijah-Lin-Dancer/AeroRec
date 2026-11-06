@@ -91,7 +91,7 @@
 
 ### 阶段 5c — 发布前复核（2026-11-06，本轮）
 
-> 结论：**仓库侧无问题，可以发 Release**；剩两项属平台/托管侧，非代码问题。
+> 结论：**仓库侧无问题，可以发 Release**；剩一项属平台侧时序问题，非代码问题。
 
 - [x] 复算 `0.3625`：`boundary_by_range(t_pop=0.25, n_records=600, n_seeds=30)` → `ess_ratio = 0.3625`，与论文 §4.3 及 Fig. 3 图注逐位吻合
       *（审计脚本本身就现场跑这条路径，`--strict` 通过即等于已固化复现）*
@@ -105,8 +105,8 @@
 - [x] 标签面：`preprint-v1`→`c41997b`、`preprint-v2`→`d187766`、`v1.0.0`→`37c0727`、`v1.1.0`→`d187766`，本地与远端一致
 - [x] 发布状态：**GitHub Release 仍为 0 条**，Zenodo hook（监听 release）active —— 按约定等用户另行下令才发
 
-- [ ] **Streamlit Cloud 需手动 Reboot**：线上实例至今仍显示 `.v1` DOI
-      *（实测线上呈混合态——`app.py` 引用块已是 `.v2`、`src/serve/i18n.py` 的 hero / 规格表 / 引用链接 / 页脚仍是 `.v1`；遍历全部历史后确认该组合**不对应仓库任何 commit**（历史是干净二分：≤`18129bc` 全 v1，≥`54f4486` 全 v2），故属 Cloud 侧未完整重建，非仓库漏改。push webhook `share.streamlit.io/hook` 状态 active，已用空提交触发重建，8 分钟后仍为旧版）*
+- [x] **Streamlit Cloud 已重建完成**：线上 DOI 全站切至 `.v2`（中英文界面各 5 处 `.v2`、0 处 `.v1`，页头/规格表/引用/页脚/BibTeX 均已刷新）
+      *（过程中一度呈现 app.py 新 / i18n.py 旧的混合态；遍历全部历史后确认该组合**不对应仓库任何 commit**（历史是干净二分：≤`18129bc` 全 v1，≥`54f4486` 全 v2），故判为 Cloud 侧未完整重建。push webhook `share.streamlit.io/hook` 为 active，用空提交 `41a1a3b` 触发重建，约 12 分钟后自动完成，**无需人工 Reboot**）*
 - [ ] **`.v2` DOI 尚未在注册机构生效**：`doi.org/.../2582.v2` 返回 404，Crossref 与 DataCite 均未收录（`.v1` 正常 302）
       *（平台已于 v2 正式 PDF 页脚声明该 DOI，注册滞后于分配；属平台侧时序问题，不影响引用，待其生效后复核链接可用性）*
 
