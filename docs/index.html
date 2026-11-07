@@ -60,7 +60,12 @@
   <header>
     <span class="badge">工程型 · 交叉学科（AI + 出行/交通）</span>
     <h1>AeroRec · 出行智能推荐中台</h1>
-    <p class="subtitle">开源、可复现的出行场景智能推荐系统：召回 → DeepFM 排序 → 5 步混排 → 降级 → 服务化 → 真实 CTR 评估 + 偏差传播诊断</p>
+    <p style="font-size:14px;margin-top:8px">🌐 <a href="https://github.com/Elijah-Lin-Dancer/AeroRec/blob/main/README.md">English (README)</a> | <a href="https://github.com/Elijah-Lin-Dancer/AeroRec/blob/main/README.zh.md">简体中文 (README)</a></p>
+    <p class="subtitle">可复现的出行场景智能推荐平台：四路召回 → DeepFM 排序 → 5 步混排 → 服务化 + 双语面板；并携带一条研究主线——让曝光偏差<b>可测量</b>而不是靠猜</p>
+
+    <p class="banner" style="background:#f0fdf4;border-color:#bbf7d0;border-left-color:#16a34a;color:#14532d">
+      <b>由来</b>　这个项目起于一段实习。实习期间参与一家航空公司的出行产品项目，我第一次近距离看到推荐系统在真实业务里的约束；实习结束后，我把当时没来得及深究的问题带了回来——曝光偏差到底有多大，什么时候才真的值得去纠。这个仓库就是拿测量而不是直觉去回答它们。
+    </p>
 
     <p class="banner">
       <b>数据说明</b>：本项目全部数据由 <code>src/data/synthetic_generator.py</code>
@@ -314,8 +319,8 @@
     <table>
       <tr><th>指标（micro 档，本机实测）</th><th>值</th></tr>
       <tr><td>冷启动 · 模块导入 / 引擎构造</td><td>0.21 s / 0.08 s</td></tr>
-      <tr><td>延迟 · P50 / P99</td><td><b>0.70 ms</b> / 0.95 ms</td></tr>
-      <tr><td>吞吐 · 单线程 QPS</td><td>~1378</td></tr>
+      <tr><td>延迟 · P50 / P99</td><td><b>0.71 ms</b> / 0.93 ms</td></tr>
+      <tr><td>吞吐 · 单线程 QPS</td><td>~1379</td></tr>
       <tr><td>峰值内存 · RSS</td><td><b>~129 MB</b>（脚本内置断言校验未加载 torch）</td></tr>
       <tr><td>端到端峰值（真实 streamlit 进程 + 浏览器）</td><td>~297 MB（相对 690MB 下限余量 2.3×）</td></tr>
     </table>
