@@ -1,8 +1,8 @@
 # AeroRec · 出行智能推荐中台
 
-**一套端到端的推荐系统实现——四路召回、DeepFM 排序、五步混排、服务化 API 与双语面板——上面挂着一条研究主线：让曝光偏差变得「可测量」，而不是靠猜。**
-
 > 🌐 [English](README.md) | 简体中文
+
+**一套端到端的推荐系统实现——四路召回、DeepFM 排序、五步混排、服务化 API 与双语面板——上面挂着一条研究主线：让曝光偏差变得「可测量」，而不是靠猜。**
 
 [![CI](https://github.com/Elijah-Lin-Dancer/AeroRec/actions/workflows/repro.yml/badge.svg)](https://github.com/Elijah-Lin-Dancer/AeroRec/actions/workflows/repro.yml)
 [![Python](https://img.shields.io/badge/python-3.11-blue.svg)](https://www.python.org/)

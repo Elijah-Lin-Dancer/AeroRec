@@ -1,5 +1,7 @@
 # AeroRec
 
+> 🌐 English | [简体中文](README.zh.md)
+
 **An end-to-end travel recommendation platform — 4-way recall, DeepFM ranking, 5-step mixing, serving API and a bilingual panel — carrying a research thread that makes exposure bias *measurable* instead of guessed.**
 
 [![CI](https://github.com/Elijah-Lin-Dancer/AeroRec/actions/workflows/repro.yml/badge.svg)](https://github.com/Elijah-Lin-Dancer/AeroRec/actions/workflows/repro.yml)
