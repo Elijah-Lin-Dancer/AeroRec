@@ -41,6 +41,53 @@ AeroRec reproduces an industrial recommendation chain on a **reproducible synthe
 
 > The panel opens on **Overview** — what the project does, the four headline numbers and the citation, in one screen. The rest is the live demo, the bias sweep and the model page; the last shot is the same page in Chinese. The UI is bilingual throughout (sidebar toggle, English by default).
 
+## 🧭 Architecture
+
+```mermaid
+flowchart TB
+    GEN["Synthetic generator<br/>100k users × 100k items × 5M impressions<br/>hidden nonlinear interactions"]
+    REC["Recall<br/>popularity / ItemCF / Two-Tower / rules"]
+    FUS["4-way fusion"]
+    RANK["Ranking<br/>DeepFM CTR + LR CVR multi-objective"]
+    MIX["5-step mixing<br/>normalize / weight / tier / de-cluster / dedup"]
+    DEG["Fallback<br/>switch to mean CTR on failure"]
+    SVC["Serving<br/>FastAPI / Streamlit panel"]
+    OUT["Top-K recommendations, explainable"]
+
+    GEN --> REC
+    REC --> FUS
+    FUS --> RANK
+    RANK --> MIX
+    MIX --> OUT
+    DEG -. on failure .-> RANK
+    SVC -- request --> REC
+    MIX -- response --> SVC
+```
+
+Training and inference are decoupled: torch trains offline and exports numpy weights; the online path is a pure-numpy forward pass — **no torch at serve time**.
+
+## ✨ Feature list
+
+- [x] Multi-category mixing: flights / hotels / retail / marketing / live-streaming
+- [x] Popularity fallback recall + item-based collaborative filtering (ItemCF) baseline
+- [x] Two-Tower vector recall (PyTorch, with negative sampling)
+- [x] Rule recall: mileage redemption / zero award inventory / home-base top routes / return-first multi-leg trips
+- [x] 4-way recall fusion (position-weighted + degradation fallback)
+- [x] Lightweight feature store shared by recall / ranking / cold start (dense + sparse)
+- [x] CTR-based dynamic ordering: normalize → weight → tier → de-cluster → dedup per page
+- [x] DeepFM ranker (PyTorch, FM + DNN)
+- [x] Degradation fallback: on CTR-service timeout, fall back to historical mean CTR
+- [x] Offline evaluation: LR vs DeepFM AUC + true-CTR comparison of ranked lists
+- [x] Serving API (FastAPI: `/health` `/recommend` `/explain` `/ab`)
+- [x] Streamlit panel, **7 pages, bilingual EN / 中文**
+- [x] Online inference benchmark: cold-start init ≈ 0.08 s, single-thread P50 ≈ 0.7 ms / P99 ≈ 1 ms, peak RSS ≈ 129 MB (micro tier)
+- [x] Simulated A/B (multi-objective CTR + CVR, offline counterfactual replay)
+- [x] **True-CTR protocol + oracle upper bound** (no smoothing estimates involved; citable)
+- [x] **Bias-propagation diagnosis + debiasing validation** (propagation matrix / IPS·SNIPS·DR / boundary `ESS/N ≈ 0.358`)
+- [x] **Real-data transferability**: Criteo 1 M rows AUC **0.7733**, UCI Adult **0.9183**
+- [x] Three data tiers: `full` / `lite` / `micro` — same code, scale only
+- [x] Live demo: GitHub Pages homepage + Streamlit Community Cloud
+
 ## ⚡ Quick start
 
 ```bash
@@ -77,6 +124,45 @@ python -m pytest -q                      # 133 tests
 | `micro` | 10 k × 10 k × 500 k | **~0.30 GB** | Free instance (690 MB floor), offline training + numpy inference |
 
 All three tiers share the same algorithm code; only data scale and the feature store differ.
+
+## 📊 Results at a glance
+
+**Offline AUC (synthetic, 60k test samples)**
+
+| Model | AUC |
+|---|---|
+| Logistic Regression | 0.7421 |
+| **DeepFM** | **0.8019** (+6.0 pp) |
+
+**True-CTR protocol (no smoothing involved; 100 users × Top-10)**
+
+| Method | Mean true CTR | vs popularity | Of oracle bound |
+|---|---|---|---|
+| Random (lower reference) | 0.1652 | −66.4% | 23.1% |
+| Popularity (common baseline) | 0.4922 | — | 68.8% |
+| **DeepFM + multi-objective mixing** | **0.6323** | **+28.5%** | **88.4%** |
+| Oracle upper bound (pool-best) | 0.7153 | +45.3% | 100% |
+
+Every number above is produced directly by the two commands in Quick start (`python -m src.eval.evaluate`, `python scripts/run_bias_experiments.py`).
+
+<details>
+<summary>Research-line results (bias propagation / boundary / user side)</summary>
+
+- The primary damage of exposure bias is **rank inversion**: Spearman **+0.8665 → −0.5054** as exposure skew grows (τ = 3, p < 0.001) — mean CTR looks fine while the leaderboard quietly flips.
+- The debiasing boundary sits at **ESS/N ≈ 0.358**: below it, variance cost exceeds the correction gain; a 33× scale-up and 30 → 250 seeds move the boundary by only 0.005.
+- User-side self-selection must be modeled at the user–item level: naive CTR inflates **2.5×** (0.2811 → 0.7025), and debiasing at the wrong granularity leaves a residual of +0.222.
+- Full tables and derivations: [docs/tech-report.md](docs/tech-report.md) and the [self-contained HTML report](data/bias/report.html).
+
+</details>
+
+<details>
+<summary>How the oracle is built / why not the smoothed protocol / what the simulated A/B is</summary>
+
+- **Oracle construction**: pool = popularity candidates ∪ rule candidates ∪ 3,000 random items; rank the pool by the user's **true CTR** and take Top-K. The pool must contain every other method's outcome, or it is not a real upper bound (ranking by global mean true CTR would just be a popularity-list variant).
+- **Why the smoothed protocol is not used for headline numbers**: the popularity baseline ranked by Bayesian-smoothed CTR (α = 5) is severely inflated under random exposure — top-200 smoothed 0.6231 vs true 0.2528, and the smoothed top-10 overlaps the true top-10 in only 2/10 items. That protocol overstates gains, so a smoothing-free protocol is reported alongside; the smoothed protocol's distortion is itself a measured sample of bias damage.
+- **The simulated A/B is a protocol check only**: offline counterfactual replay, no network effects or feedback loops; it validates that the two-proportion z-test implementation is correct.
+
+</details>
 
 ## 🗂️ Repository layout
 
@@ -180,10 +266,26 @@ No. The free tier is the design target: ~297 MB measured peak with the browser d
 
 </details>
 
-<details>
-<summary><strong>What does this project <em>not</em> claim?</strong></summary>
+## 📏 Honest boundaries
 
-No new algorithm — the contribution is a faithful reproduction of the engineering chain plus an honest evaluation protocol. No real or company data: the synthetic set is generated here, and the internship is only the source of business-rule inspiration. Synthetic metrics are not shown to transfer to real travel traffic, although the same implementation is validated on Criteo (AUC 0.7733) and UCI Adult (0.9183). Deep interactions show **no** clear advantage on Criteo (0.7733 vs 0.7716 for LR). The A/B is an offline counterfactual replay. The full list is in [docs/bias_report.md](docs/bias_report.md) and [docs/tech-report.md](docs/tech-report.md).
+Stated up front, to avoid misreading:
+
+- The data is **synthetic, generated in this repo** (controlled experiments) — for demonstrating the engineering chain and the measurement method only. No real business data, nothing tied to any real company system.
+- The generator injects hidden nonlinear interactions so deep models have something to learn; models see raw features only. This is an explicit controlled setting, not a claim about real traffic.
+- Two-Tower / DeepFM are standard implementations of existing methods; this project **proposes no new algorithm**.
+- The internship is only the source of motivation (business rules and workflow inspiration); no deep ranking model was trained during it.
+
+<details>
+<summary><strong>Known limitations (8)</strong></summary>
+
+1. **Transfer of synthetic metrics to real travel traffic is unproven.** Transferability is validated on Criteo (AUC 0.7733) and UCI Adult (0.9183; LR baseline 0.9113), but neither is travel-domain traffic.
+2. **No visible deep-interaction advantage on Criteo**: DeepFM 0.7733 vs LR 0.7716 (Δ 0.0017); 200k-row, 3-seed 0.7586 ± 0.0007. Only "the same implementation learns a strong signal (≫ 0.5) on real CTR data" is claimed — not a deep-model increment. Criteo is dominated by high-cardinality sparse features, where linear models are already near-strong baselines — consistent with the literature.
+3. **The A/B is an offline counterfactual replay** — no network effects, feedback loops, or long/short-term benefit differences.
+4. **Travel business rules are untested against real data** (mileage redemption, multi-leg priority, etc. are self-consistent on synthetic data only).
+5. **Training budget must be set by gradient-update count, not epochs**: fixed epochs silently underfit small tiers (12k samples × 2 epochs ≈ 12 updates → AUC 0.5109); back-solve epochs with `plan_epochs(target_updates=400)`.
+6. **The contribution is a faithful chain reproduction plus an honest evaluation protocol — not algorithmic novelty.**
+7. **The bias experiments assume a closed-form propensity; the boundary value does not transfer.** Real systems must estimate propensity, which adds error this experiment does not contain — the practical boundary is stricter. What transfers is the method (ESS/N as a warning signal), not 0.358.
+8. **Limited experimental scale; user-side preference bias not covered**: propagation matrix 500 items × 5,000 requests × 5 slots (30 seeds); boundary experiments 20k records (250 seeds). Only exposure/position bias is modeled — within-user cross-item selection bias is out of scope.
 
 </details>
 
