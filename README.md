@@ -14,6 +14,8 @@ AeroRec reproduces an industrial recommendation chain on a **reproducible synthe
 
 **[Live demo](https://aerorec-tourism.streamlit.app)** · **[Project homepage](https://elijah-lin-dancer.github.io/AeroRec/)** · **[Preprint](https://doi.org/10.20944/preprints202610.2582.v2)** · **[Tech report](docs/bias_report.md)**
 
+> **Where this came from** — It began with an internship. Working on a travel product at an airline gave me my first close look at the constraints a recommender faces in production; once it ended, I carried back the questions I had no time to chase — how large exposure bias really is, and when it is genuinely worth correcting. This repository answers them with measurement rather than intuition.
+
 ---
 
 ## 🎯 Why this one
