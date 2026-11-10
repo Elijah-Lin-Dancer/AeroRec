@@ -135,11 +135,23 @@ def compare_rankers(users, items, rankers: dict, sample_users, top_k: int = 10,
     ----
     {
       "per_method": {名称: {"true_ctr": 均值, "rel_to_base": 相对热门基线,
-                            "pct_of_oracle": 占 Oracle 的百分比}},
+                            "pct_of_oracle": 占 Oracle 的百分比,
+                            "ndcg_at_k": 端到端 graded NDCG@K,
+                            "ndcg_rel_to_base": 相对基线的 NDCG 变化,
+                            "ndcg_pct_of_oracle": 占 Oracle NDCG 的百分比}},
       "oracle": 上界真实 CTR,
+      "oracle_ndcg_at_k": 上界 NDCG,
       "bias_table": 热门榜的 平滑CTR vs 真实CTR 偏差（若可获取）,
       "n_users": 评估用户数,
     }
+
+    NDCG 口径说明
+    -------------
+    `true_ctr` 只衡量"列表里物品的平均真实点击率"，**不体现顺序**——
+    把 Top-K 列表整体打乱，`true_ctr` 完全不变。因此另给 graded NDCG@K：
+    增益 g_i 取该物品在候选池内的**真实 CTR**，位置折扣用标准 1/log2(i+2)；
+    **IDCG 取同一候选池内真实 CTR 降序前 K 的 DCG**，因此所有方法分母相同、
+    可直接横向比较。这与 `true_ctr` 互补：一个看内容质量，一个看排序质量。
     """
     n_items = n_items or len(items)
     rng = np.random.default_rng(seed)
@@ -159,36 +171,69 @@ def compare_rankers(users, items, rankers: dict, sample_users, top_k: int = 10,
     # ---- 构造逐用户 Oracle：池必须包含所有方法的结局 ----
     oracle_scores: list = []
     method_scores: dict[str, list] = {name: [] for name in rankers}
+    method_ndcgs: dict[str, list] = {name: [] for name in rankers}
+    oracle_ndcgs: list = []
     for i, uid in enumerate(sample_users):
         pool_parts = [np.asarray(ids) for ids in
                       (method_ids[name][i] for name in rankers)]
         pool_parts.append(rng.choice(n_items, size=oracle_pool_size, replace=False))
         pool = np.unique(np.concatenate([p for p in pool_parts if len(p)]))
         t = _tc(uid, pool)
-        oracle_scores.append(float(t[np.argsort(-t)[:top_k]].mean()))
+        # 池内真实 CTR 的降序排列 —— 同时用于 Oracle 与所有方法的 IDCG 分母，
+        # 保证不同方法的 NDCG **分母相同**、可直接横向比较。
+        pool_order = np.argsort(-t)
+        pool_sorted_t = t[pool_order]
+        # graded DCG：增益取真实 CTR（连续值），位置折扣取标准 log2 折减
+        disc = 1.0 / np.log2(np.arange(2, len(pool_sorted_t) + 2))
+        idcg = float((pool_sorted_t[:top_k] * disc[:top_k]).sum())
+        oracle_scores.append(float(pool_sorted_t[:top_k].mean()))
+        oracle_ndcgs.append(
+            float((pool_sorted_t[:top_k] * disc[:top_k]).sum() / idcg)
+            if idcg > 0 else 0.0)
         for name in rankers:
-            method_scores[name].append(float(_tc(uid, method_ids[name][i]).mean()))
+            ids = np.asarray(method_ids[name][i])
+            method_scores[name].append(float(_tc(uid, ids).mean()))
+            # 方法自身的 DCG：按其给出的顺序，取这些物品在池中的真实 CTR
+            if len(ids) == 0:
+                method_ndcgs[name].append(0.0)
+                continue
+            t_pos = {int(it): float(v) for it, v in zip(pool, t)}
+            gains = np.array([t_pos.get(int(it), 0.0) for it in ids[:top_k]],
+                             dtype=np.float64)
+            dcg = float((gains * disc[:len(gains)]).sum())
+            method_ndcgs[name].append(dcg / idcg if idcg > 0 else 0.0)
 
     oracle_mean = float(np.mean(oracle_scores))
+    oracle_ndcg_mean = float(np.mean(oracle_ndcgs))
     per_method = {}
     # 参照系固定为"热门"（若存在），否则取字典首项
     base_name = "热门" if "热门" in rankers else next(iter(rankers))
     base_mean = float(np.mean(method_scores[base_name]))
+    base_ndcg = float(np.mean(method_ndcgs[base_name]))
     for name in rankers:
         m = float(np.mean(method_scores[name]))
+        nd = float(np.mean(method_ndcgs[name]))
         per_method[name] = {
             "true_ctr": m,
             "rel_to_base": (m - base_mean) / max(base_mean, 1e-9),
             "pct_of_oracle": m / max(oracle_mean, 1e-9),
-            # 与 Oracle 的逐用户配对差（更严格）
+            # 逐用户配对差（比 pct_of_oracle 更严格）
             "paired_lift_vs_oracle": float(np.mean(
                 [a - b for a, b in zip(method_scores[name], oracle_scores)])),
+            # 端到端 NDCG@K（graded：增益=真实 CTR，分母=同池 IDCG）
+            "ndcg_at_k": round(nd, 4),
+            "ndcg_rel_to_base": round((nd - base_ndcg) / max(base_ndcg, 1e-9), 4),
+            "ndcg_pct_of_oracle": round(nd / max(oracle_ndcg_mean, 1e-9), 4),
         }
     per_method["Oracle"] = {
         "true_ctr": oracle_mean,
         "rel_to_base": (oracle_mean - base_mean) / max(base_mean, 1e-9),
         "pct_of_oracle": 1.0,
         "paired_lift_vs_oracle": 0.0,
+        "ndcg_at_k": round(oracle_ndcg_mean, 4),
+        "ndcg_rel_to_base": round(
+            (oracle_ndcg_mean - base_ndcg) / max(base_ndcg, 1e-9), 4),
+        "ndcg_pct_of_oracle": 1.0,
     }
 
     if verbose:
@@ -200,17 +245,26 @@ def compare_rankers(users, items, rankers: dict, sample_users, top_k: int = 10,
             d = per_method[name]
             print(f"  {name:<16} 真实CTR={d['true_ctr']:.4f}  "
                   f"相对{base_name}={d['rel_to_base']:+.1%}  "
-                  f"占Oracle={d['pct_of_oracle']:.1%}")
+                  f"占Oracle={d['pct_of_oracle']:.1%}  "
+                  f"NDCG@{top_k}={d['ndcg_at_k']:.4f}")
         print("=" * 64)
 
     return {
         "per_method": per_method,
         "oracle_true_ctr": oracle_mean,
+        "oracle_ndcg_at_k": round(oracle_ndcg_mean, 4),
         "base_method": base_name,
         "n_users": len(sample_users),
         "top_k": top_k,
         "oracle_scores": oracle_scores,
         "method_scores": method_scores,
+        "method_ndcgs": {k: [round(x, 6) for x in v]
+                          for k, v in method_ndcgs.items()},
+        "ndcg_protocol": (
+            "graded NDCG@K：增益 g_i = 该物品在候选池内的**真实 CTR**，"
+            "位置折扣 1/log2(i+2)；IDCG 取**同一候选池**内真实 CTR 降序前 K 的 DCG，"
+            "因此所有方法的分母相同、可横向比较。"
+            "与 true_ctr 口径互补：true_ctr 只看列表平均质量，NDCG 额外体现**顺序**。"),
     }
 
 

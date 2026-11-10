@@ -15,7 +15,20 @@
 完整档实测：热门榜 top200 平滑 CTR 0.6231 vs 真实 CTR 0.2528（偏差 +0.37）。
 这会让模拟 A/B **高估**实验组增益。
 故本脚本以**真实 CTR 口径**为准，并打印偏差表说明差异。
+
+📦 结果落盘（2026-11-10 新增）
+--------------------------------
+本脚本原先只 `print`，属于「跑一次终端里看一眼」的性质，不在零漂移门禁的覆盖范围内，
+论文引用时无法回答「这个数字怎么复现」。现将同一批结果**同时**落盘为 JSON：
+
+    data/eval/end_to_end.json
+
+**落盘不改变任何计算口径**——打印与落盘共用同一批变量，仅额外写出。
+所有数值保留 4 位小数（与 print 输出一致），跨机末位漂移见下方「可复现性边界」。
 """
+import json
+from pathlib import Path
+
 import numpy as np
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score
@@ -30,6 +43,9 @@ from src.rank.mixer import Mixer
 from src.rank.trainer import DeepFMRanker
 from src.recall.baselines import PopularRecall
 from src.recall.rule import RuleRecall
+
+# 落盘产物路径（与 data/bias/ 同级，便于审计脚本统一扫描）
+EVAL_OUT = Path(__file__).resolve().parents[2] / "data" / "eval" / "end_to_end.json"
 
 
 def _lr_features(dense, sparse, sparse_cards):
@@ -129,6 +145,69 @@ def main():
     print(f"  DeepFM 达到上界比例    : {pm['DeepFM+混排']['pct_of_oracle']:.1%}")
     print(f"  热门   达到上界比例    : {pm['热门']['pct_of_oracle']:.1%}")
     print("=" * 64)
+
+    # ---- 5) 落盘 JSON（与上面打印共用同一批变量，口径不变）----
+    payload = {
+        "meta": {
+            "description": "端到端离线评估结果：CTR 模型 AUC 对比 + 真实 CTR 口径排序对比",
+            "mode": "full",
+            "scale_note": ("本脚本用 src.data.synthetic_generator.build_dataset()"
+                           "（full 档：10 万物品 × 10 万用户 × 500 万曝光），"
+                           "即论文口径。micro/lite 档的对照见 "
+                           "data/eval/ablation_micro.json 等产物。"),
+            "seed": SEED,
+            "top_k": TOP_K,
+            "n_train": int(len(tr)),
+            "n_test": int(len(te)),
+            "n_sample_users": int(result["n_users"]),
+            "note": (
+                "本文件由 python -m src.eval.evaluate 生成，与 stdout 打印同源同口径。"
+                "AUC 完全可复现；真实 CTR 类指标末位可能因 Oracle 池采样随机性跨机漂移，"
+                "论文引用请取整到整数百分点。"
+            ),
+        },
+        "auc": {
+            "logistic_regression": round(float(lr_auc), 4),
+            "deepfm": round(float(dfm_auc), 4),
+            "delta": round(float(dfm_auc - lr_auc), 4),
+        },
+        "true_ctr_ranking": {
+            "random": round(float(pm["随机"]["true_ctr"]), 4),
+            "popular": round(float(pm["热门"]["true_ctr"]), 4),
+            "deepfm_mixed": round(float(pm["DeepFM+混排"]["true_ctr"]), 4),
+            "oracle": round(float(pm["Oracle"]["true_ctr"]), 4),
+            "deepfm_rel_to_popular": round(float(pm["DeepFM+混排"]["rel_to_base"]), 4),
+            "deepfm_pct_of_oracle": round(float(pm["DeepFM+混排"]["pct_of_oracle"]), 4),
+            "popular_pct_of_oracle": round(float(pm["热门"]["pct_of_oracle"]), 4),
+            # 端到端 graded NDCG@K：增益 = 候选池内真实 CTR，IDCG 取同一候选池
+            # 降序前 K —— 四个方法共用同一分母，可直接横向比较。
+            # 真实 CTR 只回答"点得多不多"，NDCG 额外回答"好的排前面没有"；
+            # 论文第 5 章论证排序质量需要后者。
+            "ndcg_at_k": {
+                "random": round(float(pm["随机"]["ndcg_at_k"]), 4),
+                "popular": round(float(pm["热门"]["ndcg_at_k"]), 4),
+                "deepfm_mixed": round(float(pm["DeepFM+混排"]["ndcg_at_k"]), 4),
+                "oracle": round(float(pm["Oracle"]["ndcg_at_k"]), 4),
+                "deepfm_pct_of_oracle": round(
+                    float(pm["DeepFM+混排"]["ndcg_pct_of_oracle"]), 4),
+            },
+            "ndcg_protocol": result["ndcg_protocol"],
+        },
+    }
+    if "error" not in bias:
+        payload["popularity_baseline_bias"] = {
+            "top_n": int(bias["top_n"]),
+            "smoothed_ctr": round(float(bias["smooth_ctr"]), 4),
+            "true_ctr": round(float(bias["true_ctr"]), 4),
+            "bias": round(float(bias["bias"]), 4),
+            "note": "平滑 CTR 相对真实 CTR 的高估幅度；说明为何不采用平滑协议报告主结果",
+        }
+
+    EVAL_OUT.parent.mkdir(parents=True, exist_ok=True)
+    with EVAL_OUT.open("w", encoding="utf-8") as f:
+        json.dump(payload, f, ensure_ascii=False, indent=2)
+        f.write("\n")
+    print(f"\n[eval] 结果已落盘：{EVAL_OUT}（{EVAL_OUT.stat().st_size} 字节）")
 
 
 if __name__ == "__main__":
