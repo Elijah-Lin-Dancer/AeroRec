@@ -22,3 +22,4 @@ data/criteo/
 # 平台回传的正式 PDF 才是 version of record
 docs/paper/*-draft.docx
 docs/paper/_preprint_v2.md
+.coverage

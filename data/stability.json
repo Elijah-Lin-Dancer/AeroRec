@@ -1,0 +1,216 @@
+{
+  "mode": "micro",
+  "env": {
+    "python": "3.11.1",
+    "numpy": "2.3.5",
+    "platform": "Linux-6.6.117-45.11.4.tl4.x86_64-x86_64-with-glibc2.39"
+  },
+  "params": {
+    "duration_s": 60.0,
+    "top_k": 10
+  },
+  "bad_inputs": {
+    "all_handled": true,
+    "process_alive_after": true,
+    "cases": [
+      {
+        "case": "user_id = -1（越界）",
+        "behavior": "returned",
+        "ok": true,
+        "detail": "返回 list"
+      },
+      {
+        "case": "user_id = 10000（越界）",
+        "behavior": "raised",
+        "ok": true,
+        "detail": "IndexError: list index out of range"
+      },
+      {
+        "case": "top_k = 0",
+        "behavior": "returned",
+        "ok": true,
+        "detail": "返回 list"
+      },
+      {
+        "case": "top_k = -5",
+        "behavior": "returned",
+        "ok": true,
+        "detail": "返回 list"
+      },
+      {
+        "case": "top_k 超过候选池（500）",
+        "behavior": "returned",
+        "ok": true,
+        "detail": "返回 list"
+      }
+    ]
+  },
+  "determinism": {
+    "ok": true,
+    "n_repeat": 5,
+    "user_id": 0,
+    "first_run": [
+      7138,
+      7536,
+      4141,
+      4222,
+      7404,
+      5246,
+      5723,
+      7992,
+      6468,
+      4761
+    ],
+    "identical": true
+  },
+  "degradation": {
+    "ok": true,
+    "checked_users": 20,
+    "detail": [
+      {
+        "user_id": 0,
+        "n_items": 10,
+        "unique": true,
+        "in_range": true
+      },
+      {
+        "user_id": 1,
+        "n_items": 10,
+        "unique": true,
+        "in_range": true
+      },
+      {
+        "user_id": 2,
+        "n_items": 10,
+        "unique": true,
+        "in_range": true
+      },
+      {
+        "user_id": 3,
+        "n_items": 10,
+        "unique": true,
+        "in_range": true
+      },
+      {
+        "user_id": 4,
+        "n_items": 10,
+        "unique": true,
+        "in_range": true
+      }
+    ]
+  },
+  "memory": {
+    "ok": true,
+    "total_requests": 4000,
+    "duration_s": 62.5,
+    "rss_first_mb": 124.82,
+    "rss_last_mb": 124.82,
+    "growth_pct": 0.0,
+    "slope_mb_per_1k_requests": 0.0,
+    "criterion": "末批 RSS 增幅 <5% 且后半段斜率 <1 MB/千请求",
+    "samples": [
+      {
+        "requests": 200,
+        "elapsed_s": 4.1,
+        "rss_mb": 124.82
+      },
+      {
+        "requests": 400,
+        "elapsed_s": 8.6,
+        "rss_mb": 124.82
+      },
+      {
+        "requests": 600,
+        "elapsed_s": 13.0,
+        "rss_mb": 124.82
+      },
+      {
+        "requests": 800,
+        "elapsed_s": 16.0,
+        "rss_mb": 124.82
+      },
+      {
+        "requests": 1000,
+        "elapsed_s": 18.8,
+        "rss_mb": 124.82
+      },
+      {
+        "requests": 1200,
+        "elapsed_s": 21.7,
+        "rss_mb": 124.82
+      },
+      {
+        "requests": 1400,
+        "elapsed_s": 24.5,
+        "rss_mb": 124.82
+      },
+      {
+        "requests": 1600,
+        "elapsed_s": 27.4,
+        "rss_mb": 124.82
+      },
+      {
+        "requests": 1800,
+        "elapsed_s": 30.2,
+        "rss_mb": 124.82
+      },
+      {
+        "requests": 2000,
+        "elapsed_s": 33.1,
+        "rss_mb": 124.82
+      },
+      {
+        "requests": 2200,
+        "elapsed_s": 36.0,
+        "rss_mb": 124.82
+      },
+      {
+        "requests": 2400,
+        "elapsed_s": 38.8,
+        "rss_mb": 124.82
+      },
+      {
+        "requests": 2600,
+        "elapsed_s": 41.5,
+        "rss_mb": 124.82
+      },
+      {
+        "requests": 2800,
+        "elapsed_s": 44.5,
+        "rss_mb": 124.82
+      },
+      {
+        "requests": 3000,
+        "elapsed_s": 47.4,
+        "rss_mb": 124.82
+      },
+      {
+        "requests": 3200,
+        "elapsed_s": 50.5,
+        "rss_mb": 124.82
+      },
+      {
+        "requests": 3400,
+        "elapsed_s": 53.6,
+        "rss_mb": 124.82
+      },
+      {
+        "requests": 3600,
+        "elapsed_s": 56.5,
+        "rss_mb": 124.82
+      },
+      {
+        "requests": 3800,
+        "elapsed_s": 59.4,
+        "rss_mb": 124.82
+      },
+      {
+        "requests": 4000,
+        "elapsed_s": 62.5,
+        "rss_mb": 124.82
+      }
+    ]
+  },
+  "overall_pass": true,
+  "note": "RSS 用 /proc/self/statm 当前值（非 ru_maxrss 峰值），每批后 gc.collect() 再读。判据：末批增幅 <5% 且后半段斜率 <1 MB/千请求。长稳时长以 params.duration_s 为准，论文引用须与实际运行一致。"
+}

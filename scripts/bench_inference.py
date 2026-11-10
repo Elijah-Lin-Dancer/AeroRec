@@ -148,14 +148,25 @@ def main():
     qps = round(args.iters / wall_s, 1) if wall_s > 0 else float("nan")
     peak_rss_mb = max(peak_rss_mb, resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024.0)
 
-    # 诚实性自检：micro/lite 的在线路径**不得**加载 torch。
+    # 诚实性自检：
+    # - micro 档是**唯一**的在线部署形态，其路径必须零 torch（权重已导出为 numpy）。
+    # - lite / full 档的引擎会**现场训练** DeepFM（src/serve/engine_lite.py:47
+    #   导入 src.rank.trainer，后者 import torch），因此必然加载 torch。
+    #   它们属于「训练形态」而非「在线轻量形态」，冷启动里包含训练成本——
+    #   这恰恰是「为什么在线要选 micro」的证据，不该被当成错误拒绝。
     torch_loaded = "torch" in sys.modules
-    if args.mode in ("micro", "lite") and torch_loaded:
-        raise SystemExit("✗ 在线路径意外加载了 torch（应纯 numpy），基准无效")
+    if args.mode == "micro" and torch_loaded:
+        raise SystemExit("✗ micro 在线路径意外加载了 torch（应纯 numpy），基准无效")
+    if args.mode != "micro" and not torch_loaded:
+        raise SystemExit(
+            f"✗ {args.mode} 档应包含 torch（引擎需现场训练 DeepFM），"
+            "未加载说明引擎选择有误，基准无效")
 
     result = {
         "mode": args.mode,
         "torch_loaded": torch_loaded,
+        "deployment_form": ("在线部署形态（权重预导出，零 torch）" if args.mode == "micro"
+                            else "训练形态（冷启动含 DeepFM 现场训练，需 torch）"),
         "env": {
             "python": platform.python_version(),
             "numpy": np.__version__,
@@ -165,7 +176,11 @@ def main():
         "cold_start": {
             "import_s": import_s,
             "engine_init_s": round(init_s, 4),
-            "note": "engine_init = 数据即时生成 + numpy 权重加载；import = 子进程纯导入在线引擎模块",
+            "note": ("engine_init = 数据即时生成 + numpy 权重加载；"
+                     "import = 子进程纯导入在线引擎模块"
+                     if args.mode == "micro" else
+                     "engine_init 含 DeepFM 现场训练成本，故远高于 micro 档；"
+                     "import = 子进程导入引擎模块（会连带加载 torch）"),
         },
         "latency_ms": {
             "n": args.iters,

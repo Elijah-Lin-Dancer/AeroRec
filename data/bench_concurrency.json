@@ -1,0 +1,112 @@
+{
+  "mode": "micro",
+  "torch_loaded": false,
+  "env": {
+    "python": "3.11.1",
+    "numpy": "2.3.5",
+    "cpu": "x86_64",
+    "platform": "Linux-6.6.117-45.11.4.tl4.x86_64-x86_64-with-glibc2.39"
+  },
+  "params": {
+    "threads": [
+      1,
+      2,
+      4,
+      8,
+      16
+    ],
+    "requests_per_thread": 150,
+    "top_k": 10
+  },
+  "levels": [
+    {
+      "n_threads": 1,
+      "requests_total": 150,
+      "wall_s": 0.2652,
+      "qps": 565.7,
+      "error_count": 0,
+      "error_rate": 0.0,
+      "first_error": null,
+      "latency_ms": {
+        "mean": 1.7628,
+        "p50": 1.4643,
+        "p95": 1.6224,
+        "p99": 22.1289,
+        "max": 23.5173
+      },
+      "speedup_vs_1thread": 1.0
+    },
+    {
+      "n_threads": 2,
+      "requests_total": 300,
+      "wall_s": 0.6034,
+      "qps": 497.2,
+      "error_count": 0,
+      "error_rate": 0.0,
+      "first_error": null,
+      "latency_ms": {
+        "mean": 3.9868,
+        "p50": 2.9862,
+        "p95": 4.5285,
+        "p99": 28.7557,
+        "max": 30.7675
+      },
+      "speedup_vs_1thread": 0.88
+    },
+    {
+      "n_threads": 4,
+      "requests_total": 600,
+      "wall_s": 1.4736,
+      "qps": 407.2,
+      "error_count": 0,
+      "error_rate": 0.0,
+      "first_error": null,
+      "latency_ms": {
+        "mean": 9.7238,
+        "p50": 7.2017,
+        "p95": 33.6644,
+        "p99": 35.8753,
+        "max": 40.6148
+      },
+      "speedup_vs_1thread": 0.72
+    },
+    {
+      "n_threads": 8,
+      "requests_total": 1200,
+      "wall_s": 3.0064,
+      "qps": 399.2,
+      "error_count": 0,
+      "error_rate": 0.0,
+      "first_error": null,
+      "latency_ms": {
+        "mean": 19.8088,
+        "p50": 15.349,
+        "p95": 44.0166,
+        "p99": 48.1704,
+        "max": 55.9342
+      },
+      "speedup_vs_1thread": 0.71
+    },
+    {
+      "n_threads": 16,
+      "requests_total": 2400,
+      "wall_s": 6.3062,
+      "qps": 380.6,
+      "error_count": 0,
+      "error_rate": 0.0,
+      "first_error": null,
+      "latency_ms": {
+        "mean": 41.6589,
+        "p50": 36.8263,
+        "p95": 67.7322,
+        "p99": 76.0206,
+        "max": 90.2518
+      },
+      "speedup_vs_1thread": 0.67
+    }
+  ],
+  "peak_qps": 565.7,
+  "peak_qps_threads": 1,
+  "all_errors_zero": true,
+  "note": "单进程多线程（threading），测引擎推理路径，不含 HTTP 层。Python GIL 存在，加速比来自 numpy 释放 GIL 的部分，不假设线性扩展。对机器敏感，结论须连同 env 一并引用。"
+}

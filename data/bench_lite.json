@@ -1,0 +1,35 @@
+{
+  "mode": "lite",
+  "torch_loaded": true,
+  "deployment_form": "训练形态（冷启动含 DeepFM 现场训练，需 torch）",
+  "env": {
+    "python": "3.11.1",
+    "numpy": "2.3.5",
+    "cpu": "Intel(R) Xeon(R) 6981E-C",
+    "platform": "Linux-6.6.117-45.11.4.tl4.x86_64-x86_64-with-glibc2.39"
+  },
+  "cold_start": {
+    "import_s": 3.8855,
+    "engine_init_s": 293.8458,
+    "note": "engine_init 含 DeepFM 现场训练成本，故远高于 micro 档；import = 子进程导入引擎模块（会连带加载 torch）"
+  },
+  "latency_ms": {
+    "n": 200,
+    "top_k": 10,
+    "mean": 229.9908,
+    "p50": 196.6733,
+    "p95": 503.6219,
+    "p99": 702.7517,
+    "min": 99.287,
+    "max": 997.4838,
+    "stdev": 148.4882
+  },
+  "throughput": {
+    "qps_single_thread": 4.3,
+    "wall_s": 45.9984
+  },
+  "memory": {
+    "peak_rss_mb": 926.7
+  },
+  "note": "单进程单线程串行；QPS = 1/平均延迟，仅作数量级参考；对机器敏感。"
+}
