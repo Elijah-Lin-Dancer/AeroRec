@@ -93,4 +93,93 @@ def test_micro_engine_benchmark_structure(micro_engine):
     assert {"随机", "热门", "DeepFM+混排"}.issubset(pm.keys())
     for name, m in pm.items():
         assert 0.0 <= m["true_ctr"] <= 1.0          # 真实 CTR 口径，比例值
+        assert 0.0 <= m["ndcg_at_k"] <= 1.0         # 端到端 NDCG@K
     assert rep["n_users"] == 20
+
+
+# ---------------------------------------------------------------------------
+# 去偏判据的在线接入
+# ---------------------------------------------------------------------------
+def test_estimate_propensity_from_log_sums_to_one():
+    from src.serve.bias_guard import estimate_propensity_from_log
+
+    ids = np.array([0, 0, 0, 1, 2, 2])
+    pi = estimate_propensity_from_log(ids, n_candidates=10, lam=1.0)
+    assert pi.shape == (10,)
+    assert abs(pi.sum() - 1.0) < 1e-9
+    # 未曝光物品拿到平滑后的正概率（λ=1）
+    assert (pi > 0).all()
+
+
+def test_estimate_propensity_raw_lambda_zero_gives_zero_for_unseen():
+    """λ=0 时未曝光物品 π̂=0 —— 这正是 1/π̂ 权重爆炸的根源，
+    线上默认必须用 λ=1。"""
+    from src.serve.bias_guard import estimate_propensity_from_log
+
+    pi = estimate_propensity_from_log(np.array([0, 0, 1]), n_candidates=5, lam=0.0)
+    assert pi[2] == 0.0
+    assert pi[0] > pi[1]
+
+
+def test_bias_guard_reports_caliber_and_threshold(micro_engine):
+    """判据输出必须自带口径与阈值来源说明——
+    Coat 实测证明 ESS/N 随口径横跨边界两侧，不带口径的数字没有意义。"""
+    g = micro_engine.bias_guard()
+    for key in ("ess", "ess_ratio", "should_debias", "recommendation",
+                "caliber", "threshold_note", "lam", "n_records"):
+        assert key in g, key
+    assert 0.0 <= g["ess_ratio"] <= 1.0
+    assert isinstance(g["should_debias"], bool)
+    assert "口径" in g["caliber"]
+
+
+def test_bias_guard_detects_skewed_log():
+    """构造极端偏斜的日志（一个物品占绝大多数曝光），
+    ESS/N 必须显著下降并给出「谨慎/不建议」的判断。"""
+    from src.serve.bias_guard import bias_guard
+
+    skewed = np.array([0] * 990 + list(range(1, 11)) * 10)
+    g = bias_guard(skewed, n_candidates=1000, lam=1.0)
+    assert g["ess_ratio"] < 0.4
+    assert g["should_debias"] is False
+    assert "谨慎" in g["recommendation"] or "不建议" in g["recommendation"]
+
+
+def test_bias_guard_uses_record_level_caliber_not_pool_level():
+    """**记录级口径**（口径 A）而非候选池级口径 —— 这是一个会翻转结论的关键区别。
+
+    同一份偏斜日志：
+        候选池级 ESS/N = 0.9907 → 「可以放心去偏」
+        记录级   ESS/N = 0.1129 → 「不建议去偏」
+    若误用候选池级口径，判据会给出完全相反的结论。
+    Coat 实验的四口径结果同样证明口径必须显式报告。
+    """
+    from src.bias.estimators import effective_sample_size
+    from src.serve.bias_guard import bias_guard, estimate_propensity_from_log
+
+    ids = np.array([0] * 990 + list(range(1, 11)) * 10)
+    c = 1000
+    pi_item = estimate_propensity_from_log(ids, c, lam=1.0)
+
+    def ess_ratio(v):
+        v = np.asarray(v, dtype=float)
+        return effective_sample_size(v) / len(v)
+
+    pool_level = ess_ratio(pi_item)
+    record_level = ess_ratio(pi_item[ids])
+    # 两者确实不同，且方向相反——这就是必须锁住口径的原因
+    assert pool_level > 0.9
+    assert record_level < 0.4
+
+    # 线上判据必须采用记录级口径
+    g = bias_guard(ids, c, lam=1.0)
+    assert abs(g["ess_ratio"] - record_level) < 1e-3
+    assert g["should_debias"] is False
+
+
+def test_recommend_with_guard_returns_switch_signal(micro_engine):
+    r = micro_engine.recommend_with_guard(0, top_k=5)
+    assert "recommendations" in r and "bias_guard" in r
+    assert r["ranking_applied"] in ("ctr_with_debias", "popularity_fallback")
+    # 开关信号必须与判据结论一致
+    assert (r["ranking_applied"] == "ctr_with_debias") == r["bias_guard"]["should_debias"]

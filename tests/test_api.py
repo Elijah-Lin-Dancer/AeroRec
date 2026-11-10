@@ -26,6 +26,12 @@ class _StubEngine:
     def run_ab(self, n_users=1000, top_k=None):
         return {"n_users": n_users, "top_k": top_k}
 
+    def bias_guard(self, lam=1.0):
+        return {"ess": 100.0, "ess_ratio": 0.5, "should_debias": True,
+                "recommendation": "可用", "lam": lam,
+                "caliber": "记录级 ESS/N（口径 A）",
+                "n_records": 1000, "n_candidates": 200}
+
 
 @pytest.fixture()
 def client(monkeypatch):
@@ -87,3 +93,26 @@ def test_internal_error_returns_500_without_leaking_stack(client, monkeypatch):
     r = client.get("/recommend", params={"user_id": 0})
     assert r.status_code == 500
     assert "secret internal detail" not in r.text       # 不向调用方泄露内部栈
+
+
+# ---------------------------------------------------------------------------
+# 去偏判据端点（/bias-guard）
+# ---------------------------------------------------------------------------
+def test_bias_guard_endpoint_ok(client):
+    r = client.get("/bias-guard")
+    assert r.status_code == 200
+    d = r.json()
+    assert d["caliber"]                      # 必须自带口径声明
+    assert 0.0 <= d["ess_ratio"] <= 1.0
+    assert isinstance(d["should_debias"], bool)
+
+
+def test_bias_guard_passes_lambda(client):
+    r = client.get("/bias-guard", params={"lam": 0.5})
+    assert r.status_code == 200
+    assert r.json()["lam"] == 0.5
+
+
+def test_bias_guard_rejects_negative_lambda(client):
+    r = client.get("/bias-guard", params={"lam": -1})
+    assert r.status_code == 400

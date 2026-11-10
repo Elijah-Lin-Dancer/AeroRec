@@ -352,6 +352,48 @@ class MicroRecommendationEngine:
             "overlap_ratio": overlap / n,
         }
 
+    # ---------- 去偏判据（在线可计算） ----------
+
+    def bias_guard(self, lam: float = 1.0, item_ids=None) -> dict:
+        """**只看日志**，给出「该不该启用 IPS/SNIPS 去偏」的建议。
+
+        这是本项目判据的在线落地形态：从日志的曝光频次估计倾向分 π̂，
+        算出 ESS/N，再翻译成可执行的三档建议（见 `src/serve/bias_guard.py`）。
+
+        参数
+        ----
+        lam : Laplace 平滑强度，默认 1（λ=0 时冷门物品 1/π̂ 权重会爆炸）
+        item_ids : 可选的曝光物品序列；默认用引擎内的全量日志
+
+        诚实边界
+        --------
+        阈值 0.4 标定于**合成**环境。本方法保证的是「机制可迁移」
+        （输入可算、输出可执行），**不保证数值直接可用**。
+        且 ESS/N 必须与口径一起看——Coat 实测显示同一份数据在不同口径下
+        可横跨去偏有效边界两侧。
+        """
+        from src.serve.bias_guard import bias_guard as _bias_guard
+
+        ids = self.logs["item_id"] if item_ids is None else item_ids
+        return _bias_guard(ids, self.n_items, lam=lam)
+
+    def recommend_with_guard(self, user_id, top_k=None) -> dict:
+        """带去偏判据的推荐：返回推荐结果 **以及** 当前该不该去偏的判断。
+
+        这是判据「接进在线服务」的完整体现——判据不是旁挂的报告，
+        而是随推荐请求一起给出的**开关信号**。
+        """
+        guard = self.bias_guard()
+        recs = self.recommend(user_id, top_k=top_k)
+        return {
+            "user_id": int(user_id),
+            "recommendations": recs,
+            "bias_guard": guard,
+            # 判据为「不建议去偏」时，走朴素热度排序而非 CTR 排序
+            "ranking_applied": "ctr_with_debias" if guard["should_debias"]
+                               else "popularity_fallback",
+        }
+
 
 # ==========================================================================
 # 供 A/B 使用的「伪 DataFrame」适配层（与 engine_lite 同构）

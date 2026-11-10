@@ -165,3 +165,31 @@ class RecommendationEngine:
         from src.eval.ab import baseline_bias_table
         return baseline_bias_table(self.pop, self.users, self.items,
                                    top_n=top_n, sample_user=sample_user)
+
+    # ---------- 去偏判据（在线可计算，与 micro 档同一实现） ----------
+
+    def bias_guard(self, lam: float = 1.0, item_ids=None) -> dict:
+        """**只看日志**，给出「该不该启用 IPS/SNIPS 去偏」的建议。
+
+        实现见 `src/serve/bias_guard.py`：从日志曝光频次估物品粒度倾向分 π̂，
+        按**记录级口径**（Coat 口径 A）算 ESS/N，翻译成三档可执行建议。
+
+        诚实边界：阈值标定于合成环境，保证的是「机制可迁移」而非「数值可直接用」。
+        """
+        from src.serve.bias_guard import bias_guard as _bias_guard
+
+        ids = self.logs["item_id"] if item_ids is None else item_ids
+        n_candidates = int(self.items["item_id"].max()) + 1
+        return _bias_guard(ids, n_candidates, lam=lam)
+
+    def recommend_with_guard(self, user_id, top_k=None) -> dict:
+        """带去偏判据的推荐：结果 + 当前该不该去偏的开关信号。"""
+        guard = self.bias_guard()
+        recs = self.recommend(user_id, top_k=top_k)
+        return {
+            "user_id": int(user_id),
+            "recommendations": recs,
+            "bias_guard": guard,
+            "ranking_applied": "ctr_with_debias" if guard["should_debias"]
+                               else "popularity_fallback",
+        }

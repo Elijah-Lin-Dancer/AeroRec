@@ -80,3 +80,25 @@ def ab(n_users: int = 2000, top_k: int = 10):
     except Exception:
         traceback.print_exc()
         raise HTTPException(status_code=500, detail="内部错误，请稍后重试")
+
+
+@app.get("/bias-guard")
+def bias_guard(lam: float = 1.0):
+    """去偏判据：只看日志，回答「当前该不该启用 IPS/SNIPS 去偏」。
+
+    这是本项目判据的**在线落地形态**——判据不是离线报告，而是随服务可查的开关信号。
+    返回 ESS/N（**记录级口径**）、三档建议与 `should_debias` 布尔开关。
+
+    ⚠️ 口径说明：ESS/N 必须与口径一起看。同一份日志在候选池级口径下可能
+    给出与记录级口径**相反**的结论（实测 0.9907 vs 0.1129）。
+    本接口固定用记录级口径（与合成标定 `data/bias/boundary.json` 同口径），
+    并在响应的 `caliber` 字段中显式声明。
+    """
+    if lam < 0:
+        raise HTTPException(status_code=400, detail=f"lam 必须 ≥ 0，收到 {lam}")
+    engine = _checked(user_id=0, top_k=10)
+    try:
+        return engine.bias_guard(lam=lam)
+    except Exception:
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail="内部错误，请稍后重试")
