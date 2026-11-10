@@ -1,0 +1,228 @@
+{
+  "meta": {
+    "description": "召回通道与混排步骤的消融实验（真实 CTR 口径）",
+    "mode": "micro",
+    "seed": 42,
+    "top_k": 10,
+    "n_users": 100,
+    "protocol": "统一使用 src/eval/ab.py:compare_rankers 的真实 CTR 口径；召回关闭=不注册该路（非 weight=0）；混排消融复用 Mixer.mix_trace 的中间态。",
+    "baseline_note": "全四路 / 完整五步为基线组，其余为消融组。",
+    "ndcg_note": "NDCG@K 的增益 = 物品在候选池内的真实 CTR，IDCG 分母取**同一候选池**降序前 K。所以：**同一次 compare_rankers 调用内的各组可比，跨调用不可横比**。推论——① 召回消融各组候选池不同（仅itemcf 的池 ≠ 全四路的池）→ 分母不同，横比 NDCG 无意义，召回结论请以 true_ctr 为准（true_ctr 直接查真实 CTR，与池无关）；② 混排消融候选池固定为全四路（见 run_mixer_ablation 注释）→ 分母相同，NDCG 可横向比较，且能看出『CTR 高的组 NDCG 未必高』。",
+    "ctr_model_auc": 0.8014,
+    "ctr_model_note": "消融实验专用的辅助 CTR 模型（DeepFM），与 src/eval/evaluate.py 同法训练。论文主结果仍引用 data/eval/end_to_end.json 的那次训练。",
+    "scale_note": "micro/lite 档仅用于验证消融流程与相对关系，数值不代表论文口径；论文引用须以 full 档为准。"
+  },
+  "recall_ablation": {
+    "groups": {
+      "全四路": [
+        "popular",
+        "itemcf",
+        "two_tower",
+        "rule"
+      ],
+      "仅popular": [
+        "popular"
+      ],
+      "去掉popular": [
+        "itemcf",
+        "two_tower",
+        "rule"
+      ],
+      "仅itemcf": [
+        "itemcf"
+      ],
+      "去掉itemcf": [
+        "popular",
+        "two_tower",
+        "rule"
+      ],
+      "仅two_tower": [
+        "two_tower"
+      ],
+      "去掉two_tower": [
+        "popular",
+        "itemcf",
+        "rule"
+      ],
+      "仅rule": [
+        "rule"
+      ],
+      "去掉rule": [
+        "popular",
+        "itemcf",
+        "two_tower"
+      ]
+    },
+    "per_method": {
+      "全四路": {
+        "true_ctr": 0.5383,
+        "rel_to_base": 0.0,
+        "pct_of_oracle": 0.7886,
+        "paired_lift_vs_oracle": -0.1443,
+        "ndcg_at_k": 0.8111,
+        "ndcg_rel_to_base": 0.0,
+        "ndcg_pct_of_oracle": 0.8111
+      },
+      "仅popular": {
+        "true_ctr": 0.5564,
+        "rel_to_base": 0.0335,
+        "pct_of_oracle": 0.815,
+        "paired_lift_vs_oracle": -0.1263,
+        "ndcg_at_k": 0.8435,
+        "ndcg_rel_to_base": 0.04,
+        "ndcg_pct_of_oracle": 0.8435
+      },
+      "去掉popular": {
+        "true_ctr": 0.3564,
+        "rel_to_base": -0.3379,
+        "pct_of_oracle": 0.5221,
+        "paired_lift_vs_oracle": -0.3262,
+        "ndcg_at_k": 0.5355,
+        "ndcg_rel_to_base": -0.3398,
+        "ndcg_pct_of_oracle": 0.5355
+      },
+      "仅itemcf": {
+        "true_ctr": 0.3549,
+        "rel_to_base": -0.3407,
+        "pct_of_oracle": 0.5199,
+        "paired_lift_vs_oracle": -0.3278,
+        "ndcg_at_k": 0.5337,
+        "ndcg_rel_to_base": -0.342,
+        "ndcg_pct_of_oracle": 0.5337
+      },
+      "去掉itemcf": {
+        "true_ctr": 0.5311,
+        "rel_to_base": -0.0134,
+        "pct_of_oracle": 0.778,
+        "paired_lift_vs_oracle": -0.1516,
+        "ndcg_at_k": 0.8044,
+        "ndcg_rel_to_base": -0.0082,
+        "ndcg_pct_of_oracle": 0.8044
+      },
+      "仅two_tower": {
+        "true_ctr": 0.3626,
+        "rel_to_base": -0.3264,
+        "pct_of_oracle": 0.5311,
+        "paired_lift_vs_oracle": -0.3201,
+        "ndcg_at_k": 0.5181,
+        "ndcg_rel_to_base": -0.3612,
+        "ndcg_pct_of_oracle": 0.5181
+      },
+      "去掉two_tower": {
+        "true_ctr": 0.544,
+        "rel_to_base": 0.0106,
+        "pct_of_oracle": 0.797,
+        "paired_lift_vs_oracle": -0.1386,
+        "ndcg_at_k": 0.8176,
+        "ndcg_rel_to_base": 0.008,
+        "ndcg_pct_of_oracle": 0.8176
+      },
+      "仅rule": {
+        "true_ctr": 0.3865,
+        "rel_to_base": -0.2821,
+        "pct_of_oracle": 0.5661,
+        "paired_lift_vs_oracle": -0.2962,
+        "ndcg_at_k": 0.562,
+        "ndcg_rel_to_base": -0.3071,
+        "ndcg_pct_of_oracle": 0.562
+      },
+      "去掉rule": {
+        "true_ctr": 0.5413,
+        "rel_to_base": 0.0056,
+        "pct_of_oracle": 0.793,
+        "paired_lift_vs_oracle": -0.1413,
+        "ndcg_at_k": 0.8154,
+        "ndcg_rel_to_base": 0.0053,
+        "ndcg_pct_of_oracle": 0.8154
+      },
+      "Oracle": {
+        "true_ctr": 0.6826,
+        "rel_to_base": 0.2681,
+        "pct_of_oracle": 1.0,
+        "paired_lift_vs_oracle": 0.0,
+        "ndcg_at_k": 1.0,
+        "ndcg_rel_to_base": 0.2329,
+        "ndcg_pct_of_oracle": 1.0
+      }
+    },
+    "oracle_true_ctr": 0.6826,
+    "oracle_ndcg_at_k": 1.0
+  },
+  "mixer_ablation": {
+    "levels": {
+      "完整五步": "all",
+      "关_同品类打散": "no_scatter",
+      "关_去重截断": "no_dedup",
+      "关_CTR加权": "no_ctr",
+      "关_归一化": "no_normalize",
+      "完全不混排": "no_mix"
+    },
+    "per_method": {
+      "完整五步": {
+        "true_ctr": 0.5383,
+        "rel_to_base": 0.0,
+        "pct_of_oracle": 0.7932,
+        "paired_lift_vs_oracle": -0.1403,
+        "ndcg_at_k": 0.8183,
+        "ndcg_rel_to_base": 0.0,
+        "ndcg_pct_of_oracle": 0.8183
+      },
+      "关_同品类打散": {
+        "true_ctr": 0.6125,
+        "rel_to_base": 0.1379,
+        "pct_of_oracle": 0.9026,
+        "paired_lift_vs_oracle": -0.0661,
+        "ndcg_at_k": 0.903,
+        "ndcg_rel_to_base": 0.1035,
+        "ndcg_pct_of_oracle": 0.903
+      },
+      "关_去重截断": {
+        "true_ctr": 0.5383,
+        "rel_to_base": 0.0,
+        "pct_of_oracle": 0.7932,
+        "paired_lift_vs_oracle": -0.1403,
+        "ndcg_at_k": 0.8183,
+        "ndcg_rel_to_base": 0.0,
+        "ndcg_pct_of_oracle": 0.8183
+      },
+      "关_CTR加权": {
+        "true_ctr": 0.2058,
+        "rel_to_base": -0.6178,
+        "pct_of_oracle": 0.3032,
+        "paired_lift_vs_oracle": -0.4729,
+        "ndcg_at_k": 0.2798,
+        "ndcg_rel_to_base": -0.6581,
+        "ndcg_pct_of_oracle": 0.2798
+      },
+      "关_归一化": {
+        "true_ctr": 0.221,
+        "rel_to_base": -0.5895,
+        "pct_of_oracle": 0.3256,
+        "paired_lift_vs_oracle": -0.4577,
+        "ndcg_at_k": 0.2992,
+        "ndcg_rel_to_base": -0.6344,
+        "ndcg_pct_of_oracle": 0.2992
+      },
+      "完全不混排": {
+        "true_ctr": 0.6125,
+        "rel_to_base": 0.1379,
+        "pct_of_oracle": 0.9026,
+        "paired_lift_vs_oracle": -0.0661,
+        "ndcg_at_k": 0.903,
+        "ndcg_rel_to_base": 0.1035,
+        "ndcg_pct_of_oracle": 0.903
+      },
+      "Oracle": {
+        "true_ctr": 0.6786,
+        "rel_to_base": 0.2607,
+        "pct_of_oracle": 1.0,
+        "paired_lift_vs_oracle": 0.0,
+        "ndcg_at_k": 1.0,
+        "ndcg_rel_to_base": 0.222,
+        "ndcg_pct_of_oracle": 1.0
+      }
+    },
+    "oracle_true_ctr": 0.6786,
+    "oracle_ndcg_at_k": 1.0
+  }
+}

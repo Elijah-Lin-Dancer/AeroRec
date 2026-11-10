@@ -1,0 +1,63 @@
+{
+  "meta": {
+    "description": "模型对照实验：A=LR基线 / B=LR+手工交叉 / C=DeepFM / E=DeepFM+手工交叉 / D=召回族",
+    "mode": "micro",
+    "seed": 42,
+    "n_users": 30,
+    "top_k": 10,
+    "protocol": "A/B/C/E 四组用同一训练/测试划分（30 万样本、24 万/6 万切分）；B 组交叉项由 src/data/generator_common.py:pair_features 计算，与生成日志同一套公式与同一份 cat_bias。E 组 = DeepFM + 同一批手工交叉，用于分离「结构增益」与「特征增益」——若 E ≈ B，则 C→B 的差距全部来自显式交叉特征而非 FM+DNN 结构。D 组用真实 CTR 口径（召回器无点式分，无 AUC）。",
+    "honest_note": "B 组是『上帝视角』对照——它使用生成器才知道的交叉项，因此不是可部署方案，只作为自动学交叉的参照上界。",
+    "mechanism_note": "本实现的 DeepFM 其 FM 二阶项只作用于稀疏 embedding 之间（src/rank/deepfm.py:49-54，embs 只取 sparse_embs，dense 不参与）；而真实 CTR 的交叉项是稠密×稠密（price_sens×(1-price_norm)、is_biz×is_early）与用户稠密×物品离散（aff_cat）——FM 结构无法直接表达。这是 B>C 的机制解释，不是调参不足。",
+    "scale_note": "micro/lite 档仅验证流程与相对关系，论文引用须以 full 档为准。"
+  },
+  "auc_comparison": {
+    "auc_lr_baseline": 0.7473,
+    "auc_lr_manual_cross": 0.8178,
+    "auc_deepfm": 0.8014,
+    "auc_deepfm_manual_cross": 0.8164,
+    "delta_c_minus_b": -0.0165,
+    "delta_b_minus_a": 0.0705,
+    "delta_c_minus_a": 0.054,
+    "delta_e_minus_b": -0.0014,
+    "verdict": "手工交叉的 LR 明显优于 DeepFM（0.8178 vs 0.8014，差 0.0165）：本实现的 DeepFM 其 FM 二阶项只作用于**稀疏**embedding 之间（见 src/rank/deepfm.py:49-54），而真实 CTR 里的乘积型交叉是稠密×稠密（价格敏感度×价格）与用户稠密×物品离散（品类亲和），FM 结构无法直接表达。 E 组（DeepFM+手工交叉）为 0.8164，与 B 组基本持平，说明结构增益在本数据规模下不显著。 且 B>C>A（手工喂入交叉优于模型自动学交叉），需如实报告这一反直觉结果。",
+    "n_train": 240000,
+    "n_test": 60000
+  },
+  "recall_comparison": {
+    "per_method": {
+      "热门召回": {
+        "true_ctr": 0.481,
+        "pct_of_oracle": 0.7244,
+        "ndcg_at_k": 0.6877,
+        "ndcg_pct_of_oracle": 0.6877
+      },
+      "ItemCF召回": {
+        "true_ctr": 0.1534,
+        "pct_of_oracle": 0.231,
+        "ndcg_at_k": 0.1995,
+        "ndcg_pct_of_oracle": 0.1995
+      },
+      "TwoTower召回": {
+        "true_ctr": 0.2102,
+        "pct_of_oracle": 0.3165,
+        "ndcg_at_k": 0.2833,
+        "ndcg_pct_of_oracle": 0.2833
+      },
+      "规则召回": {
+        "true_ctr": 0.2027,
+        "pct_of_oracle": 0.3053,
+        "ndcg_at_k": 0.2864,
+        "ndcg_pct_of_oracle": 0.2864
+      },
+      "Oracle": {
+        "true_ctr": 0.664,
+        "pct_of_oracle": 1.0,
+        "ndcg_at_k": 1.0,
+        "ndcg_pct_of_oracle": 1.0
+      }
+    },
+    "oracle_true_ctr": 0.664,
+    "oracle_ndcg_at_k": 1.0,
+    "note": "召回器不产生点式分，无 AUC；统一用真实 CTR 口径 + 同一混排层评估。"
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "meta": {
+    "description": "端到端离线评估结果：CTR 模型 AUC 对比 + 真实 CTR 口径排序对比",
+    "mode": "full",
+    "scale_note": "本脚本用 src.data.synthetic_generator.build_dataset()（full 档：10 万物品 × 10 万用户 × 500 万曝光），即论文口径。micro/lite 档的对照见 data/eval/ablation_micro.json 等产物。",
+    "seed": 42,
+    "top_k": 10,
+    "n_train": 240000,
+    "n_test": 60000,
+    "n_sample_users": 100,
+    "note": "本文件由 python -m src.eval.evaluate 生成，与 stdout 打印同源同口径。AUC 完全可复现；真实 CTR 类指标末位可能因 Oracle 池采样随机性跨机漂移，论文引用请取整到整数百分点。"
+  },
+  "auc": {
+    "logistic_regression": 0.7421,
+    "deepfm": 0.8019,
+    "delta": 0.0598
+  },
+  "true_ctr_ranking": {
+    "random": 0.1652,
+    "popular": 0.4922,
+    "deepfm_mixed": 0.6322,
+    "oracle": 0.7154,
+    "deepfm_rel_to_popular": 0.2845,
+    "deepfm_pct_of_oracle": 0.8836,
+    "popular_pct_of_oracle": 0.6879,
+    "ndcg_at_k": {
+      "random": 0.2068,
+      "popular": 0.6716,
+      "deepfm_mixed": 0.9016,
+      "oracle": 1.0,
+      "deepfm_pct_of_oracle": 0.9016
+    },
+    "ndcg_protocol": "graded NDCG@K：增益 g_i = 该物品在候选池内的**真实 CTR**，位置折扣 1/log2(i+2)；IDCG 取**同一候选池**内真实 CTR 降序前 K 的 DCG，因此所有方法的分母相同、可横向比较。与 true_ctr 口径互补：true_ctr 只看列表平均质量，NDCG 额外体现**顺序**。"
+  },
+  "popularity_baseline_bias": {
+    "top_n": 200,
+    "smoothed_ctr": 0.6231,
+    "true_ctr": 0.2521,
+    "bias": 0.371,
+    "note": "平滑 CTR 相对真实 CTR 的高估幅度；说明为何不采用平滑协议报告主结果"
+  }
+}
