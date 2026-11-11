@@ -22,7 +22,7 @@ AeroRec 在一份**可复现的合成数据**上复现工业推荐链路：四�
 
 ## 🎯 为什么看这个项目
 
-1. **跑通的是整条链路，不是一个模型。** 热门 / ItemCF / Two-Tower / 规则四路召回 → 位置分加权融合 → DeepFM 出 CTR、LR 出 CVR → 归一化 / 加权 / 分层 / 打散 / 去重截断 → REST API 与七页面板。`133` 项测试，`ruff` + `mypy` 全绿。
+1. **跑通的是整条链路，不是一个模型。** 热门 / ItemCF / Two-Tower / 规则四路召回 → 位置分加权融合 → DeepFM 出 CTR、LR 出 CVR → 归一化 / 加权 / 分层 / 打散 / 去重截断 → REST API 与七页面板。`151` 项测试，`ruff` + `mypy` 全绿。
 2. **偏差对着已知真值来量。** 有闭式真值，排序损伤就藏不住：随曝光偏斜加剧，Spearman **+0.8665 → −0.5054**，榜单已经反转，而「平均 CTR 看着正常」。去偏存在可测边界 **ESS/N ≈ 0.358**，且这个量不需要真值就能算。
 3. **数字逐字节可复现。** 7 组偏差实验在**仅 numpy** 下 **19 秒**跑完；产物在 CI 中重新生成并逐字节比对（`git diff --exit-code`）；论文里 **207** 个数字全部对产物审计，**0 差异**。
 4. **能塞进 690 MB 内存。** 训练与推理解耦：离线用 torch，在线用纯 numpy 前向（最大偏差 **1.19e-07**），**服务期不加载 torch**——这一条由 CI 断言。在线：P50 **0.71 ms** / P99 **0.93 ms**，**1379 QPS**，**129 MB** 常驻内存。
@@ -99,7 +99,7 @@ streamlit run app.py
 pip install -r requirements_full.txt
 python -m src.eval.evaluate              # LR vs DeepFM 的 AUC + 真实 CTR 口径 + oracle 上界
 python scripts/run_bias_experiments.py   # 7 组偏差实验 -> data/bias/*.json（约 19 秒，仅 numpy）
-python -m pytest -q                      # 133 项测试
+python -m pytest -q                      # 151 项测试
 ```
 
 | 命令 | 作用 | 依赖 |
@@ -185,7 +185,7 @@ src/
                              boundary（ESS 预警）、report（自包含 HTML）
 app.py                       Streamlit 演示（七页、双语、默认 micro）
 scripts/                     偏差实验、报告、基准、论文配图、数字审计、真实数据验证
-tests/                       133 项测试，覆盖 data / rank / api / bias / 真实数据
+tests/                       151 项测试，覆盖 data / rank / api / bias / coat / serve
 docs/                        bias_report.md、tech-report.md、paper/、index.html（主页）
 data/bias/                   7 份实验产物 + report.html
 data/real_validation/        Criteo（100 万 / 20 万）与 Adult 验证结果
@@ -205,7 +205,7 @@ requirements_full.txt        torch / sklearn / pandas / fastapi / pytest / matpl
 | 排序 | DeepFM（torch）出 CTR，逻辑回归出 CVR；导出为 numpy 供在线推理 |
 | 服务 | FastAPI、Streamlit、纯 numpy 前向（运行期不依赖 torch / sklearn / pandas） |
 | 研究 | IPS / SNIPS / DR 估计量、bootstrap 置信区间（B = 10000）、ESS 边界、闭式 propensity |
-| 质量 | pytest（133 项）、ruff、mypy、GitHub Actions（产物逐字节零漂移门禁 + 论文数字审计） |
+| 质量 | pytest（151 项）、ruff、mypy、GitHub Actions（产物逐字节零漂移门禁 + 论文数字审计） |
 
 ## ❓ 常见问题
 

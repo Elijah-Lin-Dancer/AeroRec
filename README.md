@@ -22,7 +22,7 @@ AeroRec reproduces an industrial recommendation chain on a **reproducible synthe
 
 ## 🎯 Why this one
 
-1. **The whole chain runs, not just the model.** Popularity / ItemCF / Two-Tower / rule recall → position-weighted fusion → DeepFM (CTR) + LR (CVR) → normalize / weight / tier / de-cluster / dedup → REST API and a 7-page panel. `133` tests, `ruff` + `mypy` green.
+1. **The whole chain runs, not just the model.** Popularity / ItemCF / Two-Tower / rule recall → position-weighted fusion → DeepFM (CTR) + LR (CVR) → normalize / weight / tier / de-cluster / dedup → REST API and a 7-page panel. `151` tests, `ruff` + `mypy` green.
 2. **Bias is measured against a known truth.** With closed-form ground truth, the ranking damage shows up plainly: Spearman **+0.8665 → −0.5054** as exposure skew grows — the leaderboard inverts even though the mean CTR looks fine. Debiasing has a measurable boundary at **ESS/N ≈ 0.358**, and it needs no ground truth to compute.
 3. **Numbers reproduce byte-for-byte.** 7 bias experiments in **19 s on numpy only**; committed artifacts are re-derived in CI and diffed (`git diff --exit-code`); all **207** numeric claims in the paper are audited against artifacts with **0 difference**.
 4. **It ships inside a 690 MB memory budget.** Training and inference are decoupled: torch offline, pure-numpy forward online (max deviation **1.19e-07**), **no torch at serve time** — asserted in CI. Online: P50 **0.71 ms** / P99 **0.93 ms**, **1379 QPS**, **129 MB** RSS.
@@ -99,7 +99,7 @@ streamlit run app.py
 pip install -r requirements_full.txt
 python -m src.eval.evaluate              # LR vs DeepFM AUC + true-CTR protocol + oracle bound
 python scripts/run_bias_experiments.py   # 7 bias experiments -> data/bias/*.json (~19 s, numpy only)
-python -m pytest -q                      # 133 tests
+python -m pytest -q                      # 151 tests
 ```
 
 | Command | What it does | Needs |
@@ -185,8 +185,9 @@ src/
                              boundary (ESS warning), report (self-contained HTML)
 app.py                       Streamlit demo (7 pages, bilingual, micro by default)
 scripts/                     bias experiments, report, benchmark, paper figures,
-                             number audit, real-data validation
-tests/                       133 tests across data / rank / api / bias / real data
+                             number audit, real-data validation, ablation,
+                             model comparison, concurrency + stability
+tests/                       151 tests across data / rank / api / bias / coat / serve
 docs/                        bias_report.md, tech-report.md, paper/, index.html (Pages)
 data/bias/                   7 experiment artifacts + report.html
 data/real_validation/        Criteo (1 M / 200 k) and Adult results
@@ -206,7 +207,7 @@ requirements_full.txt        torch / sklearn / pandas / fastapi / pytest
 | Ranking | DeepFM (torch) for CTR, logistic regression for CVR; exported to numpy for serving |
 | Serving | FastAPI, Streamlit, pure-numpy forward pass (no torch / sklearn / pandas at run time) |
 | Research | IPS / SNIPS / DR estimators, bootstrap CIs (B = 10,000), ESS-based boundary, closed-form propensity |
-| Quality | pytest (133), ruff, mypy, GitHub Actions with a byte-level zero-drift gate and a paper-number audit |
+| Quality | pytest (151), ruff, mypy, GitHub Actions with a byte-level zero-drift gate and a paper-number audit |
 
 ## ❓ FAQ
 
