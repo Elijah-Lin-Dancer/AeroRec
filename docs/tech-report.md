@@ -196,7 +196,7 @@ modeled at the user-item granularity.**
 pip install numpy==2.3.5          # 研究路径唯一依赖
 python scripts/run_bias_experiments.py    # 生成 7 个产物 JSON
 python scripts/build_bias_report.py       # 自包含 HTML 报告
-python -m pytest                          # 全量测试（133 项）
+python -m pytest                          # 全量测试（151 项）
 ```
 
 - 实验耗时约 19 s（单机单进程实测 19.2 s）；随机种子、bootstrap 种子、RNG 策略

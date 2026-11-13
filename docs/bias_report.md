@@ -364,7 +364,7 @@ SNIPS 去偏误差的变化不显著（delta ≈ 0，p=0.87）——oracle 结�
 | `src/bias/report.py` | 自包含 HTML 报告生成（内联 SVG，零依赖） |
 | `scripts/run_bias_experiments.py` | 实验入口（7 个产物 JSON：propagation / injection / boundary / estimand_check / boundary_sweep / propensity_estimation / userbias） |
 | `scripts/build_bias_report.py` | 报告生成入口 → `data/bias/report.html` |
-| `tests/test_bias_*.py` | 8 个测试文件，共 133 个用例 |
+| `tests/test_bias_*.py` | 9 个测试文件，共 90 个用例（偏差研究模块专用；全仓测试共 151 个） |
 
 一键复现：
 
